@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   VscFolder,
   VscFolderOpened,
@@ -267,6 +267,30 @@ const FileExplorer = ({
   const [creatingState, setCreatingState] = useState(null) // { type: 'file' | 'folder', parentId: string }
   const [rootInlineName, setRootInlineName] = useState('')
   const [itemToDelete, setItemToDelete] = useState(null) // Node targeted for deletion confirmation modal
+
+  // Auto-expand root and newly created folders without overriding user collapse choices
+  useEffect(() => {
+    setExpandedFolders((prev) => {
+      let changed = false
+      const next = { ...prev }
+      const visit = (nodes) => {
+        for (const node of nodes) {
+          if (node.type === 'folder') {
+            const id = node._id || node.id
+            if (id && !(id in next)) {
+              next[id] = true
+              changed = true
+            }
+            if (Array.isArray(node.children) && node.children.length > 0) {
+              visit(node.children)
+            }
+          }
+        }
+      }
+      visit(fileTree)
+      return changed ? next : prev
+    })
+  }, [fileTree])
 
   const toggleFolder = (folderId, forceExpand = null) => {
     setExpandedFolders((prev) => ({

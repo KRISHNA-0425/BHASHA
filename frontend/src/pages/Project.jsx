@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { toast, ToastContainer } from 'react-toastify'
 import {
@@ -11,12 +11,17 @@ import {
   VscPlay,
   VscArrowLeft,
   VscLayoutSidebarLeft,
-  VscSync
+  VscSync,
+  VscCode,
+  VscGlobe,
+  VscSplitHorizontal
 } from 'react-icons/vsc'
 import FileExplorer from '../components/editor/FileExplorer.jsx'
 import CodeEditor from '../components/editor/CodeEditor.jsx'
 import TerminalPanel from '../components/editor/TerminalPanel.jsx'
 import AIAgentPanel from '../components/editor/AIAgentPanel.jsx'
+import PreviewPanel from '../components/editor/PreviewPanel.jsx'
+import { buildFileMap, detectProjectKind } from '../utils/previewBuilder.js'
 import { getProjectById } from '../features/project.js'
 import {
   getTree,
@@ -110,6 +115,8 @@ const Project = () => {
   const [isTerminalMaximized, setIsTerminalMaximized] = useState(false)
   const [isAIOpen, setIsAIOpen] = useState(true)
   const [activeActivityTab, setActiveActivityTab] = useState('explorer')
+  const [workspaceView, setWorkspaceView] = useState('code') // 'code' | 'split' | 'preview'
+  const [previewVersion, setPreviewVersion] = useState(0)
 
   // Editor and File States
   const [openTabs, setOpenTabs] = useState([])
@@ -118,8 +125,11 @@ const Project = () => {
 
   // Refs for debounced auto-save & manual save without closure staleness
   const activeFileRef = useRef(activeFile)
-  activeFileRef.current = activeFile
   const saveTimeoutRef = useRef(null)
+
+  useEffect(() => {
+    activeFileRef.current = activeFile
+  }, [activeFile])
 
   // Determine root folder (folder with parentId === null)
   const rootFolder = useMemo(() => {
@@ -128,7 +138,34 @@ const Project = () => {
 
   const rootFolderId = rootFolder ? rootFolder._id || rootFolder.id : null
 
-  // 1. Initial Load: Fetch Project & Workspace File Tree
+  // 1. Select file: fetch full content if missing
+  const selectFileWithContent = useCallback(async (fileNode) => {
+    const fileId = fileNode._id || fileNode.id
+    let fullFile = fileNode
+
+    if (fullFile.content === undefined || fullFile.content === null) {
+      try {
+        const data = await getFile(fileId)
+        fullFile = { ...fileNode, ...data }
+      } catch (err) {
+        console.error("Failed to fetch full file content:", err)
+        fullFile = { ...fileNode, content: '' }
+      }
+    }
+
+    setActiveFile(fullFile)
+
+    // Add or update in open tabs
+    setOpenTabs((prev) => {
+      const exists = prev.some((tab) => (tab._id || tab.id) === fileId)
+      if (exists) {
+        return prev.map((tab) => ((tab._id || tab.id) === fileId ? fullFile : tab))
+      }
+      return [...prev, fullFile]
+    })
+  }, [])
+
+  // 2. Initial Load: Fetch Project & Workspace File Tree
   useEffect(() => {
     if (!projectId) return
 
@@ -190,34 +227,7 @@ const Project = () => {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [projectId])
-
-  // 2. Select file: fetch full content if missing
-  const selectFileWithContent = async (fileNode) => {
-    const fileId = fileNode._id || fileNode.id
-    let fullFile = fileNode
-
-    if (fullFile.content === undefined || fullFile.content === null) {
-      try {
-        const data = await getFile(fileId)
-        fullFile = { ...fileNode, ...data }
-      } catch (err) {
-        console.error("Failed to fetch full file content:", err)
-        fullFile = { ...fileNode, content: '' }
-      }
-    }
-
-    setActiveFile(fullFile)
-
-    // Add or update in open tabs
-    setOpenTabs((prev) => {
-      const exists = prev.some((tab) => (tab._id || tab.id) === fileId)
-      if (exists) {
-        return prev.map((tab) => ((tab._id || tab.id) === fileId ? fullFile : tab))
-      }
-      return [...prev, fullFile]
-    })
-  }
+  }, [projectId, selectFileWithContent])
 
   // 3. Close Tab
   const handleCloseTab = (tabToClose) => {
@@ -414,6 +424,86 @@ const Project = () => {
     }
   }
 
+  // 12. Handle autonomous file mutations emitted by the AI Agent
+  const handleAIFileMutated = async ({ operation, data, didMutate }) => {
+    try {
+      const updatedTree = await getTree(projectId)
+      const validTree = Array.isArray(updatedTree) ? updatedTree : []
+      setFileTree(validTree)
+
+      if ((operation === 'create_file' || operation === 'update_file') && data?.file) {
+        const rawFile = data.file
+        const mutatedId = rawFile._id || rawFile.id
+        const treeNode = findNodeInTree(validTree, mutatedId)
+        const mutatedFile = {
+          ...(treeNode || {}),
+          ...rawFile,
+          content: rawFile.content ?? treeNode?.content ?? ''
+        }
+
+        setOpenTabs((prev) => {
+          const exists = prev.some((t) => (t._id || t.id) === mutatedId)
+          if (exists) {
+            return prev.map((t) => ((t._id || t.id) === mutatedId ? mutatedFile : t))
+          }
+          return [...prev, mutatedFile]
+        })
+
+        // Focus created/updated file in editor so user watches code arrive in real time
+        setActiveFile((prevActive) => {
+          const prevId = prevActive?._id || prevActive?.id
+          if (!prevActive || prevId === mutatedId || operation === 'create_file') {
+            return mutatedFile
+          }
+          return prevActive
+        })
+      }
+
+      if (operation === 'delete_file' && data?.fileId) {
+        setOpenTabs((prev) => {
+          const remaining = prev.filter((t) => (t._id || t.id) !== data.fileId)
+          setActiveFile((curr) =>
+            curr && (curr._id || curr.id) === data.fileId
+              ? remaining.length > 0
+                ? remaining[remaining.length - 1]
+                : null
+              : curr
+          )
+          return remaining
+        })
+      }
+
+      if (operation === 'delete_folder') {
+        setOpenTabs((prev) => {
+          const remaining = prev.filter((tab) => findNodeInTree(validTree, tab._id || tab.id))
+          setActiveFile((curr) =>
+            curr && !findNodeInTree(validTree, curr._id || curr.id)
+              ? remaining.length > 0
+                ? remaining[remaining.length - 1]
+                : null
+              : curr
+          )
+          return remaining
+        })
+      }
+
+      if (operation !== 'done' || didMutate) {
+        setPreviewVersion((v) => v + 1)
+      }
+
+      // When AI completes building a previewable project, automatically reveal Split View (Code + Preview)
+      if (operation === 'done' && didMutate) {
+        const fileMap = buildFileMap(validTree)
+        const info = detectProjectKind(fileMap)
+        if (info.kind === 'react-vite' || info.kind === 'html-js') {
+          setWorkspaceView((curr) => (curr === 'code' ? 'split' : curr))
+        }
+      }
+    } catch (err) {
+      console.error("Failed to sync workspace after AI mutation:", err)
+    }
+  }
+
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#07090e] text-slate-200 select-none font-sans">
       <ToastContainer
@@ -457,14 +547,60 @@ const Project = () => {
           </div>
         </div>
 
-        {/* Center: Quick Dev Action */}
-        <div className="hidden md:flex items-center gap-2">
+        {/* Center: View Mode Switcher (Code | Split | Preview) & Run Action */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-[#121622] border border-white/[0.08] rounded-md p-0.5 text-[11px] font-mono">
+            <button
+              type="button"
+              onClick={() => setWorkspaceView('code')}
+              title="Code Editor Only"
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
+                workspaceView === 'code'
+                  ? 'bg-white/[0.12] text-white font-medium'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <VscCode className="text-xs" />
+              <span className="hidden sm:inline">Code</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setWorkspaceView('split')}
+              title="Split Code + Live Preview"
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
+                workspaceView === 'split'
+                  ? 'bg-white/[0.12] text-white font-medium'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <VscSplitHorizontal className="text-xs" />
+              <span className="hidden sm:inline">Split</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setWorkspaceView('preview')}
+              title="Full Live Preview"
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
+                workspaceView === 'preview'
+                  ? 'bg-emerald-500/20 text-emerald-300 font-medium'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <VscGlobe className="text-xs" />
+              <span className="hidden sm:inline">Preview</span>
+            </button>
+          </div>
+
           <button
-            onClick={() => setIsTerminalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/[0.12] text-xs font-mono transition-all cursor-pointer shadow-xs"
+            type="button"
+            onClick={() => {
+              setWorkspaceView((curr) => (curr === 'code' ? 'split' : curr))
+              setPreviewVersion((v) => v + 1)
+            }}
+            className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/[0.12] text-xs font-mono transition-all cursor-pointer shadow-xs"
           >
-            <VscPlay className="text-xs text-slate-100" />
-            <span>Run Dev</span>
+            <VscPlay className="text-xs text-emerald-400" />
+            <span>Run Preview</span>
           </button>
         </div>
 
@@ -603,19 +739,41 @@ const Project = () => {
           </div>
         )}
 
-        {/* Center Canvas: Monaco Code Editor + Bottom Terminal */}
+        {/* Center Canvas: Monaco Code Editor + Live Preview + Bottom Terminal */}
         <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
-          {/* Main Monaco Code Editor */}
-          <div className="flex-1 overflow-hidden relative">
-            <CodeEditor
-              openTabs={openTabs}
-              activeFile={activeFile}
-              onSelectTab={(tab) => selectFileWithContent(tab)}
-              onCloseTab={handleCloseTab}
-              onCodeChange={handleCodeChange}
-              saveStatus={saveStatus}
-              projectName={project?.name || 'workspace'}
-            />
+          {/* Top Stage: Code, Split, or Live Preview */}
+          <div className="flex-1 flex overflow-hidden relative min-h-0">
+            {(workspaceView === 'code' || workspaceView === 'split') && (
+              <div
+                className={`h-full overflow-hidden min-w-0 ${
+                  workspaceView === 'split'
+                    ? 'flex-1 border-r border-white/[0.08]'
+                    : 'flex-1'
+                }`}
+              >
+                <CodeEditor
+                  openTabs={openTabs}
+                  activeFile={activeFile}
+                  onSelectTab={(tab) => selectFileWithContent(tab)}
+                  onCloseTab={handleCloseTab}
+                  onCodeChange={handleCodeChange}
+                  saveStatus={saveStatus}
+                  projectName={project?.name || 'workspace'}
+                />
+              </div>
+            )}
+
+            {(workspaceView === 'preview' || workspaceView === 'split') && (
+              <div className="flex-1 h-full overflow-hidden min-w-0">
+                <PreviewPanel
+                  fileTree={fileTree}
+                  openTabs={openTabs}
+                  activeFile={activeFile}
+                  projectName={project?.name || 'workspace'}
+                  previewVersion={previewVersion}
+                />
+              </div>
+            )}
           </div>
 
           {/* Bottom Terminal Panel */}
@@ -631,7 +789,14 @@ const Project = () => {
         <AIAgentPanel
           isOpen={isAIOpen}
           onClose={() => setIsAIOpen(false)}
+          projectId={projectId}
           activeFile={activeFile}
+          onFileMutated={handleAIFileMutated}
+          onOpenFile={selectFileWithContent}
+          onOpenPreview={() => {
+            setWorkspaceView('split')
+            setPreviewVersion((v) => v + 1)
+          }}
         />
       </div>
     </div>

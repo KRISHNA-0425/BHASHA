@@ -10,7 +10,7 @@
 ![Express](https://img.shields.io/badge/Express-v5-000000?style=for-the-badge&logo=express&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 ![LangChain](https://img.shields.io/badge/LangChain-LangGraph-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)
-![OpenRouter](https://img.shields.io/badge/OpenRouter-DeepSeek-6366F1?style=for-the-badge&logo=openai&logoColor=white)
+![OpenRouter](https://img.shields.io/badge/OpenRouter-LLM_Router-6366F1?style=for-the-badge&logo=openai&logoColor=white)
 ![Monaco](https://img.shields.io/badge/Monaco_Editor-VS_Code_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)
 ![Xterm.js](https://img.shields.io/badge/Terminal-Xterm.js-000000?style=for-the-badge&logo=gnubash&logoColor=white)
 
@@ -44,8 +44,9 @@
 - 🗂️ **Hierarchical Virtual Filesystem**: Self-referencing Mongoose schema supporting deeply nested directories, recursive soft deletes, and alphabetical directory tree synthesis (`buildTree`).
 - 🎨 **Extension-Accurate Brand Icons**: Custom file icon engine rendering brand-authentic logos and palettes (`.jsx` React Cyan, `.js` JS Yellow, `.ts` TS Blue, `.html` Orange, `.css` Blue, `.json` Amber, `.py` Python Blue, etc.).
 - 💻 **Integrated Virtual Terminal**: Built with `@xterm/xterm` and `@xterm/addon-fit`, equipped with ANSI color schemes, key event bindings, and simulated interactive commands (`npm run dev`, `ls`, `clear`, `help`).
-- 🤖 **Autonomous AI Agent**: LangGraph-driven state machine running on OpenRouter (`deepseek-chat`) with strict token guards, armed with a tool suite to autonomously inspect the file tree, read files, generate code, update existing files, and build folder structures.
-- 🛡️ **Zero-Cost LLM Budget Guarding**: Hardened configuration featuring token caps (`maxTokens: 1024`), low deterministic temperature (`0.1`), timeout cutoffs, and provider fallback lockouts to stay strictly within free limits.
+- 🤖 **Autonomous AI Agent**: LangGraph-driven state machine running on OpenRouter with strict token & cost guards, streaming tool executions via Server-Sent Events (SSE) to autonomously inspect the file tree, read files, generate code, update existing files, and build folder structures.
+- ⚡ **Built-In Live Preview (`Code | Split | Preview`)**: In-browser sandbox supporting both **React + Vite** (`@babel/standalone` + `esm.sh` + Tailwind CSS) and **HTML + CSS + JavaScript** apps, complete with viewport toggles, sandbox storage shims, and runtime error reporting.
+- 🛡️ **Zero-Cost LLM Budget Guarding**: Hardened configuration featuring token caps (`MAX_TOKENS`), low deterministic temperature (`0.1`), retry elimination (`maxRetries: 0`), timeout cutoffs, and strict `$0` price ceilings (`max_price: { prompt: 0, completion: 0 }`) loaded cleanly from `.env`.
 - 🔐 **Microservice Security & Auth**: Reverse-proxied sessions, cookie management, JWT authentication, and user header decoration (`x-user-id`, `x-user-email`) protecting microservices.
 - 🎨 **Futuristic Design System**: Minimalist slate and dark-mode aesthetic built with Tailwind CSS v4, smooth spring animations via Framer Motion, and responsive panel toggling.
 
@@ -79,7 +80,7 @@ flowchart TD
 
     subgraph Storage["🗄️ Databases & External APIs"]
         MONGO_DB[("MongoDB Atlas<br/>Multi-Tenant Collections")]
-        OPENROUTER["OpenRouter API<br/>DeepSeek Free Tier"]
+        OPENROUTER["OpenRouter API<br/>Free Tier Router"]
     end
 
     UI -->|HTTP / Axios| PROXY
@@ -123,7 +124,7 @@ flowchart TD
 | **MongoDB Atlas** | ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white) | Multi-cluster cloud NoSQL database with Mongoose ODM |
 | **LangChain Core** | ![LangChain](https://img.shields.io/badge/LangChain-Core-1C3C3C?logo=langchain&logoColor=white) | Modular framework for building LLM agents and tool calling |
 | **LangGraph** | ![LangGraph](https://img.shields.io/badge/LangGraph-Agent_Workflow-2E7D32?logo=diagramsdotnet&logoColor=white) | State graph orchestration for multi-step AI reasoning loops |
-| **OpenRouter** | ![OpenRouter](https://img.shields.io/badge/OpenRouter-DeepSeek_Chat-6366F1?logo=openai&logoColor=white) | Unified LLM routing provider hosting free, high-performance models |
+| **OpenRouter** | ![OpenRouter](https://img.shields.io/badge/OpenRouter-LLM_Router-6366F1?logo=openai&logoColor=white) | Unified LLM routing provider configured via environment variables |
 | **Zod** | ![Zod](https://img.shields.io/badge/Zod-Schema_Validation-3E67B1?logo=zod&logoColor=white) | Strict runtime schema validation for AI agent tool inputs |
 | **JWT** | ![JWT](https://img.shields.io/badge/JWT-Authentication-000000?logo=jsonwebtokens&logoColor=white) | Secure token authentication across cookies and internal microservices |
 | **Firebase Admin** | ![Firebase](https://img.shields.io/badge/Firebase-Auth_Admin-FFCA28?logo=firebase&logoColor=black) | Authentication verification and social Google OAuth login |
@@ -179,15 +180,19 @@ Responsible for modeling, storing, and organizing nested project filesystems.
   - `deleteFolder` iteratively resolves all nested child folder and file IDs across arbitrary tree depths and soft-deletes the entire sub-tree atomically.
 
 ### 3. AI Agent Microservice (`backend/services/AI`)
-Responsible for intelligent pair-programming, automated workspace scaffolding, and code editing.
+Responsible for intelligent pair-programming, automated workspace scaffolding, and code editing over real-time SSE streaming.
 - **Port**: `8004`
-- **Engine**: LangGraph state machine powered by `@langchain/openrouter` and DeepSeek.
-- **Guardrails (`llm.js`)**:
-  - Defaults to `deepseek/deepseek-chat:free` (100% free tier).
+- **Engine**: LangGraph state machine powered by `@langchain/openrouter` with safe `ToolMessage`-aware context window trimming (`maxMessage = 30`).
+- **Models Configured (via `.env` `OPENROUTER_MODEL` & `OPENROUTER_FALLBACK_MODELS`)**:
+  1. **`cohere/north-mini-code:free`** *(Primary)* — Coding-specialized free model (`256k` context, `tools` / `tool_choice` support) delivering fast, accurate filesystem tool calls.
+  2. **`nvidia/nemotron-3-ultra-550b-a55b:free`** *(Fallback 1)* — High-capacity 550B MoE free model (`1M` context, `tools` support) used as backup for complex multi-file reasoning.
+  3. **`openrouter/free`** *(Fallback 2)* — OpenRouter's official `$0.00` auto-router (`200k` context) that dynamically selects active tool-capable free models if individual promotional slugs rotate.
+- **Guardrails (`llm.js` & `ai.controllers.js`)**:
+  - Zero hardcoded model strings in source code (loaded strictly from `.env`).
   - Strict low temperature (`0.1`) eliminating token waste and hallucination.
-  - Max token ceiling (`maxTokens: 1024`).
-  - Fallback lockout (`allow_fallbacks: false`) ensuring requests never silently route to paid alternatives.
-  - Timeout cutoff (`30000ms`) and retry ceiling (`maxRetries: 1`).
+  - Configurable max token ceiling (`MAX_TOKENS=4096`) to prevent mid-file JSON tool truncation.
+  - Hard zero-cost price limit (`max_price: { prompt: 0, completion: 0 }`) with 3-model OpenRouter cap.
+  - Timeout cutoff (`60000ms`), `maxRetries: 0`, and friendly `429` quota/reset error formatting.
 - **Internal API Client (`fetchFileApi.js`)**:
   - Provides reliable inter-service HTTP communication directly to the Management Service with `x-user-id` forwarding.
 
@@ -234,12 +239,14 @@ Located at [`frontend/`](file:///c:/Users/263237/Desktop/MERN/AI-Editor/frontend
   - Dock tabs: `TERMINAL`, `OUTPUT`, `PROBLEMS (0)`, `DEBUG CONSOLE`.
   - Simulated interactive CLI responding to keyboard input (`dev@ai-ide:~/workspace$ `) with commands like `npm run dev`, `ls`, `clear`, and `help`.
   - Panel controls: Clear screen, Maximize/Restore dock height, and Close.
-- **AI Agent Panel (`AIAgentPanel.jsx`)**:
-  - Real-time AI copilot sidebar.
-  - Model selector dropdown (`Claude 3.5 Sonnet`, `Gemini 1.5 Pro`, `GPT-4o`, `DeepSeek`).
-  - Interaction modes: `Chat`, `Edit Code`, `Review`.
-  - Code suggestion cards with one-click **Copy Code** and **Insert**.
-  - Quick prompt pills (*"Explain active file"*, *"Add TypeScript types"*, *"Generate unit tests"*).
+- **AI Agent Panel (`AIAgentPanel.jsx` & `features/ai.js`)**:
+  - Real-time AI copilot sidebar streaming tool actions via Server-Sent Events (`fetch` + `ReadableStream`).
+  - Live step-by-step tool activity cards with clickable file badges that open created/updated files directly in Monaco.
+  - Instant workspace synchronization (`handleAIFileMutated`) updating the tree, open tabs, and live preview automatically, with abort/stop support (`AbortController`).
+- **Live Browser Preview (`PreviewPanel.jsx` & `utils/previewBuilder.js`)**:
+  - `Code | Split | Preview` view modes with Desktop/Tablet/Mobile viewport switching, manual reload, and open-in-new-tab.
+  - Compiles **React + Vite** projects in-browser via `@babel/standalone`, `esm.sh`, and Tailwind CSS auto-detection, and bundles **Plain HTML + CSS + JavaScript** apps with inline stylesheet/script resolution and an in-memory `localStorage`/`sessionStorage` sandbox shim.
+  - Shows `"Can't preview this project"` cleanly for non-browser technologies (e.g., Node.js backends, Python scripts).
 
 ---
 
@@ -373,8 +380,9 @@ PORT=8004
 MONGO_URL=mongodb+srv://<user>:<password>@cluster.mongodb.net/ai
 MANAGMENT_SERVICE_URL=http://localhost:8003
 OPENROUTER_API_KEY=sk-or-v1-your-openrouter-key
-OPENROUTER_MODEL=deepseek/deepseek-chat:free
-MAX_TOKENS=1024
+OPENROUTER_MODEL=cohere/north-mini-code:free
+OPENROUTER_FALLBACK_MODELS=cohere/north-mini-code:free,nvidia/nemotron-3-ultra-550b-a55b:free,openrouter/free
+MAX_TOKENS=4096
 ```
 
 ---
@@ -431,6 +439,8 @@ AI-Editor/
 │       │   ├── utils/            # buildTree recursive tree builder
 │       │   └── index.js
 │       └── AI/                   # AI Agent microservice (Port 8004)
+│           ├── controllers/
+│           │   └── ai.controllers.js # SSE stream handler & history builder
 │           ├── graph/
 │           │   ├── graph.js      # LangGraph state machine & system prompt
 │           │   └── tools.js      # LangChain filesystem tool suite
@@ -443,9 +453,10 @@ AI-Editor/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── editor/
-│   │   │   │   ├── AIAgentPanel.jsx   # AI pair-programmer sidebar
+│   │   │   │   ├── AIAgentPanel.jsx   # Autonomous AI agent sidebar (SSE)
 │   │   │   │   ├── CodeEditor.jsx     # Monaco editor canvas & tabs
 │   │   │   │   ├── FileExplorer.jsx   # Nested directory tree & actions
+│   │   │   │   ├── PreviewPanel.jsx   # In-browser React & HTML live preview
 │   │   │   │   └── TerminalPanel.jsx  # Interactive Xterm.js terminal
 │   │   │   ├── DeleteConfirmationModal.jsx
 │   │   │   ├── EmptyState.jsx
@@ -453,14 +464,19 @@ AI-Editor/
 │   │   │   ├── ProjectCard.jsx
 │   │   │   ├── Sidebar.jsx
 │   │   │   └── TopBar.jsx
+│   │   ├── features/
+│   │   │   ├── ai.js             # SSE fetch reader for AI Agent
+│   │   │   ├── management.js     # Management CRUD & tree API client
+│   │   │   └── project.js        # Project CRUD API client
 │   │   ├── pages/
 │   │   │   ├── Homepage.jsx      # Projects dashboard
 │   │   │   ├── Login.jsx
 │   │   │   ├── NotFound.jsx
-│   │   │   ├── Project.jsx       # Main IDE workspace layout
+│   │   │   ├── Project.jsx       # Main IDE workspace (Code | Split | Preview)
 │   │   │   └── Register.jsx
 │   │   ├── utils/
 │   │   │   ├── fileIcons.jsx     # Authentic brand-colored file icons
+│   │   │   ├── previewBuilder.js # In-browser React + HTML sandbox compiler
 │   │   │   └── timeAgo.js
 │   │   ├── App.jsx               # Routes configuration
 │   │   └── main.jsx
