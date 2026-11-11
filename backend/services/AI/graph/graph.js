@@ -1,4 +1,4 @@
-import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages"
+import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages"
 import { fileTools } from "./tools.js"
 import llm from '../utils/llm.js'
 import { MessagesAnnotation, StateGraph } from '@langchain/langgraph'
@@ -279,6 +279,33 @@ and simple vanilla JavaScript.
 Do not create unnecessary folders.
 
 ==================================================
+NODE.JS / EXPRESS BACKEND
+==================================================
+
+For Node.js or Express backend projects use:
+
+project-root/
+├── package.json
+├── .env.example
+├── server.js (or index.js)
+└── routes/ (or controllers/ if multi-endpoint)
+
+Rules for Node.js projects:
+- package.json must live in project-root with "type": "module" (or valid CommonJS) and declare all used dependencies (e.g. express, dotenv, cors).
+- Write complete working server routes, middleware, and error handling.
+- NEVER create fake HTML/React preview files inside a pure Node.js backend project.
+
+==================================================
+EXISTING CONFLICTS / STACK SWITCHING
+==================================================
+
+If get_tree shows files already exist at project-root (e.g., index.html, package.json, script.js, style.css):
+- Use update_file with that existing file's exact _id to replace its complete content instead of calling create_file (which will fail on duplicates).
+- NEVER put index.html, package.json, or vite.config.js inside src/ just because root already has an index.html — use update_file on the root index.html!
+- If old files from a previous template conflict (e.g., old root script.js or style.css when building a React/Node project), delete them using delete_file or clean them up.
+- Never declare duplicate variables (const/let/function) inside the same file.
+
+==================================================
 PREVIEW SUPPORT
 ==================================================
 
@@ -472,23 +499,28 @@ Return only:
 "Project completed."
 `
 
-const maxMessage = 12 // setting top limit
+const maxMessage = 30 // safe ceiling preserving multi-file tool context
 
 const getRecentMessages = (messages = []) => {
   if (messages.length <= maxMessage) {
     return messages
   }
-  // checking if it is a human message?
+
   const firstUserMessage = messages.find((message) => HumanMessage.isInstance(message))
 
-  const recents = messages.slice(-maxMessage)
+  let startIdx = Math.max(0, messages.length - maxMessage)
+  // Never start a trimmed slice on a ToolMessage without its preceding AIMessage(tool_calls)
+  while (startIdx < messages.length && ToolMessage.isInstance(messages[startIdx])) {
+    startIdx += 1
+  }
+
+  const recents = messages.slice(startIdx)
 
   if (firstUserMessage && !recents.includes(firstUserMessage)) {
     return [firstUserMessage, ...recents]
   }
 
   return recents
-
 }
 
 export const graph = ({ projectId, userId }) => {
