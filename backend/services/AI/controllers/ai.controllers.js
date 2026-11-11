@@ -171,16 +171,27 @@ export const chat = async (req, res) => {
 
         if (disconnected) return;
 
+        let cleanMessage = error?.message || "Internal AI stream error";
+        if (error?.statusCode === 429 || error?.code === 429 || cleanMessage.includes("free-models-per-day")) {
+            const resetMs = Number(error?.metadata?.headers?.["X-RateLimit-Reset"] || error?.headers?.["x-ratelimit-reset"]);
+            const resetLabel = Number.isFinite(resetMs) && resetMs > 0
+                ? new Date(resetMs).toLocaleString()
+                : "tomorrow (UTC midnight)";
+            cleanMessage = `Daily free-tier limit reached (50 requests/day on OpenRouter without credits). Quota resets at ${resetLabel}, or you can switch to another free provider/API key.`;
+        } else if (cleanMessage.includes(" | metadata:")) {
+            cleanMessage = cleanMessage.split(" | metadata:")[0].trim();
+        }
+
         // If headers are already sent, stream error via SSE
         if (res.headersSent) {
             sendEvent(res, "error", {
                 success: false,
-                message: error?.message || "Internal AI stream error"
+                message: cleanMessage
             });
             res.end();
         } else {
-            return res.status(500).json({
-                message: error?.message || "Internal server error in AI chat"
+            return res.status(error?.statusCode || 500).json({
+                message: cleanMessage
             });
         }
     }
