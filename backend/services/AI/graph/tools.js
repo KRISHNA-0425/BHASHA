@@ -309,6 +309,7 @@ export const fileTools = ({ projectId, userId }) => {
                         type: file.type,
                         language: file.language,
                         extension: file.extension,
+                        content: file.content ?? '',
                         size: file.size,
                         parentId: file.parentId,
                         projectId: file.projectId
@@ -399,6 +400,7 @@ export const fileTools = ({ projectId, userId }) => {
                         type: updatedFile.type,
                         language: updatedFile.language,
                         extension: updatedFile.extension,
+                        content: updatedFile.content ?? '',
                         size: updatedFile.size,
                         parentId: updatedFile.parentId
                     }
