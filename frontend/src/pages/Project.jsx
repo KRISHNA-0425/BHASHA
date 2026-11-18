@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { toast, ToastContainer } from 'react-toastify'
 import {
   VscFiles,
@@ -102,6 +103,8 @@ const findFirstFile = (nodes) => {
 
 const Project = () => {
   const { id: projectId } = useParams()
+  const { userData } = useSelector((state) => state.user)
+  const userId = userData?._id || userData?.id
 
   // Project details & tree states
   const [project, setProject] = useState(null)
@@ -782,6 +785,8 @@ const Project = () => {
             onClose={() => setIsTerminalOpen(false)}
             isMaximized={isTerminalMaximized}
             onToggleMaximize={() => setIsTerminalMaximized((prev) => !prev)}
+            projectId={projectId}
+            userId={userId}
           />
         </div>
 
