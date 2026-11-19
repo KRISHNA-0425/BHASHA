@@ -32,7 +32,8 @@ import {
   createFile,
   updateFile,
   deleteFile,
-  deleteFolder
+  deleteFolder,
+  syncTerminalDisk
 } from '../features/management.js'
 
 /**
@@ -199,6 +200,17 @@ const Project = () => {
           } catch (createErr) {
             console.error("Auto-creation of root folder failed:", createErr)
           }
+        }
+
+        // Run terminal disk-to-DB sync to detect any files created via CLI
+        try {
+          await syncTerminalDisk(projectId, userId)
+          const syncedTree = await getTree(projectId)
+          if (Array.isArray(syncedTree) && syncedTree.length > 0) {
+            tree = syncedTree
+          }
+        } catch (syncErr) {
+          console.warn("Initial terminal disk sync notice:", syncErr)
         }
 
         if (isMounted) {
@@ -413,15 +425,24 @@ const Project = () => {
   }
 
   // 11. Refresh File Tree
-  const handleRefreshTree = async () => {
+  const handleRefreshTree = async (showToast = true) => {
     setIsLoadingTree(true)
     try {
+      try {
+        await syncTerminalDisk(projectId, userId)
+      } catch (e) {
+        console.warn("Terminal disk sync notice:", e)
+      }
       const updatedTree = await getTree(projectId)
       setFileTree(Array.isArray(updatedTree) ? updatedTree : [])
-      toast.info("Workspace file tree refreshed")
+      if (showToast) {
+        toast.info("Workspace file tree refreshed")
+      }
     } catch (err) {
       console.error("Failed to refresh file tree:", err)
-      toast.error("Failed to refresh workspace")
+      if (showToast) {
+        toast.error("Failed to refresh workspace")
+      }
     } finally {
       setIsLoadingTree(false)
     }
@@ -787,6 +808,7 @@ const Project = () => {
             onToggleMaximize={() => setIsTerminalMaximized((prev) => !prev)}
             projectId={projectId}
             userId={userId}
+            onRefreshTree={handleRefreshTree}
           />
         </div>
 

@@ -99,3 +99,35 @@ export const deleteFolder = async (folderId) => {
     return data;
 };
 
+/**
+ * Trigger synchronization between the local terminal workspace disk and MongoDB
+ * Scans for newly created files/folders (e.g. package.json, npm scripts) and registers them
+ * @param {string} projectId 
+ * @param {string} [userId]
+ */
+export const syncTerminalDisk = async (projectId, userId) => {
+    try {
+        const { data } = await api.post('/api/terminal/sync', { projectId, userId });
+        return data;
+    } catch (err) {
+        // Fallback directly to terminal service port if gateway route is unavailable
+        try {
+            const terminalUrl = import.meta.env.VITE_TERMINAL_URL || 'http://localhost:8005';
+            const res = await fetch(`${terminalUrl}/sync-disk`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(userId ? { 'x-user-id': String(userId) } : {})
+                },
+                body: JSON.stringify({ projectId, userId })
+            });
+            if (res.ok) {
+                return await res.json();
+            }
+        } catch (directErr) {
+            console.warn('Direct terminal sync fallback failed:', directErr);
+        }
+        return null;
+    }
+};
+
