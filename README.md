@@ -548,6 +548,79 @@ stateDiagram-v2
 
 ---
 
+## ⚡ Multi-Language Execution & Compiler Engine (Python, C, C++, Java, Node.js)
+
+BHASHA features a VS Code-style **Context-Aware Code Runner** that enables seamless, isolated execution for multi-language projects directly within the integrated terminal dock. Developers can create a standalone Python file (`test.py`), C file (`main.c`), or C++ file (`main.cpp`), write code, and run it with one click without affecting any other files or services in the workspace.
+
+```mermaid
+flowchart TD
+    subgraph UI["Editor & TopBar"]
+        A["Active Tab: test.py / main.cpp / main.c"] --> B{"Run Action Triggered"}
+        B -->|Click TopBar Run| C["handleRunFile(activeFile)"]
+        B -->|Click Breadcrumb Run| C
+    end
+
+    subgraph SyncEngine["1. Real-Time State Flush"]
+        C --> D["performSave: Flush to MongoDB"]
+        C --> E["socket.emit('file-saved'): Immediate Disk Write"]
+    end
+
+    subgraph ExecutionDock["2. Integrated Terminal Dispatch"]
+        D & E --> F["setIsTerminalOpen(true)"]
+        F --> G{"Target Language Detector"}
+        G -->|Python .py| H["python 'path/test.py'"]
+        G -->|C .c| I["gcc 'path/main.c' -o output.exe; if ($?) { .\\output.exe }"]
+        G -->|C++ .cpp| J["g++ 'path/main.cpp' -o output.exe; if ($?) { .\\output.exe }"]
+        G -->|Node.js .js| K["node 'path/index.js'"]
+        G -->|TypeScript .ts| L["npx ts-node 'path/main.ts'"]
+        G -->|Java .java| M["javac 'path/Main.java'; if ($?) { java Main }"]
+    end
+
+    subgraph TerminalPTY["3. Native PTY Process Execution"]
+        H & I & J & K & L & M --> N["node-pty (PowerShell / Bash)"]
+        N --> O["Live Streaming stdout / stderr (xterm.js)"]
+        N --> P["Interactive stdin (input(), cin, scanf)"]
+    end
+
+    subgraph Shielding["4. Build Artifact Shielding"]
+        N -.->|Generates __pycache__, .exe, .o| Q[Disk Workspace]
+        Q -->|Filtered by IGNORED_NAMES & IGNORED_EXTENSIONS| R[MongoDB Sync Engine]
+        R -->|Clean File Tree| S[Explorer Sidebar Untouched]
+    end
+```
+
+### Supported Languages & Execution Matrix
+
+| Language | Extensions | Syntax Grammar | Authentic Icon | CLI Compiler / Runtime | Auto-Generated Run Command |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Python** | `.py`, `.pyw` | `python` | `SiPython` (`#3776AB`) | Python 3.x | `python "<relPath>"` |
+| **C** | `.c`, `.h` | `c` | `SiC` (`#A8B9CC`) | GCC (MinGW / Clang) | `gcc "<relPath>" -o output.exe; if ($?) { .\output.exe }` |
+| **C++** | `.cpp`, `.cc`, `.cxx`, `.hpp` | `cpp` | `SiCplusplus` (`#00599C`) | G++ (MinGW / Clang) | `g++ "<relPath>" -o output.exe; if ($?) { .\output.exe }` |
+| **JavaScript** | `.js`, `.mjs`, `.cjs` | `javascript` | `SiJavascript` (`#F7DF1E`) | Node.js | `node "<relPath>"` |
+| **TypeScript** | `.ts`, `.tsx` | `typescript` | `SiTypescript` (`#3178C6`) | `ts-node` / Node.js | `npx ts-node "<relPath>"` |
+| **Java** | `.java` | `java` | `SiOpenjdk` (`#ED8B00`) | OpenJDK (`javac`, `java`) | `javac "<relPath>"; if ($?) { java "<ClassName>" }` |
+| **Rust** | `.rs` | `rust` | `SiRust` (`#DEA584`) | `rustc` / Cargo | `rustc "<relPath>" -o output.exe; if ($?) { .\output.exe }` |
+| **Go** | `.go` | `go` | `SiGo` (`#00ADD8`) | Go Runtime | `go run "<relPath>"` |
+| **Shell / Bash** | `.sh`, `.bash` | `shell` | `VscFileCode` | Bash | `bash "<relPath>"` |
+
+### Anti-Pollution Shielding for Build Artifacts
+When compiling C/C++ or running Python scripts, interpreters and compilers produce auxiliary binaries and cache folders:
+- Python bytecode: `__pycache__/`, `*.pyc`, `*.pyo`, `.pytest_cache/`
+- C/C++ executables & object files: `output.exe`, `*.o`, `*.obj`, `*.pdb`
+
+The sync engine [`backend/services/terminal/index.js`](file:///c:/Users/263237/Desktop/MERN/AI-Editor/backend/services/terminal/index.js) enforces strict filtering via `IGNORED_NAMES` and `IGNORED_EXTENSIONS`:
+```javascript
+const IGNORED_NAMES = new Set([
+    'node_modules', '.git', '.cache', '__pycache__', '.pytest_cache', '.mypy_cache', '.venv', 'venv'
+])
+const IGNORED_EXTENSIONS = new Set([
+    'exe', 'o', 'obj', 'out', 'a', 'lib', 'so', 'dll', 'dylib', 'class', 'pyc', 'pyo', 'pyd'
+])
+```
+This ensures build binaries remain strictly on disk for local execution and are **never** persisted to MongoDB or displayed as clutter in the File Explorer.
+
+---
+
 ## 🤖 Autonomous AI Agent & LangGraph Tools
 
 The AI Agent in [`backend/services/AI/graph/tools.js`](file:///c:/Users/263237/Desktop/MERN/AI-Editor/backend/services/AI/graph/tools.js) is equipped with a deterministic tool suite designed for real filesystem operations:
