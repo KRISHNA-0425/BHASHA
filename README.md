@@ -12,6 +12,8 @@
 ![LangChain](https://img.shields.io/badge/LangChain-LangGraph-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)
 ![OpenRouter](https://img.shields.io/badge/OpenRouter-LLM_Router-6366F1?style=for-the-badge&logo=openai&logoColor=white)
 ![Monaco](https://img.shields.io/badge/Monaco_Editor-VS_Code_Core-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white)
+![Socket.IO](https://img.shields.io/badge/Socket.IO-v4.8-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
+![node-pty](https://img.shields.io/badge/PTY-node--pty-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![Xterm.js](https://img.shields.io/badge/Terminal-Xterm.js-000000?style=for-the-badge&logo=gnubash&logoColor=white)
 
 <p align="center">
@@ -76,14 +78,22 @@ flowchart TD
         PROJ_SVC["Project Service (Port 8002)<br/>Workspaces, Stars, Metadata"]
         MGMT_SVC["Management Service (Port 8003)<br/>File Tree, Nested CRUD, buildTree"]
         AI_SVC["AI Service (Port 8004)<br/>LangGraph, OpenRouter, Tools"]
+        TERM_SVC["Terminal Service (Port 8005)<br/>Socket.IO, node-pty, Disk Sync"]
+    end
+
+    subgraph HostSystem["💻 Host Operating System"]
+        SHELL["PowerShell.exe / Bash<br/>Native PTY Process"]
+        DISK_WS[("OS Temp Disk Cache<br/>%TEMP%/BHASHA-AI/:projectId")]
     end
 
     subgraph Storage["🗄️ Databases & External APIs"]
         MONGO_DB[("MongoDB Atlas<br/>Multi-Tenant Collections")]
+        REDIS_CACHE[("Redis Cache<br/>Session Store & Tokens")]
         OPENROUTER["OpenRouter API<br/>Free Tier Router"]
     end
 
     UI -->|HTTP / Axios| PROXY
+    XTERM <-->|WebSockets (Socket.IO)| TERM_SVC
     PROXY --> AUTH_MW
     AUTH_MW -->|/api/auth/*| AUTH_SVC
     AUTH_MW -->|/api/project/*| PROJ_SVC
@@ -91,8 +101,13 @@ flowchart TD
     AUTH_MW -->|/api/ai/*| AI_SVC
 
     AUTH_SVC --> MONGO_DB
+    AUTH_SVC --> REDIS_CACHE
     PROJ_SVC --> MONGO_DB
     MGMT_SVC --> MONGO_DB
+    TERM_SVC --> MONGO_DB
+    TERM_SVC -->|HTTP fetch /api/management/tree| MGMT_SVC
+    TERM_SVC -->|writeNode sync| DISK_WS
+    TERM_SVC <-->|pty.spawn stdio stream| SHELL
     AI_SVC -->|fetchFileApi HTTP Client| MGMT_SVC
     AI_SVC --> MONGO_DB
     AI_SVC --> OPENROUTER
@@ -196,6 +211,72 @@ Responsible for intelligent pair-programming, automated workspace scaffolding, a
 - **Internal API Client (`fetchFileApi.js`)**:
   - Provides reliable inter-service HTTP communication directly to the Management Service with `x-user-id` forwarding.
 
+### 4. Interactive Terminal Microservice (`backend/services/terminal`)
+Responsible for live command execution, pseudo-terminal (PTY) emulation, and on-disk project synchronization.
+- **Port**: `8005`
+- **Core Technologies**: `socket.io`, `node-pty`, `axios`, `express`, `mongoose`.
+- **Shell Spawning (`SHELL`)**: Dynamically resolves `powershell.exe` on Windows (`win32`) and `/bin/bash` on Linux/macOS.
+- **Workspace Disk Cache Synchronization (`syncProject` & `writeNode`)**:
+  - Fetches the active project's hierarchical file tree directly from the Management service (`GET /api/management/tree/:projectId`).
+  - Materializes all folders and file contents into an isolated local directory: `path.join(os.tmpdir(), "BHASHA-AI", projectId)`.
+  - Directory structure extraction handles root wrapper folders and recursive nested folders automatically, ensuring real compilers, runtimes (`node`, `npm`, `python`, `git`), and utilities operate on valid local files.
+- **Real-Time Bidirectional Event Protocol**:
+  - `terminalData` (Client ➔ Server): Connects with `{ projectId, userId, cols, rows }`, triggering `syncProject()` and spawning `pty.spawn(SHELL, ...)`.
+  - `terminal-ready` (Server ➔ Client): Broadcasts that the PTY shell is online and ready for keyboard input.
+  - `terminal-write` (Client ➔ Server): Forwards raw user keystrokes, escape sequences, backspaces, and shortcuts directly to `ptyProcess.write()`.
+  - `terminalData` (Server ➔ Client): Streams raw PTY stdout/stderr ANSI color data directly into Xterm.js for zero-lag rendering.
+  - `terminal-resize` (Client ➔ Server): Synchronizes viewport dimensions to `ptyProcess.resize(cols, rows)`.
+  - `disconnect`: Automatically kills active PTY instances and deletes session mappings from `sessions` Map.
+- **Security & Sandboxing Guardrails**:
+  - `isValidFileName`: Directory traversal filtering blocking `..`, `.`, `/`, and `\`.
+  - Clamped column (`20`–`500`) and row (`5`–`200`) dimensions preventing terminal buffer exhaustion attacks.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Developer as Developer
+    participant Xterm as Frontend Terminal (Xterm.js)
+    participant Socket as Socket.IO Client
+    participant TermService as Terminal Service (:8005)
+    participant MgmtService as Management Service (:8003)
+    participant Disk as Local Disk Cache (%TEMP%)
+    participant PTY as Native PTY (PowerShell / Bash)
+
+    Developer->>Xterm: Clicks Terminal Dock Toggle
+    Xterm->>Socket: io.connect("http://localhost:8005")
+    Socket->>TermService: emit("terminalData", { projectId, userId, cols, rows })
+    
+    rect rgb(20, 25, 40)
+        Note over TermService,Disk: Workspace Synchronization Phase
+        TermService->>MgmtService: GET /api/management/tree/:projectId (x-user-id)
+        MgmtService-->>TermService: Returns recursive JSON file tree
+        TermService->>Disk: writeNode() creates folders and writes files to %TEMP%/BHASHA-AI/:id
+    end
+
+    rect rgb(25, 35, 25)
+        Note over TermService,PTY: Shell Spawning Phase
+        TermService->>PTY: pty.spawn(SHELL, [], { cwd: projectRoot, cols, rows })
+        TermService->>Socket: emit("terminal-ready", { cols, rows })
+        Socket->>Xterm: Updates status badge to "connected"
+    end
+
+    rect rgb(30, 25, 35)
+        Note over Developer,PTY: Interactive Keystroke & ANSI Output Loop
+        Developer->>Xterm: Types "npm install" / Keystroke
+        Xterm->>Socket: term.onData -> emit("terminal-write", data)
+        Socket->>TermService: socket.on("terminal-write")
+        TermService->>PTY: ptyProcess.write(data)
+        PTY-->>TermService: ptyProcess.onData(ansiOutput)
+        TermService-->>Socket: emit("terminalData", ansiOutput)
+        Socket-->>Xterm: term.write(ansiOutput)
+    end
+
+    Developer->>Xterm: Closes terminal / closes tab
+    Xterm->>Socket: socket.disconnect()
+    Socket->>TermService: socket.on("disconnect")
+    TermService->>PTY: ptyProcess.kill() & sessions.delete(socket.id)
+```
+
 ---
 
 ## 💻 Frontend Workspace Experience
@@ -235,10 +316,12 @@ Located at [`frontend/`](file:///c:/Users/263237/Desktop/MERN/AI-Editor/frontend
   - Breadcrumbs path tracker (`src > App.jsx`) with live saved status.
   - Live cursor tracking in footer (`Ln 14, Col 22`, `UTF-8`, `Spaces: 2`).
 - **Interactive Terminal Dock (`TerminalPanel.jsx`)**:
-  - Powered by `@xterm/xterm` and `@xterm/addon-fit`.
+  - Powered by `@xterm/xterm`, `@xterm/addon-fit`, and `socket.io-client`.
   - Dock tabs: `TERMINAL`, `OUTPUT`, `PROBLEMS (0)`, `DEBUG CONSOLE`.
-  - Simulated interactive CLI responding to keyboard input (`dev@ai-ide:~/workspace$ `) with commands like `npm run dev`, `ls`, `clear`, and `help`.
-  - Panel controls: Clear screen, Maximize/Restore dock height, and Close.
+  - **Live Bidirectional PTY Streaming**: Connects directly to the Terminal Microservice via WebSockets (`http://localhost:8005`), syncing the active project's file hierarchy into a real OS temp directory and spawning a native interactive shell (`PowerShell` or `Bash`).
+  - **Full Terminal Emulation**: Supports real CLI execution (e.g., `npm install`, `node index.js`, `python script.py`, `git status`, `ls`, `cat`), ANSI 256-color palettes, Tab auto-complete, arrow key navigation, text copy/paste, and `Ctrl+C` interrupt signals.
+  - **Connection Telemetry & Panel Controls**: Live pulsing status pill (`Connected`, `Connecting...`, `Disconnected`), 1-click Reconnect button, Clear screen, Split toggle, Maximize/Restore dock height, and Close.
+  - **Automatic Resizing**: Dynamically computes terminal cols and rows via `fitAddon.fit()` on split/maximize toggles and dispatches `terminal-resize` events to the backend PTY.
 - **AI Agent Panel (`AIAgentPanel.jsx` & `features/ai.js`)**:
   - Real-time AI copilot sidebar streaming tool actions via Server-Sent Events (`fetch` + `ReadableStream`).
   - Live step-by-step tool activity cards with clickable file badges that open created/updated files directly in Monaco.
@@ -385,6 +468,27 @@ OPENROUTER_FALLBACK_MODELS=cohere/north-mini-code:free,nvidia/nemotron-3-ultra-5
 MAX_TOKENS=4096
 ```
 
+### `backend/services/terminal/.env`
+```env
+PORT=8005
+MONGO_URL=mongodb+srv://<user>:<password>@cluster.mongodb.net/terminal
+REDIS_URL=redis://localhost:6379
+FILE_SERVICE_URL=http://localhost:8003
+NODE_ENV=development
+```
+
+### `frontend/.env`
+```env
+VITE_BACKEND_URL=http://localhost:3000
+VITE_TERMINAL_URL=http://localhost:8005
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+```
+
 ---
 
 ## 🏃 Running the Services
@@ -392,22 +496,28 @@ MAX_TOKENS=4096
 Open terminal instances for the microservices and client:
 
 ```bash
-# Terminal 1: API Gateway
+# Terminal 1: Redis (Docker)
+cd backend && docker compose up -d
+
+# Terminal 2: API Gateway
 cd backend/gateway && npm run dev
 
-# Terminal 2: Auth Service
+# Terminal 3: Auth Service
 cd backend/services/auth && npm run dev
 
-# Terminal 3: Project Service
+# Terminal 4: Project Service
 cd backend/services/project && npm run dev
 
-# Terminal 4: Management Service
+# Terminal 5: Management Service
 cd backend/services/management && npm run dev
 
-# Terminal 5: AI Agent Service
+# Terminal 6: AI Agent Service
 cd backend/services/AI && npm run dev
 
-# Terminal 6: Frontend Client
+# Terminal 7: Terminal Service
+cd backend/services/terminal && npm run dev
+
+# Terminal 8: Frontend Client
 cd frontend && npm run dev
 ```
 
@@ -449,6 +559,11 @@ AI-Editor/
 │           │   ├── fetchFileApi.js # Inter-service HTTP management client
 │           │   └── llm.js        # Hardened OpenRouter LLM client
 │           └── index.js
+│       └── terminal/             # Interactive Terminal microservice (Port 8005)
+│           ├── config/
+│           │   └── db.js         # MongoDB connection lifecycle
+│           ├── index.js          # Socket.IO & node-pty session server
+│           └── package.json
 ├── frontend/                     # React 19 + Vite SPA (Port 5173)
 │   ├── src/
 │   │   ├── components/
@@ -457,7 +572,7 @@ AI-Editor/
 │   │   │   │   ├── CodeEditor.jsx     # Monaco editor canvas & tabs
 │   │   │   │   ├── FileExplorer.jsx   # Nested directory tree & actions
 │   │   │   │   ├── PreviewPanel.jsx   # In-browser React & HTML live preview
-│   │   │   │   └── TerminalPanel.jsx  # Interactive Xterm.js terminal
+│   │   │   │   └── TerminalPanel.jsx  # Live Socket.IO + Xterm.js PTY terminal
 │   │   │   ├── DeleteConfirmationModal.jsx
 │   │   │   ├── EmptyState.jsx
 │   │   │   ├── NewProjectModal.jsx
