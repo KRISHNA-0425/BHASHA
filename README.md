@@ -619,6 +619,33 @@ const IGNORED_EXTENSIONS = new Set([
 ```
 This ensures build binaries remain strictly on disk for local execution and are **never** persisted to MongoDB or displayed as clutter in the File Explorer.
 
+### Multi-Language Execution Sequence Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Dev as Developer
+    participant UI as CodeEditor / TopBar
+    participant Mgmt as Management Service (Port 8003)
+    participant Term as Terminal Service (Port 8005)
+    participant Disk as %TEMP%/BHASHA-AI (Disk)
+    participant PTY as PowerShell / Bash PTY
+    participant Xterm as Xterm.js Terminal Dock
+
+    Dev->>UI: Click '▶ Run [filename]' (e.g. test.c++, test.py, test.c)
+    UI->>Mgmt: PUT /updateFile/:id (Immediate flush to MongoDB)
+    UI->>Term: WS emit('file-saved', { relPath, content })
+    Term->>Disk: fs.writeFile(fullPath, content)
+    UI->>Term: WS emit('terminal-write', cmd + '\r')
+    Note over Term,PTY: Invokes runtime or compiler:<br/>Python: python "test.py"<br/>C++: g++ "test.c++" -o output.exe; if ($?) { & .\output.exe }<br/>C: gcc "test.c" -o output.exe; if ($?) { & .\output.exe }<br/>Node: node "index.js"
+    Term->>PTY: Write formatted command to shell stdin
+    PTY->>Disk: Read source file & compile
+    PTY->>Disk: Emit output.exe (Shielded from DB sync)
+    PTY-->>Term: Stream stdout / stderr (ANSI color chunks)
+    Term-->>Xterm: WS emit('terminalData', data)
+    Xterm-->>Dev: Live ANSI output display (Supports input() / cin / Ctrl+C)
+```
+
 ---
 
 ## 🤖 Autonomous AI Agent & LangGraph Tools
@@ -793,6 +820,21 @@ VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 ```
+
+---
+
+### Microservices & Network Topology
+
+| Service | Port | Protocol | Primary Responsibilities |
+| :--- | :--- | :--- | :--- |
+| **API Gateway** | `3000` | HTTP / Reverse Proxy | Central ingress, JWT verification, rate limiting, service routing. |
+| **Frontend Client** | `5173` | HTTP / WebSocket | React 19 SPA, Monaco Editor, Xterm.js dock, live preview. |
+| **Auth Service** | `8001` | HTTP (REST) | User signup, login, JWT token issuance, profile management. |
+| **Project Service** | `8002` | HTTP (REST) | Project workspace CRUD, star/like toggles, metadata indexing. |
+| **Management Service** | `8003` | HTTP (REST) | MongoDB file/folder tree hierarchy, CRUD, soft-deletion reconciliation. |
+| **AI Agent Service** | `8004` | HTTP (SSE Stream) | LangGraph autonomous coding agent, LLM tool orchestration. |
+| **Terminal Service** | `8005` | HTTP & WebSocket (PTY) | node-pty pseudo-terminal, two-way disk-to-DB sync, code runner. |
+| **Redis** | `6379` | TCP / In-Memory Store | Distributed session caching, pub/sub messaging, rate limiting. |
 
 ---
 
