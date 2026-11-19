@@ -130,6 +130,7 @@ const Project = () => {
   // Refs for debounced auto-save & manual save without closure staleness
   const activeFileRef = useRef(activeFile)
   const saveTimeoutRef = useRef(null)
+  const terminalRef = useRef(null)
 
   useEffect(() => {
     activeFileRef.current = activeFile
@@ -256,7 +257,7 @@ const Project = () => {
   }
 
   // 4. Save logic: updates file on backend
-  const performSave = async (fileId, contentToSave) => {
+  const performSave = useCallback(async (fileId, contentToSave) => {
     if (!fileId) return
     setSaveStatus('saving')
     try {
@@ -267,7 +268,79 @@ const Project = () => {
       setSaveStatus('error')
       toast.error("Failed to save changes")
     }
-  }
+  }, [])
+
+  // 4b. Multi-language Runner: executes Python, C, C++, Node.js, etc. in integrated terminal
+  const isRunnableFile = useCallback((fileNode) => {
+    if (!fileNode || !fileNode.name) return false
+    const ext = fileNode.name.split('.').pop().toLowerCase()
+    return ['py', 'pyw', 'c', 'cpp', 'cc', 'cxx', 'js', 'mjs', 'cjs', 'ts', 'java', 'go', 'rs', 'sh', 'bash'].includes(ext)
+  }, [])
+
+  const getFileRelativePath = useCallback((node) => {
+    if (!node || !node.name) return ''
+    const parts = [node.name]
+    let current = node
+    let depth = 0
+    while (current.parentId && depth < 20) {
+      depth++
+      const parentIdStr = String(current.parentId)
+      if (rootFolderId && parentIdStr === String(rootFolderId)) break
+      const parent = fileTree.find((n) => String(n._id || n.id) === parentIdStr)
+      if (!parent) break
+      parts.unshift(parent.name)
+      current = parent
+    }
+    return parts.join('/')
+  }, [fileTree, rootFolderId])
+
+  const handleRunFile = useCallback(async (targetFile = activeFile) => {
+    if (!targetFile) return
+    const fileId = targetFile._id || targetFile.id
+    const content = targetFile.content || ''
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    await performSave(fileId, content)
+
+    const relPath = getFileRelativePath(targetFile)
+    if (!relPath) return
+
+    terminalRef.current?.saveFileToDisk(relPath, content)
+
+    if (!isTerminalOpen) {
+      setIsTerminalOpen(true)
+    }
+
+    const ext = targetFile.name?.split('.').pop()?.toLowerCase()
+    let cmd = ''
+    if (ext === 'py' || ext === 'pyw') {
+      cmd = `python "${relPath}"`
+    } else if (ext === 'c') {
+      cmd = `gcc "${relPath}" -o output.exe; if ($?) { .\\output.exe }`
+    } else if (ext === 'cpp' || ext === 'cc' || ext === 'cxx') {
+      cmd = `g++ "${relPath}" -o output.exe; if ($?) { .\\output.exe }`
+    } else if (ext === 'js' || ext === 'mjs' || ext === 'cjs') {
+      cmd = `node "${relPath}"`
+    } else if (ext === 'ts') {
+      cmd = `npx ts-node "${relPath}"`
+    } else if (ext === 'java') {
+      const className = targetFile.name.replace(/\.java$/, '')
+      cmd = `javac "${relPath}"; if ($?) { java "${className}" }`
+    } else if (ext === 'go') {
+      cmd = `go run "${relPath}"`
+    } else if (ext === 'rs') {
+      cmd = `rustc "${relPath}" -o output.exe; if ($?) { .\\output.exe }`
+    } else if (ext === 'sh' || ext === 'bash') {
+      cmd = `bash "${relPath}"`
+    }
+
+    if (cmd) {
+      terminalRef.current?.executeCommand(cmd)
+      toast.success(`Running ${targetFile.name} in terminal`, { duration: 2500 })
+    }
+  }, [activeFile, getFileRelativePath, isTerminalOpen, performSave])
 
   // 5. Code change in Monaco Editor: instant local state + debounced auto-save
   const handleCodeChange = (newCode) => {
@@ -629,17 +702,29 @@ const Project = () => {
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setWorkspaceView((curr) => (curr === 'code' ? 'split' : curr))
-              setPreviewVersion((v) => v + 1)
-            }}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/[0.12] text-xs font-mono transition-all cursor-pointer shadow-xs"
-          >
-            <VscPlay className="text-xs text-emerald-400" />
-            <span>Run Preview</span>
-          </button>
+          {activeFile && isRunnableFile(activeFile) ? (
+            <button
+              type="button"
+              onClick={() => handleRunFile(activeFile)}
+              title={`Run ${activeFile.name} in Integrated Terminal`}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-medium transition-all cursor-pointer shadow-xs active:scale-95"
+            >
+              <VscPlay className="text-xs text-emerald-400 fill-current" />
+              <span>Run {activeFile.name}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setWorkspaceView((curr) => (curr === 'code' ? 'split' : curr))
+                setPreviewVersion((v) => v + 1)
+              }}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/[0.12] text-xs font-mono transition-all cursor-pointer shadow-xs"
+            >
+              <VscPlay className="text-xs text-emerald-400" />
+              <span>Run Preview</span>
+            </button>
+          )}
         </div>
 
         {/* Right: Panel Toggles */}
@@ -795,6 +880,7 @@ const Project = () => {
                   onSelectTab={(tab) => selectFileWithContent(tab)}
                   onCloseTab={handleCloseTab}
                   onCodeChange={handleCodeChange}
+                  onRunFile={handleRunFile}
                   saveStatus={saveStatus}
                   projectName={project?.name || 'workspace'}
                 />
@@ -816,6 +902,7 @@ const Project = () => {
 
           {/* Bottom Terminal Panel */}
           <TerminalPanel
+            ref={terminalRef}
             isOpen={isTerminalOpen}
             onClose={() => setIsTerminalOpen(false)}
             isMaximized={isTerminalMaximized}
