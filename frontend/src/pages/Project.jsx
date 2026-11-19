@@ -257,26 +257,7 @@ const Project = () => {
   }
 
   // 4. Save logic: updates file on backend
-  const performSave = useCallback(async (fileId, contentToSave) => {
-    if (!fileId) return
-    setSaveStatus('saving')
-    try {
-      await updateFile(fileId, { content: contentToSave })
-      setSaveStatus('saved')
-    } catch (err) {
-      console.error("Auto-save failed:", err)
-      setSaveStatus('error')
-      toast.error("Failed to save changes")
-    }
-  }, [])
-
-  // 4b. Multi-language Runner: executes Python, C, C++, Node.js, etc. in integrated terminal
-  const isRunnableFile = useCallback((fileNode) => {
-    if (!fileNode || !fileNode.name) return false
-    const ext = fileNode.name.split('.').pop().toLowerCase()
-    return ['py', 'pyw', 'c', 'cpp', 'cc', 'cxx', 'js', 'mjs', 'cjs', 'ts', 'java', 'go', 'rs', 'sh', 'bash'].includes(ext)
-  }, [])
-
+  // 4a. Path resolver & language validation
   const getFileRelativePath = useCallback((node) => {
     if (!node || !node.name) return ''
     const parts = [node.name]
@@ -294,6 +275,35 @@ const Project = () => {
     return parts.join('/')
   }, [fileTree, rootFolderId])
 
+  const isRunnableFile = useCallback((fileNode) => {
+    if (!fileNode || !fileNode.name) return false
+    const ext = fileNode.name.split('.').pop().toLowerCase()
+    return ['py', 'pyw', 'pyi', 'c', 'cpp', 'c++', 'cc', 'cxx', 'cp', 'js', 'mjs', 'cjs', 'ts', 'java', 'go', 'rs', 'sh', 'bash'].includes(ext)
+  }, [])
+
+  // 4b. Save logic: updates file on backend and writes directly to workspace disk
+  const performSave = useCallback(async (fileId, contentToSave) => {
+    if (!fileId) return
+    setSaveStatus('saving')
+    try {
+      await updateFile(fileId, { content: contentToSave })
+      setSaveStatus('saved')
+
+      // Flush to disk workspace immediately
+      if (activeFileRef.current && (activeFileRef.current._id === fileId || activeFileRef.current.id === fileId)) {
+        const relPath = getFileRelativePath(activeFileRef.current)
+        if (relPath) {
+          terminalRef.current?.saveFileToDisk(relPath, contentToSave)
+        }
+      }
+    } catch (err) {
+      console.error("Auto-save failed:", err)
+      setSaveStatus('error')
+      toast.error("Failed to save changes")
+    }
+  }, [getFileRelativePath])
+
+  // 4c. Multi-language Runner: executes Python, C, C++, Node.js, etc. in integrated terminal
   const handleRunFile = useCallback(async (targetFile = activeFile) => {
     if (!targetFile) return
     const fileId = targetFile._id || targetFile.id
@@ -315,12 +325,12 @@ const Project = () => {
 
     const ext = targetFile.name?.split('.').pop()?.toLowerCase()
     let cmd = ''
-    if (ext === 'py' || ext === 'pyw') {
+    if (ext === 'py' || ext === 'pyw' || ext === 'pyi') {
       cmd = `python "${relPath}"`
     } else if (ext === 'c') {
-      cmd = `gcc "${relPath}" -o output.exe; if ($?) { .\\output.exe }`
-    } else if (ext === 'cpp' || ext === 'cc' || ext === 'cxx') {
-      cmd = `g++ "${relPath}" -o output.exe; if ($?) { .\\output.exe }`
+      cmd = `gcc "${relPath}" -o output.exe; if ($?) { & .\\output.exe }`
+    } else if (ext === 'cpp' || ext === 'c++' || ext === 'cc' || ext === 'cxx' || ext === 'cp') {
+      cmd = `g++ "${relPath}" -o output.exe; if ($?) { & .\\output.exe }`
     } else if (ext === 'js' || ext === 'mjs' || ext === 'cjs') {
       cmd = `node "${relPath}"`
     } else if (ext === 'ts') {
@@ -331,7 +341,7 @@ const Project = () => {
     } else if (ext === 'go') {
       cmd = `go run "${relPath}"`
     } else if (ext === 'rs') {
-      cmd = `rustc "${relPath}" -o output.exe; if ($?) { .\\output.exe }`
+      cmd = `rustc "${relPath}" -o output.exe; if ($?) { & .\\output.exe }`
     } else if (ext === 'sh' || ext === 'bash') {
       cmd = `bash "${relPath}"`
     }

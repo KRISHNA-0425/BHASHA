@@ -57,7 +57,7 @@ const CodeEditor = ({
   const isRunnable = (fileName) => {
     if (!fileName) return false
     const ext = fileName.split('.').pop().toLowerCase()
-    return ['py', 'pyw', 'c', 'cpp', 'cc', 'cxx', 'js', 'mjs', 'cjs', 'ts', 'java', 'go', 'rs', 'sh', 'bash'].includes(ext)
+    return ['py', 'pyw', 'pyi', 'c', 'cpp', 'c++', 'cc', 'cxx', 'cp', 'js', 'mjs', 'cjs', 'ts', 'java', 'go', 'rs', 'sh', 'bash'].includes(ext)
   }
 
   // Determine Monaco language mode from file extension or file.language
@@ -67,6 +67,7 @@ const CodeEditor = ({
       if (['javascript', 'typescript', 'css', 'html', 'json', 'python', 'markdown', 'c', 'cpp', 'java', 'rust', 'go', 'shell', 'sql'].includes(lowerLang)) {
         return lowerLang
       }
+      if (lowerLang === 'c++') return 'cpp'
     }
 
     const ext = fileName?.split('.').pop()?.toLowerCase()
@@ -75,13 +76,18 @@ const CodeEditor = ({
       case 'h':
         return 'c'
       case 'cpp':
+      case 'c++':
       case 'cc':
       case 'cxx':
+      case 'cp':
       case 'hpp':
+      case 'h++':
+      case 'hh':
       case 'hxx':
         return 'cpp'
       case 'py':
       case 'pyw':
+      case 'pyi':
         return 'python'
       case 'java':
         return 'java'

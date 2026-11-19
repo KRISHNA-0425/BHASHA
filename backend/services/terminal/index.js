@@ -95,14 +95,19 @@ const getLanguageFromFilename = (filename) => {
         c: 'c',
         h: 'c',
         cpp: 'cpp',
+        'c++': 'cpp',
         cc: 'cpp',
         cxx: 'cpp',
+        cp: 'cpp',
         hpp: 'cpp',
+        'h++': 'cpp',
+        hh: 'cpp',
         hxx: 'cpp',
 
         // Python
         py: 'python',
         pyw: 'python',
+        pyi: 'python',
 
         // Java, Rust, Go
         java: 'java',

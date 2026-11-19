@@ -111,6 +111,7 @@ export const getFileIcon = (fileName, className = 'text-xs shrink-0') => {
     // Python - Python Navy Blue
     case 'py':
     case 'pyw':
+    case 'pyi':
       return <SiPython className={`${className} text-[#3776AB]`} title="Python" />
 
     // C - Light Blue
@@ -120,9 +121,13 @@ export const getFileIcon = (fileName, className = 'text-xs shrink-0') => {
 
     // C++ - Deep Blue
     case 'cpp':
+    case 'c++':
     case 'cc':
     case 'cxx':
+    case 'cp':
     case 'hpp':
+    case 'h++':
+    case 'hh':
     case 'hxx':
       return <SiCplusplus className={`${className} text-[#00599C]`} title="C++ Source" />
 
