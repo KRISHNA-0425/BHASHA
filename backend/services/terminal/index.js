@@ -57,24 +57,74 @@ const IGNORED_NAMES = new Set([
     '.git',
     '.DS_Store',
     'Thumbs.db',
-    '.cache'
+    '.cache',
+    '__pycache__',
+    '.pytest_cache',
+    '.mypy_cache',
+    '.venv',
+    'venv',
+    'env',
+    '.idea',
+    '.vscode'
+])
+
+const IGNORED_EXTENSIONS = new Set([
+    'exe',
+    'o',
+    'obj',
+    'out',
+    'a',
+    'lib',
+    'so',
+    'dll',
+    'dylib',
+    'class',
+    'pyc',
+    'pyo',
+    'pyd',
+    'pdb',
+    'idb',
+    'ilk'
 ])
 
 const getLanguageFromFilename = (filename) => {
     if (!filename || typeof filename !== 'string') return 'plainText'
     const ext = filename.includes('.') ? filename.split('.').pop().toLowerCase() : ''
     const map = {
+        // C & C++
+        c: 'c',
+        h: 'c',
+        cpp: 'cpp',
+        cc: 'cpp',
+        cxx: 'cpp',
+        hpp: 'cpp',
+        hxx: 'cpp',
+
+        // Python
+        py: 'python',
+        pyw: 'python',
+
+        // Java, Rust, Go
+        java: 'java',
+        rs: 'rust',
+        go: 'go',
+
+        // Web & Scripting
         js: 'javascript',
         jsx: 'javascript',
+        mjs: 'javascript',
+        cjs: 'javascript',
         ts: 'typescript',
         tsx: 'typescript',
         json: 'json',
         html: 'html',
+        htm: 'html',
         css: 'css',
         scss: 'scss',
         md: 'markdown',
-        py: 'python',
         sh: 'shell',
+        bash: 'shell',
+        zsh: 'shell',
         xml: 'xml',
         yaml: 'yaml',
         yml: 'yaml',
@@ -330,6 +380,9 @@ const syncDiskToDb = async (projectId, userId) => {
                     await scanAndSync(fullPath, relPath, folderNode._id)
                 }
             } else if (entry.isFile()) {
+                const ext = entry.name.includes('.') ? entry.name.split('.').pop().toLowerCase() : ''
+                if (IGNORED_EXTENSIONS.has(ext)) continue
+
                 try {
                     const stat = await fs.stat(fullPath)
                     // Skip files > 5MB to avoid mongo payload bloat
