@@ -390,6 +390,13 @@ const Project = () => {
         return remaining
       })
 
+      // Immediately synchronize deletion with terminal workspace disk
+      try {
+        await syncTerminalDisk(projectId, userId)
+      } catch (syncErr) {
+        console.warn("Terminal disk sync after delete notice:", syncErr)
+      }
+
       // Refresh tree
       const updatedTree = await getTree(projectId)
       setFileTree(Array.isArray(updatedTree) ? updatedTree : [])
@@ -404,6 +411,13 @@ const Project = () => {
     try {
       await deleteFolder(folderId)
       toast.success("Folder deleted successfully")
+
+      // Immediately synchronize deletion with terminal workspace disk
+      try {
+        await syncTerminalDisk(projectId, userId)
+      } catch (syncErr) {
+        console.warn("Terminal disk sync after delete folder notice:", syncErr)
+      }
 
       // Refresh tree
       const updatedTree = await getTree(projectId)

@@ -137,6 +137,22 @@ const getTree = async (projectId, userId) => {
     }
 }
 
+// Fetches all project files (both active and soft-deleted) for accurate two-way reconciliation
+const getAllFiles = async (projectId, userId) => {
+    try {
+        const url = `${fileService}/api/management/all-files/${projectId}`
+        const response = await axios.get(url, {
+            headers: {
+                'x-user-id': String(userId)
+            }
+        })
+        return Array.isArray(response.data) ? response.data : []
+    } catch (error) {
+        console.error('getAllFiles error:', error.response?.data || error.message)
+        return []
+    }
+}
+
 // Writes tree nodes to local disk for the terminal environment
 const writeNode = async (nodes, directory) => {
     if (!Array.isArray(nodes)) return
@@ -171,13 +187,19 @@ const syncDiskToDb = async (projectId, userId) => {
         return { success: false, message: 'Workspace directory does not exist on disk' }
     }
 
-    const tree = await getTree(projectId, userId)
-    let rootFolder = null
-    if (Array.isArray(tree) && tree.length > 0) {
-        if (tree.length === 1 && tree[0]?.type === 'folder') {
-            rootFolder = tree[0]
-        } else {
-            rootFolder = tree.find((n) => n.type === 'folder' && !n.parentId) || tree[0]
+    // Retrieve all files (both active and soft-deleted) for full two-way reconciliation
+    const allFiles = await getAllFiles(projectId, userId)
+    let rootFolder = allFiles.find((n) => n.type === 'folder' && !n.parentId)
+
+    // Fallback to getTree if getAllFiles endpoint is not available
+    if (!rootFolder) {
+        const tree = await getTree(projectId, userId)
+        if (Array.isArray(tree) && tree.length > 0) {
+            if (tree.length === 1 && tree[0]?.type === 'folder') {
+                rootFolder = tree[0]
+            } else {
+                rootFolder = tree.find((n) => n.type === 'folder' && !n.parentId) || tree[0]
+            }
         }
     }
 
@@ -185,32 +207,88 @@ const syncDiskToDb = async (projectId, userId) => {
         return { success: false, message: 'No root folder found in database' }
     }
 
-    // Build map of existing DB nodes by relative path
-    const dbMap = new Map()
-    const buildDbMap = (nodes, currentRelPath = '') => {
-        if (!Array.isArray(nodes)) return
-        for (const node of nodes) {
-            const relPath = currentRelPath ? `${currentRelPath}/${node.name}` : node.name
-            dbMap.set(relPath, node)
-            if (node.type === 'folder' && Array.isArray(node.children)) {
-                buildDbMap(node.children, relPath)
+    const rootFolderIdStr = String(rootFolder._id)
+    const idToNode = new Map()
+    for (const file of allFiles) {
+        idToNode.set(String(file._id), file)
+    }
+
+    // Resolves relative path inside project root (e.g. "src/App.jsx" or "package.json")
+    const resolveRelPath = (node) => {
+        const parts = [node.name]
+        let current = node
+        let depth = 0
+        while (current.parentId && depth < 20) {
+            depth++
+            const parentIdStr = String(current.parentId)
+            if (parentIdStr === rootFolderIdStr) {
+                break
             }
+            const parent = idToNode.get(parentIdStr)
+            if (!parent) break
+            parts.unshift(parent.name)
+            current = parent
+        }
+        return parts.join('/')
+    }
+
+    const activeMap = new Map()
+    const deletedMap = new Map()
+
+    // 1. Populate activeMap with all active (non-deleted) nodes
+    for (const node of allFiles) {
+        if (String(node._id) === rootFolderIdStr) continue
+        if (node.isDeleted) continue
+        const relPath = resolveRelPath(node)
+        if (relPath) {
+            activeMap.set(relPath, node)
         }
     }
 
-    if (rootFolder.children) {
-        buildDbMap(rootFolder.children, '')
+    // 2. Populate deletedMap strictly for paths that do not have an active document
+    for (const node of allFiles) {
+        if (String(node._id) === rootFolderIdStr) continue
+        if (!node.isDeleted) continue
+        const relPath = resolveRelPath(node)
+        if (relPath && !activeMap.has(relPath)) {
+            deletedMap.set(relPath, node)
+        }
+    }
+
+    // 3. Purge any soft-deleted files/folders off the disk immediately so they stay deleted
+    for (const [delRelPath] of deletedMap.entries()) {
+        const diskPath = path.join(root, delRelPath)
+        try {
+            await fs.rm(diskPath, { recursive: true, force: true })
+        } catch {}
+    }
+
+    // 4. Ensure all active DB files are present on disk (safeguards against accidental disk wipes)
+    for (const [activeRelPath, activeNode] of activeMap.entries()) {
+        const diskPath = path.join(root, activeRelPath)
+        try {
+            if (activeNode.type === 'folder') {
+                await fs.mkdir(diskPath, { recursive: true })
+            } else if (activeNode.type === 'file') {
+                const exists = await fs.access(diskPath).then(() => true).catch(() => false)
+                if (!exists) {
+                    await fs.mkdir(path.dirname(diskPath), { recursive: true })
+                    await fs.writeFile(diskPath, activeNode.content || '', 'utf-8')
+                }
+            }
+        } catch {}
     }
 
     const added = []
     const updated = []
+    const scannedDiskRelPaths = new Set()
 
-    // Recursive directory walk
+    // 5. Recursive disk walk to detect new files created on disk & sync modified content
     const scanAndSync = async (dirPath, currentRelPath = '', parentId = rootFolder._id) => {
         let entries
         try {
             entries = await fs.readdir(dirPath, { withFileTypes: true })
-        } catch (err) {
+        } catch {
             return
         }
 
@@ -221,8 +299,18 @@ const syncDiskToDb = async (projectId, userId) => {
             const relPath = currentRelPath ? `${currentRelPath}/${entry.name}` : entry.name
             const fullPath = path.join(dirPath, entry.name)
 
+            // If file was soft-deleted in DB, enforce deletion on disk and do not recreate
+            if (deletedMap.has(relPath)) {
+                try {
+                    await fs.rm(fullPath, { recursive: true, force: true })
+                } catch {}
+                continue
+            }
+
+            scannedDiskRelPaths.add(relPath)
+
             if (entry.isDirectory()) {
-                let folderNode = dbMap.get(relPath)
+                let folderNode = activeMap.get(relPath)
                 if (!folderNode || folderNode.type !== 'folder') {
                     try {
                         const res = await axios.post(
@@ -231,7 +319,7 @@ const syncDiskToDb = async (projectId, userId) => {
                             { headers: { 'x-user-id': String(userId) } }
                         )
                         folderNode = res.data
-                        dbMap.set(relPath, folderNode)
+                        activeMap.set(relPath, folderNode)
                         added.push(relPath)
                     } catch (err) {
                         console.error(`Failed to create folder ${relPath}:`, err.response?.data || err.message)
@@ -247,7 +335,7 @@ const syncDiskToDb = async (projectId, userId) => {
                     // Skip files > 5MB to avoid mongo payload bloat
                     if (stat.size > 5 * 1024 * 1024) continue
 
-                    const fileNode = dbMap.get(relPath)
+                    const fileNode = activeMap.get(relPath)
                     const content = await fs.readFile(fullPath, 'utf-8')
 
                     if (!fileNode) {
@@ -263,7 +351,7 @@ const syncDiskToDb = async (projectId, userId) => {
                             },
                             { headers: { 'x-user-id': String(userId) } }
                         )
-                        dbMap.set(relPath, res.data)
+                        activeMap.set(relPath, res.data)
                         added.push(relPath)
                     } else if (fileNode.type === 'file') {
                         if (fileNode.content !== content) {
@@ -284,6 +372,7 @@ const syncDiskToDb = async (projectId, userId) => {
     }
 
     await scanAndSync(root, '', rootFolder._id)
+
     return { success: true, added, updated }
 }
 
