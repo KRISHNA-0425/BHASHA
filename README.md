@@ -479,7 +479,8 @@ Located at [`frontend/`](file:///c:/Users/263237/Desktop/MERN/AI-Editor/frontend
 - **Activity Bar**: Slim VS Code-style vertical rail providing one-click access to Explorer, Search, Source Control, AI Agent, and Settings.
 - **File Explorer (`FileExplorer.jsx`)**:
   - Nested folder tree with recursive expansion and collapse.
-  - Header actions: *New File*, *New Folder*, *Refresh*, *Collapse All*.
+  - Header actions: *New File*, *New Folder*, *Refresh*, *Collapse All*, and *Delete All* (Clear Workspace).
+  - Safety confirmation modal for single-item and bulk "Delete All" operations.
   - Inline input creation with blur and keyboard submit.
 - **Extension-Accurate Brand Icons (`fileIcons.jsx`)**:
   - Dynamically extracts extensions and renders authentic brand SVG icons:
@@ -674,6 +675,7 @@ The AI Agent in [`backend/services/AI/graph/tools.js`](file:///c:/Users/263237/D
 | `PUT` | `/updateFile/:id` | Updates file content or renames | `{ name?, content?, language? }` |
 | `DELETE` | `/deleteFile/:id` | Soft-deletes a single file | URL param: `id` |
 | `DELETE` | `/deleteFolder/:id` | Recursively soft-deletes directory & sub-tree | URL param: `id` |
+| `DELETE` | `/clearWorkspace/:projectId` | Soft-deletes all non-root files and folders (clears workspace) | URL param: `projectId` |
 | `GET` | `/file/:id` | Gets file content and metadata | URL param: `id` |
 | `GET` | `/tree/:projectId` | Builds nested directory tree hierarchy | URL param: `projectId` |
 | `GET` | `/all-files/:projectId` | Retrieves all project files (active & soft-deleted) for sync | URL param: `projectId` |
@@ -683,6 +685,8 @@ The AI Agent in [`backend/services/AI/graph/tools.js`](file:///c:/Users/263237/D
 | :--- | :--- | :--- | :--- | :--- |
 | `HTTP` | `POST` | `/api/terminal/sync` | Gateway-routed sync between workspace disk and MongoDB | `{ projectId, userId? }` (Headers: `x-user-id`) |
 | `HTTP` | `POST` | `/sync-disk` | Direct sync endpoint on Terminal Service | `{ projectId, userId? }` |
+| `HTTP` | `POST` | `/api/terminal/clear` | Gateway-routed workspace disk purge | `{ projectId }` |
+| `HTTP` | `POST` | `/clear-workspace` | Direct endpoint to purge all files from terminal workspace disk | `{ projectId }` |
 | `WS` | `Emit` | `terminalData` | Initializes terminal session and spawns PTY | `{ projectId, userId, cols, rows }` |
 | `WS` | `Listen` | `terminal-ready` | Confirms PTY shell is online | `{ cols, rows }` |
 | `WS` | `Emit` | `terminal-write` | Dispatches user keystrokes to PTY stdin | Raw string / ANSI key codes |
@@ -692,6 +696,7 @@ The AI Agent in [`backend/services/AI/graph/tools.js`](file:///c:/Users/263237/D
 | `WS` | `Listen` | `disk-synced` | Signals that disk changes were persisted to MongoDB | `{ success, added, updated }` |
 | `WS` | `Emit` | `file-saved` | Syncs editor-saved file directly onto workspace disk | `{ relPath, content }` |
 | `WS` | `Emit` | `file-deleted` | Removes deleted file from workspace disk | `{ relPath }` |
+| `WS` | `Emit` | `clear-workspace` | Purges all physical files from project disk directory | None |
 
 ### Project Service (`/api/project/*`)
 | Method | Endpoint | Description |
