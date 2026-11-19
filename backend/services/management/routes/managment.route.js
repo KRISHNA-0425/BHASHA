@@ -7,7 +7,8 @@ import {
     deleteFile,
     deleteFolder,
     getFile,
-    getTree
+    getTree,
+    getAllProjectFiles
 } from '../controllers/managment.controller.js';
 
 const managmentRouter = express.Router();
@@ -26,8 +27,9 @@ managmentRouter.patch('/updateFile/:id', updateFile);
 managmentRouter.delete('/deleteFile/:id', deleteFile);
 managmentRouter.get('/file/:id', getFile);
 
-// Tree route
+// Tree & Files routes
 managmentRouter.get('/tree/:projectId', getTree);
+managmentRouter.get('/all-files/:projectId', getAllProjectFiles);
 
 export default managmentRouter;
 

@@ -412,3 +412,30 @@ export const getTree = async (req, res) => {
         return res.status(500).json({ message: 'internal server error in getTree' });
     }
 };
+
+export const getAllProjectFiles = async (req, res) => {
+    try {
+        const userId = req.headers["x-user-id"];
+        const { projectId } = req.params;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'user is not authorized' });
+        }
+
+        if (!projectId || !mongoose.Types.ObjectId.isValid(projectId)) {
+            return res.status(400).json({ message: 'invalid projectId' });
+        }
+
+        // Fetch all files and folders (including soft-deleted) for synchronization
+        const files = await File.find({
+            projectId,
+            owner: userId
+        }).select('_id name parentId type isDeleted content language extension').lean();
+
+        return res.status(200).json(files);
+
+    } catch (error) {
+        console.error("getAllProjectFiles error:", error);
+        return res.status(500).json({ message: 'internal server error in getAllProjectFiles' });
+    }
+};
