@@ -476,6 +476,40 @@ const handleSyncRequest = async (req, res) => {
 app.post('/api/terminal/sync', handleSyncRequest)
 app.post('/sync-disk', handleSyncRequest)
 
+// HTTP clear workspace disk endpoint
+const handleClearDiskRequest = async (req, res) => {
+    try {
+        const { projectId } = req.body || {}
+        if (!projectId) {
+            return res.status(400).json({ error: 'Missing projectId' })
+        }
+        const root = getProjectPath(String(projectId))
+        try {
+            const entries = await fs.readdir(root, { withFileTypes: true })
+            for (const entry of entries) {
+                const fullPath = path.join(root, entry.name)
+                await fs.rm(fullPath, { recursive: true, force: true })
+            }
+        } catch (err) {
+            console.error('Error clearing workspace disk:', err.message)
+        }
+
+        for (const [socketId, sess] of sessions.entries()) {
+            if (String(sess.projectId) === String(projectId)) {
+                io.to(socketId).emit('disk-synced', { success: true, added: [], updated: [] })
+            }
+        }
+
+        return res.status(200).json({ success: true, message: 'Workspace disk cleared successfully' })
+    } catch (error) {
+        console.error('clear-workspace error:', error)
+        return res.status(500).json({ error: error.message })
+    }
+}
+
+app.post('/api/terminal/clear', handleClearDiskRequest)
+app.post('/clear-workspace', handleClearDiskRequest)
+
 // Socket.IO event handlers
 io.on('connection', (socket) => {
     console.log('terminal connected:', socket.id)
@@ -600,6 +634,22 @@ io.on('connection', (socket) => {
             await fs.rm(fullPath, { recursive: true, force: true })
         } catch (e) {
             console.error('Error deleting file from terminal disk:', e.message)
+        }
+    })
+
+    // Clear all files and folders off terminal workspace disk
+    socket.on('clear-workspace', async () => {
+        const session = sessions.get(socket.id)
+        if (!session || !session.cwd) return
+        try {
+            const entries = await fs.readdir(session.cwd, { withFileTypes: true })
+            for (const entry of entries) {
+                const fullPath = path.join(session.cwd, entry.name)
+                await fs.rm(fullPath, { recursive: true, force: true })
+            }
+            socket.emit('disk-synced', { success: true, added: [], updated: [] })
+        } catch (e) {
+            console.error('Error clearing terminal workspace disk:', e.message)
         }
     })
 
