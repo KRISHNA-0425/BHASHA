@@ -593,13 +593,13 @@ flowchart TD
 
 | Language | Extensions | Syntax Grammar | Authentic Icon | CLI Compiler / Runtime | Auto-Generated Run Command |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Python** | `.py`, `.pyw` | `python` | `SiPython` (`#3776AB`) | Python 3.x | `python "<relPath>"` |
-| **C** | `.c`, `.h` | `c` | `SiC` (`#A8B9CC`) | GCC (MinGW / Clang) | `gcc "<relPath>" -o output.exe; if ($?) { .\output.exe }` |
-| **C++** | `.cpp`, `.cc`, `.cxx`, `.hpp` | `cpp` | `SiCplusplus` (`#00599C`) | G++ (MinGW / Clang) | `g++ "<relPath>" -o output.exe; if ($?) { .\output.exe }` |
+| **Python** | `.py`, `.pyw`, `.pyi` | `python` | `SiPython` (`#3776AB`) | Python 3.x | `python "<relPath>"` |
+| **C** | `.c`, `.h` | `c` | `SiC` (`#A8B9CC`) | GCC (MinGW / Clang) | `gcc "<relPath>" -o output.exe; if ($?) { & .\output.exe }` |
+| **C++** | `.cpp`, `.c++`, `.cc`, `.cxx`, `.cp`, `.hpp`, `.h++` | `cpp` | `SiCplusplus` (`#00599C`) | G++ (MinGW / Clang) | `g++ "<relPath>" -o output.exe; if ($?) { & .\output.exe }` |
 | **JavaScript** | `.js`, `.mjs`, `.cjs` | `javascript` | `SiJavascript` (`#F7DF1E`) | Node.js | `node "<relPath>"` |
 | **TypeScript** | `.ts`, `.tsx` | `typescript` | `SiTypescript` (`#3178C6`) | `ts-node` / Node.js | `npx ts-node "<relPath>"` |
 | **Java** | `.java` | `java` | `SiOpenjdk` (`#ED8B00`) | OpenJDK (`javac`, `java`) | `javac "<relPath>"; if ($?) { java "<ClassName>" }` |
-| **Rust** | `.rs` | `rust` | `SiRust` (`#DEA584`) | `rustc` / Cargo | `rustc "<relPath>" -o output.exe; if ($?) { .\output.exe }` |
+| **Rust** | `.rs` | `rust` | `SiRust` (`#DEA584`) | `rustc` / Cargo | `rustc "<relPath>" -o output.exe; if ($?) { & .\output.exe }` |
 | **Go** | `.go` | `go` | `SiGo` (`#00ADD8`) | Go Runtime | `go run "<relPath>"` |
 | **Shell / Bash** | `.sh`, `.bash` | `shell` | `VscFileCode` | Bash | `bash "<relPath>"` |
 
