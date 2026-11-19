@@ -33,6 +33,8 @@ import {
   updateFile,
   deleteFile,
   deleteFolder,
+  clearWorkspace,
+  clearTerminalDisk,
   syncTerminalDisk
 } from '../features/management.js'
 
@@ -521,7 +523,42 @@ const Project = () => {
     }
   }
 
-  // 11. Refresh File Tree
+  // 11. Clear Workspace Handler (Delete All Files)
+  const handleClearWorkspace = async () => {
+    try {
+      await clearWorkspace(projectId)
+      toast.success("All files deleted. Workspace cleared.")
+
+      // Clear open editor tabs and active file canvas
+      setOpenTabs([])
+      setActiveFile(null)
+
+      // Purge terminal workspace disk directly
+      try {
+        await clearTerminalDisk(projectId)
+        terminalRef.current?.clearWorkspaceDisk()
+      } catch (diskErr) {
+        console.warn("Terminal disk clear notice:", diskErr)
+      }
+
+      // Re-sync with terminal disk to ensure full clean state
+      try {
+        await syncTerminalDisk(projectId, userId)
+      } catch (syncErr) {
+        console.warn("Terminal sync notice:", syncErr)
+      }
+
+      // Refresh file tree
+      const updatedTree = await getTree(projectId)
+      setFileTree(Array.isArray(updatedTree) ? updatedTree : [])
+      setPreviewVersion((v) => v + 1)
+    } catch (err) {
+      console.error("Error clearing workspace:", err)
+      toast.error(err.response?.data?.message || "Failed to clear workspace")
+    }
+  }
+
+  // 12. Refresh File Tree
   const handleRefreshTree = async (showToast = true) => {
     setIsLoadingTree(true)
     try {
@@ -864,6 +901,7 @@ const Project = () => {
               onCreateFolder={handleCreateFolder}
               onDeleteFile={handleDeleteFile}
               onDeleteFolder={handleDeleteFolder}
+              onClearWorkspace={handleClearWorkspace}
               onRefreshTree={handleRefreshTree}
               projectName={project?.name || 'workspace'}
               rootFolderId={rootFolderId}

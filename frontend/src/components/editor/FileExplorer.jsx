@@ -246,6 +246,7 @@ const FileExplorer = ({
   onCreateFolder,
   onDeleteFile,
   onDeleteFolder,
+  onClearWorkspace,
   onRefreshTree,
   projectName = 'workspace',
   rootFolderId = null,
@@ -267,6 +268,7 @@ const FileExplorer = ({
   const [creatingState, setCreatingState] = useState(null) // { type: 'file' | 'folder', parentId: string }
   const [rootInlineName, setRootInlineName] = useState('')
   const [itemToDelete, setItemToDelete] = useState(null) // Node targeted for deletion confirmation modal
+  const [isConfirmingClearAll, setIsConfirmingClearAll] = useState(false)
 
   // Auto-expand root and newly created folders without overriding user collapse choices
   useEffect(() => {
@@ -393,6 +395,13 @@ const FileExplorer = ({
           >
             <VscRefresh className={`text-xs ${isLoading ? 'animate-spin text-blue-400' : ''}`} />
           </button>
+          <button
+            onClick={() => setIsConfirmingClearAll(true)}
+            title="Delete All Files (Clear Workspace)"
+            className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors cursor-pointer"
+          >
+            <VscTrash className="text-xs" />
+          </button>
         </div>
       </div>
 
@@ -486,7 +495,7 @@ const FileExplorer = ({
         </div>
       </div>
 
-      {/* 6. Delete Confirmation Modal */}
+      {/* 6. Delete Single Item Confirmation Modal */}
       {itemToDelete && (
         <div className="absolute inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-[#121724] border border-white/[0.12] rounded-lg p-4 shadow-2xl max-w-xs w-full text-slate-200 animate-in fade-in zoom-in-95 duration-150">
@@ -510,6 +519,38 @@ const FileExplorer = ({
                 className="px-3 py-1 text-xs font-medium rounded bg-rose-500/80 hover:bg-rose-500 text-white shadow-sm transition-colors cursor-pointer"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. Clear All Workspace Files Confirmation Modal */}
+      {isConfirmingClearAll && (
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-[#121724] border border-rose-500/40 rounded-lg p-4 shadow-2xl max-w-xs w-full text-slate-200 animate-in fade-in zoom-in-95 duration-150">
+            <h4 className="text-sm font-semibold text-white mb-1.5 flex items-center gap-1.5">
+              <VscTrash className="text-rose-400 text-base" />
+              <span>Delete All Files?</span>
+            </h4>
+            <p className="text-xs text-slate-400 leading-relaxed mb-4">
+              Are you sure you want to delete all files and folders in <span className="text-white font-mono font-medium">"{projectName}"</span>? Your workspace will be completely empty.
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setIsConfirmingClearAll(false)}
+                className="px-2.5 py-1 text-xs rounded hover:bg-white/[0.08] text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setIsConfirmingClearAll(false)
+                  onClearWorkspace?.()
+                }}
+                className="px-3 py-1 text-xs font-medium rounded bg-rose-600 hover:bg-rose-500 text-white shadow-sm transition-colors cursor-pointer"
+              >
+                Delete All
               </button>
             </div>
           </div>
