@@ -239,6 +239,69 @@ A major challenge in browser-based IDEs is maintaining consistency between a dat
    - Saves made in the Monaco Editor emit `file-saved` over Socket.IO, which writes the modified code directly into the workspace disk directory.
    - File deletions in the Explorer emit `file-deleted`, instantly removing the corresponding file from the host disk.
 
+#### 🛡️ Anti-Resurrection Deletion Architecture
+A subtle and critical bug in filesystem synchronization engines is **zombie file resurrection**:
+- **The Problem**: In a soft-delete architecture, calling `DELETE /api/management/deleteFile/:id` marks the document as `isDeleted: true` in MongoDB. However, the physical file previously stayed on the local temporary disk (`%TEMP%/BHASHA-AI/:projectId`). When the background sync engine ran, it queried the active file tree (`isDeleted: false`), observed that the file on disk was missing from the active list, and mistakenly assumed it was a newly created file. It called `createFile`, resurrecting the deleted file in MongoDB and restoring it to the File Explorer.
+- **The Solution**:
+  1. The Management Service exposes `GET /api/management/all-files/:projectId`, returning all project documents (both active and soft-deleted).
+  2. The Terminal sync engine builds two mutually exclusive lookup sets: `activeMap` and `deletedMap`.
+  3. **Immediate Disk Purge**: Any path present in `deletedMap` that exists on disk is immediately removed using `fs.rm(diskPath, { recursive: true, force: true })`.
+  4. **Creation Guard**: The disk walk explicitly skips any path registered in `deletedMap`, completely preventing soft-deleted files from ever being resurrected.
+  5. **Client-Side Trigger**: When the developer deletes a file or folder in `FileExplorer.jsx`, `handleDeleteFile` in `Project.jsx` dispatches `syncTerminalDisk()` immediately after the API call, ensuring the physical disk is purged synchronously with the UI update.
+
+#### 🚀 In-Terminal Development Server Lifecycle (`npm run dev`)
+Developers executing full-stack development commands within the integrated terminal benefit from a clean development environment:
+- **Missing Script & Dependency Prevention**: Running `npm run dev` in standard frontend setups requires:
+  1. A configured `"dev"` script in `package.json` (e.g. `"dev": "vite"` or `"dev": "node server.js"`).
+  2. Corresponding development dependencies installed in `node_modules` (e.g. `vite`, `@vitejs/plugin-react`).
+- **Port Collision Prevention**: The BHASHA IDE host web application executes on `http://localhost:5173`. When configuring or launching development servers (such as Vite) inside the integrated terminal, specify an isolated port (such as `--port 5174` or `PORT=5000`) so the inner workspace server runs concurrently without conflicting with the IDE parent process.
+- **Dual Preview Capabilities**:
+  - **In-Browser Sandboxed Live Preview (`PreviewPanel.jsx`)**: Instant client-side bundling powered by `@babel/standalone`, `esm.sh`, and Tailwind CSS that compiles and displays React and HTML apps directly inside an iframe without requiring an active terminal process.
+  - **Native PTY Server (`npm run dev` in `TerminalPanel.jsx`)**: Full native Node.js / Vite / Express runtime with real network binding, backend route handling, and standard CLI logs.
+
+```mermaid
+flowchart TD
+    subgraph UserAction["Developer Deletion Flow"]
+        CLICK_DEL["Clicks Trash Icon in File Explorer"]
+        CONFIRM["Confirms Delete in Modal"]
+    end
+
+    subgraph Frontend["Frontend Client (Project.jsx)"]
+        API_DEL["deleteFile(fileId) API Call"]
+        SYNC_TRIGGER["syncTerminalDisk(projectId, userId)"]
+        UI_UPDATE["setFileTree(updatedTree)"]
+    end
+
+    subgraph MgmtService["Management Service (:8003)"]
+        MONGO_UPDATE["File.findByIdAndUpdate: isDeleted = true"]
+        ALL_FILES_ENDPOINT["GET /api/management/all-files/:id"]
+        MONGO_DB[("MongoDB Atlas")]
+    end
+
+    subgraph TerminalService["Terminal Service (:8005)"]
+        FETCH_ALL["Fetch all files (active + soft-deleted)"]
+        RESOLVE_MAPS["Build activeMap & deletedMap"]
+        PURGE_DISK["fs.rm(deletedPath, recursive: true)"]
+        DISK_CACHE[("Host Disk Cache: %TEMP%/BHASHA-AI/:id")]
+    end
+
+    CLICK_DEL --> CONFIRM
+    CONFIRM --> API_DEL
+    API_DEL --> MONGO_UPDATE
+    MONGO_UPDATE --> MONGO_DB
+
+    API_DEL --> SYNC_TRIGGER
+    SYNC_TRIGGER --> FETCH_ALL
+    FETCH_ALL --> ALL_FILES_ENDPOINT
+    ALL_FILES_ENDPOINT --> MONGO_DB
+    FETCH_ALL --> RESOLVE_MAPS
+    RESOLVE_MAPS --> PURGE_DISK
+    PURGE_DISK --> DISK_CACHE
+
+    SYNC_TRIGGER --> UI_UPDATE
+    UI_UPDATE -->|File removed permanently| UserAction
+```
+
 ```mermaid
 flowchart TD
     subgraph Client["🖥️ Browser IDE"]
@@ -513,6 +576,7 @@ The AI Agent in [`backend/services/AI/graph/tools.js`](file:///c:/Users/263237/D
 | `DELETE` | `/deleteFolder/:id` | Recursively soft-deletes directory & sub-tree | URL param: `id` |
 | `GET` | `/file/:id` | Gets file content and metadata | URL param: `id` |
 | `GET` | `/tree/:projectId` | Builds nested directory tree hierarchy | URL param: `projectId` |
+| `GET` | `/all-files/:projectId` | Retrieves all project files (active & soft-deleted) for sync | URL param: `projectId` |
 
 ### Terminal Service (`/api/terminal/*` & WebSockets)
 | Protocol | Method / Event | Endpoint / Event Name | Description | Payload |
