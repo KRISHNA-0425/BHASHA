@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import Editor from '@monaco-editor/react'
-import { VscClose, VscChevronRight, VscCheck, VscCode, VscSync, VscError } from 'react-icons/vsc'
+import { VscClose, VscChevronRight, VscCheck, VscCode, VscSync, VscError, VscPlay } from 'react-icons/vsc'
 import { getFileIcon } from './FileExplorer.jsx'
 
 const CodeEditor = ({
@@ -9,6 +9,7 @@ const CodeEditor = ({
   onSelectTab,
   onCloseTab,
   onCodeChange,
+  onRunFile,
   saveStatus = 'saved', // 'saved' | 'saving' | 'unsaved' | 'error'
   projectName = 'workspace'
 }) => {
@@ -53,17 +54,41 @@ const CodeEditor = ({
     monaco.editor.setTheme('ai-dark-theme')
   }
 
+  const isRunnable = (fileName) => {
+    if (!fileName) return false
+    const ext = fileName.split('.').pop().toLowerCase()
+    return ['py', 'pyw', 'c', 'cpp', 'cc', 'cxx', 'js', 'mjs', 'cjs', 'ts', 'java', 'go', 'rs', 'sh', 'bash'].includes(ext)
+  }
+
   // Determine Monaco language mode from file extension or file.language
   const getLanguage = (fileName, language) => {
     if (language && language !== 'plainText') {
       const lowerLang = language.toLowerCase()
-      if (lowerLang === 'javascript' || lowerLang === 'typescript' || lowerLang === 'css' || lowerLang === 'html' || lowerLang === 'json' || lowerLang === 'python' || lowerLang === 'markdown') {
+      if (['javascript', 'typescript', 'css', 'html', 'json', 'python', 'markdown', 'c', 'cpp', 'java', 'rust', 'go', 'shell', 'sql'].includes(lowerLang)) {
         return lowerLang
       }
     }
 
     const ext = fileName?.split('.').pop()?.toLowerCase()
     switch (ext) {
+      case 'c':
+      case 'h':
+        return 'c'
+      case 'cpp':
+      case 'cc':
+      case 'cxx':
+      case 'hpp':
+      case 'hxx':
+        return 'cpp'
+      case 'py':
+      case 'pyw':
+        return 'python'
+      case 'java':
+        return 'java'
+      case 'rs':
+        return 'rust'
+      case 'go':
+        return 'go'
       case 'jsx':
       case 'js':
       case 'mjs':
@@ -83,8 +108,6 @@ const CodeEditor = ({
       case 'md':
       case 'markdown':
         return 'markdown'
-      case 'py':
-        return 'python'
       case 'sql':
         return 'sql'
       case 'sh':
@@ -153,8 +176,20 @@ const CodeEditor = ({
           <span className="text-slate-300 font-medium">{activeFile.name}</span>
         </div>
 
-        {/* Live Save State Indicator */}
+        {/* Live Save State Indicator & Run Action */}
         <div className="flex items-center gap-3 text-[11px]">
+          {onRunFile && isRunnable(activeFile.name) && (
+            <button
+              type="button"
+              onClick={() => onRunFile(activeFile)}
+              title={`Run ${activeFile.name} in Integrated Terminal`}
+              className="flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 text-[11px] font-mono font-medium transition-all cursor-pointer shadow-xs active:scale-95"
+            >
+              <VscPlay className="text-xs" />
+              <span>Run</span>
+            </button>
+          )}
+
           {saveStatus === 'saving' && (
             <div className="flex items-center gap-1.5 text-amber-400">
               <VscSync className="text-xs animate-spin" />

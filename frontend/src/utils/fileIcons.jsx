@@ -13,7 +13,10 @@ import {
   SiDocker,
   SiRust,
   SiGo,
-  SiSvg
+  SiSvg,
+  SiC,
+  SiCplusplus,
+  SiOpenjdk
 } from 'react-icons/si'
 import {
   VscFile,
@@ -107,7 +110,25 @@ export const getFileIcon = (fileName, className = 'text-xs shrink-0') => {
 
     // Python - Python Navy Blue
     case 'py':
+    case 'pyw':
       return <SiPython className={`${className} text-[#3776AB]`} title="Python" />
+
+    // C - Light Blue
+    case 'c':
+    case 'h':
+      return <SiC className={`${className} text-[#A8B9CC]`} title="C Source" />
+
+    // C++ - Deep Blue
+    case 'cpp':
+    case 'cc':
+    case 'cxx':
+    case 'hpp':
+    case 'hxx':
+      return <SiCplusplus className={`${className} text-[#00599C]`} title="C++ Source" />
+
+    // Java - Duke Orange
+    case 'java':
+      return <SiOpenjdk className={`${className} text-[#ED8B00]`} title="Java Source" />
 
     // Rust - Rust Terracotta / Orange
     case 'rs':
