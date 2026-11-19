@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { io } from 'socket.io-client'
@@ -14,7 +14,7 @@ import {
 
 const TERMINAL_SERVICE_URL = import.meta.env.VITE_TERMINAL_URL || 'http://localhost:8005'
 
-const TerminalPanel = ({
+const TerminalPanel = forwardRef(({
   isOpen,
   onClose,
   isMaximized,
@@ -22,13 +22,34 @@ const TerminalPanel = ({
   projectId,
   userId,
   onRefreshTree
-}) => {
+}, ref) => {
   const terminalRef = useRef(null)
   const xtermInstance = useRef(null)
   const fitAddonRef = useRef(null)
   const socketRef = useRef(null)
+  const pendingCommandRef = useRef(null)
   const [activeTab, setActiveTab] = useState('TERMINAL')
   const [connectionStatus, setConnectionStatus] = useState('disconnected') // 'connecting' | 'connected' | 'disconnected' | 'error'
+
+  useImperativeHandle(ref, () => ({
+    executeCommand: (cmd) => {
+      if (!cmd) return
+      const formattedCmd = cmd.endsWith('\r') || cmd.endsWith('\n') ? cmd : `${cmd}\r`
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit('terminal-write', formattedCmd)
+      } else {
+        pendingCommandRef.current = formattedCmd
+      }
+    },
+    saveFileToDisk: (relPath, content) => {
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit('file-saved', { relPath, content })
+      }
+    },
+    focus: () => {
+      xtermInstance.current?.focus()
+    }
+  }), [])
 
   // Vertical resizability states
   const [panelHeight, setPanelHeight] = useState(256)
@@ -176,6 +197,15 @@ const TerminalPanel = ({
 
     socket.on('terminal-ready', ({ cols, rows }) => {
       setConnectionStatus('connected')
+      if (pendingCommandRef.current) {
+        const cmdToRun = pendingCommandRef.current
+        pendingCommandRef.current = null
+        setTimeout(() => {
+          if (socketRef.current?.connected) {
+            socketRef.current.emit('terminal-write', cmdToRun)
+          }
+        }, 300)
+      }
     })
 
     // Listen for file sync updates emitted when files are created/updated in the terminal
@@ -409,6 +439,8 @@ const TerminalPanel = ({
       </div>
     </div>
   )
-}
+})
+
+TerminalPanel.displayName = 'TerminalPanel'
 
 export default TerminalPanel
