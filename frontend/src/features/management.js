@@ -100,6 +100,36 @@ export const deleteFolder = async (folderId) => {
 };
 
 /**
+ * Clear all non-root files and folders in a project workspace
+ * @param {string} projectId 
+ */
+export const clearWorkspace = async (projectId) => {
+    const { data } = await api.delete(`/api/management/clearWorkspace/${projectId}`);
+    return data;
+};
+
+/**
+ * Purge physical files directly off terminal workspace disk
+ * @param {string} projectId 
+ */
+export const clearTerminalDisk = async (projectId) => {
+    try {
+        const terminalUrl = import.meta.env.VITE_TERMINAL_URL || 'http://localhost:8005';
+        const res = await fetch(`${terminalUrl}/clear-workspace`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId })
+        });
+        if (res.ok) {
+            return await res.json();
+        }
+    } catch (err) {
+        console.warn('Direct terminal clear workspace disk notice:', err);
+    }
+    return null;
+};
+
+/**
  * Trigger synchronization between the local terminal workspace disk and MongoDB
  * Scans for newly created files/folders (e.g. package.json, npm scripts) and registers them
  * @param {string} projectId 

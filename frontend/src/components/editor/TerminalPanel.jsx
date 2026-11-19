@@ -46,6 +46,11 @@ const TerminalPanel = forwardRef(({
         socketRef.current.emit('file-saved', { relPath, content })
       }
     },
+    clearWorkspaceDisk: () => {
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit('clear-workspace')
+      }
+    },
     focus: () => {
       xtermInstance.current?.focus()
     }
