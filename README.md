@@ -99,14 +99,16 @@ flowchart TD
     AUTH_MW -->|/api/project/*| PROJ_SVC
     AUTH_MW -->|/api/management/*| MGMT_SVC
     AUTH_MW -->|/api/ai/*| AI_SVC
+    AUTH_MW -->|/api/terminal/*| TERM_SVC
 
     AUTH_SVC --> MONGO_DB
     AUTH_SVC --> REDIS_CACHE
     PROJ_SVC --> MONGO_DB
     MGMT_SVC --> MONGO_DB
     TERM_SVC --> MONGO_DB
-    TERM_SVC -->|HTTP fetch /api/management/tree| MGMT_SVC
-    TERM_SVC -->|writeNode sync| DISK_WS
+    TERM_SVC -->|GET /api/management/tree| MGMT_SVC
+    TERM_SVC -->|POST createFile / createFolder / updateFile| MGMT_SVC
+    TERM_SVC <-->|Two-Way Disk Sync (syncDiskToDb / writeNode)| DISK_WS
     TERM_SVC <-->|pty.spawn stdio stream| SHELL
     AI_SVC -->|fetchFileApi HTTP Client| MGMT_SVC
     AI_SVC --> MONGO_DB
@@ -212,24 +214,128 @@ Responsible for intelligent pair-programming, automated workspace scaffolding, a
   - Provides reliable inter-service HTTP communication directly to the Management Service with `x-user-id` forwarding.
 
 ### 4. Interactive Terminal Microservice (`backend/services/terminal`)
-Responsible for live command execution, pseudo-terminal (PTY) emulation, and on-disk project synchronization.
+Responsible for live command execution, pseudo-terminal (PTY) emulation, and real-time bidirectional project synchronization between OS disk and MongoDB.
 - **Port**: `8005`
 - **Core Technologies**: `socket.io`, `node-pty`, `axios`, `express`, `mongoose`.
 - **Shell Spawning (`SHELL`)**: Dynamically resolves `powershell.exe` on Windows (`win32`) and `/bin/bash` on Linux/macOS.
-- **Workspace Disk Cache Synchronization (`syncProject` & `writeNode`)**:
-  - Fetches the active project's hierarchical file tree directly from the Management service (`GET /api/management/tree/:projectId`).
-  - Materializes all folders and file contents into an isolated local directory: `path.join(os.tmpdir(), "BHASHA-AI", projectId)`.
-  - Directory structure extraction handles root wrapper folders and recursive nested folders automatically, ensuring real compilers, runtimes (`node`, `npm`, `python`, `git`), and utilities operate on valid local files.
-- **Real-Time Bidirectional Event Protocol**:
-  - `terminalData` (Client ➔ Server): Connects with `{ projectId, userId, cols, rows }`, triggering `syncProject()` and spawning `pty.spawn(SHELL, ...)`.
-  - `terminal-ready` (Server ➔ Client): Broadcasts that the PTY shell is online and ready for keyboard input.
-  - `terminal-write` (Client ➔ Server): Forwards raw user keystrokes, escape sequences, backspaces, and shortcuts directly to `ptyProcess.write()`.
-  - `terminalData` (Server ➔ Client): Streams raw PTY stdout/stderr ANSI color data directly into Xterm.js for zero-lag rendering.
-  - `terminal-resize` (Client ➔ Server): Synchronizes viewport dimensions to `ptyProcess.resize(cols, rows)`.
-  - `disconnect`: Automatically kills active PTY instances and deletes session mappings from `sessions` Map.
-- **Security & Sandboxing Guardrails**:
-  - `isValidFileName`: Directory traversal filtering blocking `..`, `.`, `/`, and `\`.
-  - Clamped column (`20`–`500`) and row (`5`–`200`) dimensions preventing terminal buffer exhaustion attacks.
+
+#### 🔄 Two-Way Virtual Filesystem & Disk Synchronization Engine
+A major challenge in browser-based IDEs is maintaining consistency between a database-backed virtual filesystem (MongoDB) and a native operating system shell executing on disk:
+1. **The Discrepancy Problem**: When developers run commands inside the integrated terminal (e.g. `npm init -y`, `npm install`, `touch app.py`, `npx create-vite`), files and folders are written directly to the host operating system's temporary directory (`%TEMP%/BHASHA-AI/:projectId`). Because the File Explorer sidebar renders exclusively from MongoDB via the Management Service (`GET /api/management/tree/:projectId`), newly generated files were previously invisible until manual intervention.
+2. **Recursive Disk-to-DB Synchronization (`syncDiskToDb`)**:
+   - The Terminal Service recursively crawls the project's OS directory starting at `getProjectPath(projectId)`.
+   - Compares relative file paths against the current MongoDB hierarchy retrieved via `getTree(projectId, userId)`.
+   - **Exclusion Filters**: Automatically ignores bulky build and VCS artifacts (`node_modules`, `.git`, `.DS_Store`, `Thumbs.db`, `.cache`) as well as binary files exceeding 5MB to preserve MongoDB throughput and storage efficiency.
+   - **Folder Creation**: Detects newly created disk directories and issues `POST /api/management/createFolder` under the corresponding parent MongoDB folder.
+   - **File Creation & Language Detection**: Reads UTF-8 file content, determines Monaco syntax modes (JavaScript, TypeScript, HTML, CSS, JSON, Python, etc.), and issues `POST /api/management/createFile` with content and language metadata.
+   - **Change Detection**: Compares disk file content against database records and issues `PUT /api/management/updateFile/:id` when local edits occur.
+3. **Smart Debounced Shell Activity Sync**:
+   - When the developer executes a command in the terminal (pressing <kbd>Enter</kbd> / `\r` / `\n`), a `1.2s` debounce timer is armed.
+   - Once the terminal output settles, `syncDiskToDb()` automatically executes in the background.
+   - Upon detecting created or modified files, the server emits a `disk-synced` event over Socket.IO, prompting the frontend File Explorer to seamlessly reload without user intervention.
+4. **On-Demand & Ingress Gateway Sync (`POST /api/terminal/sync` & `POST /sync-disk`)**:
+   - When the developer clicks the **Refresh** button (`VscRefresh`) in the File Explorer, or when the project workspace initializes, the frontend dispatches a sync request through the API Gateway, ensuring immediate synchronization even before the user opens the terminal.
+5. **Reverse Disk Sync (Monaco Editor ➔ OS Disk)**:
+   - Saves made in the Monaco Editor emit `file-saved` over Socket.IO, which writes the modified code directly into the workspace disk directory.
+   - File deletions in the Explorer emit `file-deleted`, instantly removing the corresponding file from the host disk.
+
+```mermaid
+flowchart TD
+    subgraph Client["🖥️ Browser IDE"]
+        TERM_UI["Xterm.js Terminal Dock"]
+        EXPLORER["File Explorer Sidebar"]
+        REFRESH_BTN["Explorer Refresh Button"]
+    end
+
+    subgraph TerminalSvc["⚙️ Terminal Service (Port 8005)"]
+        SOCK_HANDLER["Socket.IO Event Router"]
+        DEBOUNCE["1.2s Shell Debounce Timer"]
+        SYNC_ENGINE["syncDiskToDb Engine"]
+        FILTER{"Excluded File?<br/>node_modules, .git,<br/>.DS_Store, >5MB"}
+        LANG_DET["getLanguageFromFilename"]
+        HTTP_ENDPOINT["POST /api/terminal/sync"]
+    end
+
+    subgraph HostOS["💻 Host Operating System"]
+        PTY_PROC["Native PTY Process (PowerShell / Bash)"]
+        DISK_FILES[("Workspace Directory<br/>%TEMP%/BHASHA-AI/:projectId")]
+    end
+
+    subgraph MgmtSvc["📂 Management Service (Port 8003)"]
+        MGMT_TREE["GET /api/management/tree/:projectId"]
+        CREATE_FOLDER["POST /api/management/createFolder"]
+        CREATE_FILE["POST /api/management/createFile"]
+        UPDATE_FILE["PUT /api/management/updateFile/:id"]
+        MONGO_DB[("MongoDB Atlas<br/>Files Collection")]
+    end
+
+    %% Flow connections
+    TERM_UI -->|Keystrokes with Enter \r| SOCK_HANDLER
+    SOCK_HANDLER -->|Write to stdin| PTY_PROC
+    PTY_PROC -->|Executes npm init / touch| DISK_FILES
+    SOCK_HANDLER -->|Arms timer on Enter| DEBOUNCE
+    DEBOUNCE -->|Triggers on command settlement| SYNC_ENGINE
+    REFRESH_BTN -->|Click| HTTP_ENDPOINT
+    HTTP_ENDPOINT --> SYNC_ENGINE
+
+    SYNC_ENGINE -->|Fetch current tree| MGMT_TREE
+    MGMT_TREE --> MONGO_DB
+    SYNC_ENGINE -->|Read entries recursively| DISK_FILES
+    DISK_FILES --> FILTER
+    FILTER -->|Yes: Skip| SYNC_ENGINE
+    FILTER -->|No: Inspect entry| LANG_DET
+
+    LANG_DET -->|New Folder| CREATE_FOLDER
+    LANG_DET -->|New File| CREATE_FILE
+    LANG_DET -->|Modified File| UPDATE_FILE
+
+    CREATE_FOLDER --> MONGO_DB
+    CREATE_FILE --> MONGO_DB
+    UPDATE_FILE --> MONGO_DB
+
+    SYNC_ENGINE -->|Emits 'disk-synced'| SOCK_HANDLER
+    SOCK_HANDLER -->|Broadcasts 'disk-synced'| TERM_UI
+    TERM_UI -->|Triggers onRefreshTree| EXPLORER
+    EXPLORER -->|Rerenders tree with package.json, etc.| EXPLORER
+```
+
+```mermaid
+flowchart LR
+    subgraph UI_Side["Frontend UI"]
+        MONACO["Monaco Editor (Code Changes)"]
+        SIDEBAR["File Explorer (Tree View)"]
+    end
+
+    subgraph Gateway["API Gateway (:3000)"]
+        GW_PROXY["Reverse Proxy + isAuth + Header Decorator"]
+    end
+
+    subgraph Backend_Sync["Two-Way Sync Orchestration"]
+        direction TB
+        TERM_SERVICE["Terminal Service (:8005)"]
+        MGMT_SERVICE["Management Service (:8003)"]
+    end
+
+    subgraph Storage_Layers["Storage Layers"]
+        DB[("MongoDB Atlas (Database of Record)")]
+        DISK[("OS Temp Filesystem (%TEMP%/BHASHA-AI/:id)")]
+    end
+
+    %% UI to Backend
+    MONACO -->|Auto-save / PUT /api/management/updateFile| GW_PROXY
+    MONACO -.->|Socket.IO emit 'file-saved'| TERM_SERVICE
+    SIDEBAR -->|GET /api/management/tree| GW_PROXY
+    SIDEBAR -.->|POST /api/terminal/sync| GW_PROXY
+
+    GW_PROXY -->|Route /api/management/*| MGMT_SERVICE
+    GW_PROXY -->|Route /api/terminal/*| TERM_SERVICE
+
+    %% Backend to Storage
+    MGMT_SERVICE <-->|Read / Write File Documents| DB
+    TERM_SERVICE <-->|syncDiskToDb / writeNode| DISK
+    TERM_SERVICE -->|Sync discovered disk files| MGMT_SERVICE
+    TERM_SERVICE -->|Socket.IO emit 'disk-synced'| SIDEBAR
+```
 
 ```mermaid
 sequenceDiagram
@@ -241,16 +347,18 @@ sequenceDiagram
     participant MgmtService as Management Service (:8003)
     participant Disk as Local Disk Cache (%TEMP%)
     participant PTY as Native PTY (PowerShell / Bash)
+    participant Explorer as File Explorer Sidebar
 
     Developer->>Xterm: Clicks Terminal Dock Toggle
     Xterm->>Socket: io.connect("http://localhost:8005")
     Socket->>TermService: emit("terminalData", { projectId, userId, cols, rows })
     
     rect rgb(20, 25, 40)
-        Note over TermService,Disk: Workspace Synchronization Phase
+        Note over TermService,Disk: Initial Synchronization Phase
         TermService->>MgmtService: GET /api/management/tree/:projectId (x-user-id)
         MgmtService-->>TermService: Returns recursive JSON file tree
-        TermService->>Disk: writeNode() creates folders and writes files to %TEMP%/BHASHA-AI/:id
+        TermService->>Disk: writeNode() materializes database files to %TEMP%/BHASHA-AI/:id
+        TermService->>TermService: syncDiskToDb() scans disk for offline additions
     end
 
     rect rgb(25, 35, 25)
@@ -262,16 +370,31 @@ sequenceDiagram
 
     rect rgb(30, 25, 35)
         Note over Developer,PTY: Interactive Keystroke & ANSI Output Loop
-        Developer->>Xterm: Types "npm install" / Keystroke
-        Xterm->>Socket: term.onData -> emit("terminal-write", data)
+        Developer->>Xterm: Types "npm init -y" + Enter
+        Xterm->>Socket: term.onData -> emit("terminal-write", "npm init -y\r")
         Socket->>TermService: socket.on("terminal-write")
-        TermService->>PTY: ptyProcess.write(data)
+        TermService->>PTY: ptyProcess.write("npm init -y\r")
+        PTY-->>Disk: Creates package.json on disk
         PTY-->>TermService: ptyProcess.onData(ansiOutput)
         TermService-->>Socket: emit("terminalData", ansiOutput)
         Socket-->>Xterm: term.write(ansiOutput)
     end
 
-    Developer->>Xterm: Closes terminal / closes tab
+    rect rgb(35, 30, 25)
+        Note over TermService,Explorer: Automated Disk-to-DB Sync Loop
+        TermService->>TermService: 1.2s Debounce timer fires after Enter
+        TermService->>Disk: fs.readdir(projectRoot) detects package.json
+        TermService->>MgmtService: POST /api/management/createFile (package.json)
+        MgmtService-->>TermService: 201 Created (persisted to MongoDB)
+        TermService-->>Socket: emit("disk-synced")
+        Socket-->>Xterm: socket.on("disk-synced")
+        Xterm->>Explorer: onRefreshTree(false)
+        Explorer->>MgmtService: GET /api/management/tree/:projectId
+        MgmtService-->>Explorer: Updated tree with package.json
+        Explorer-->>Developer: package.json appears in sidebar with JSON icon
+    end
+
+    Developer->>Xterm: Closes terminal / leaves workspace
     Xterm->>Socket: socket.disconnect()
     Socket->>TermService: socket.on("disconnect")
     TermService->>PTY: ptyProcess.kill() & sessions.delete(socket.id)
@@ -320,8 +443,37 @@ Located at [`frontend/`](file:///c:/Users/263237/Desktop/MERN/AI-Editor/frontend
   - Dock tabs: `TERMINAL`, `OUTPUT`, `PROBLEMS (0)`, `DEBUG CONSOLE`.
   - **Live Bidirectional PTY Streaming**: Connects directly to the Terminal Microservice via WebSockets (`http://localhost:8005`), syncing the active project's file hierarchy into a real OS temp directory and spawning a native interactive shell (`PowerShell` or `Bash`).
   - **Full Terminal Emulation**: Supports real CLI execution (e.g., `npm install`, `node index.js`, `python script.py`, `git status`, `ls`, `cat`), ANSI 256-color palettes, Tab auto-complete, arrow key navigation, text copy/paste, and `Ctrl+C` interrupt signals.
+  - **VS Code-Style Vertical Drag-to-Resize**: Top edge drag handle (`h-2`, `cursor-row-resize`) with an interactive centered visual grab indicator that expands on hover. Enables fluid mouse-drag resizing between `90px` and `85vh` (`window.innerHeight * 0.85`), with automatic text selection prevention (`user-select: none`) and transition bypass (`transition-none`) during movement for zero-lag 60fps tracking.
+  - **Double-Click Shortcut**: Double-clicking the top resize handle bar toggles maximize (`75vh`) and restore back to the developer's custom dragged height.
+  - **Dynamic ResizeObserver Engine**: Terminal canvas uses a native `ResizeObserver` observing `terminalRef.current` that continuously recalculates character grid columns and rows via `fitAddonRef.current.fit()` on every frame and streams `terminal-resize` events to the backend PTY, completely eliminating clipped text or misaligned cursor positions.
   - **Connection Telemetry & Panel Controls**: Live pulsing status pill (`Connected`, `Connecting...`, `Disconnected`), 1-click Reconnect button, Clear screen, Split toggle, Maximize/Restore dock height, and Close.
-  - **Automatic Resizing**: Dynamically computes terminal cols and rows via `fitAddon.fit()` on split/maximize toggles and dispatches `terminal-resize` events to the backend PTY.
+  - **Automated Real-Time Tree Sync**: Terminal panel listens for `disk-synced` events from the backend, triggering silent file tree reloads (`onRefreshTree(false)`) so CLI-generated files (`package.json`, `package-lock.json`, new folders) immediately appear in the File Explorer.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle: Terminal Mounted (default 256px)
+
+    state Idle {
+        [*] --> Rendered
+        Rendered --> HoveringHandle: Mouse enters top border
+        HoveringHandle --> Rendered: Mouse leaves
+    }
+
+    Idle --> Dragging: onMouseDown on Top Handle
+    
+    state Dragging {
+        [*] --> TrackMovement
+        TrackMovement --> CalculateDelta: onMouseMove(e.clientY)
+        CalculateDelta --> ClampHeight: Clamp [90px, 85vh]
+        ClampHeight --> UpdateDOM: Update panelHeight (transition-none, select-none)
+        UpdateDOM --> FitTerminal: fitAddon.fit()
+        FitTerminal --> TrackMovement: Next frame
+    }
+
+    Dragging --> Idle: onMouseUp
+    Idle --> Maximized: onDoubleClick or Maximize Click (75vh)
+    Maximized --> Idle: onDoubleClick or Restore Click (Restores custom height)
+```
 - **AI Agent Panel (`AIAgentPanel.jsx` & `features/ai.js`)**:
   - Real-time AI copilot sidebar streaming tool actions via Server-Sent Events (`fetch` + `ReadableStream`).
   - Live step-by-step tool activity cards with clickable file badges that open created/updated files directly in Monaco.
@@ -361,6 +513,21 @@ The AI Agent in [`backend/services/AI/graph/tools.js`](file:///c:/Users/263237/D
 | `DELETE` | `/deleteFolder/:id` | Recursively soft-deletes directory & sub-tree | URL param: `id` |
 | `GET` | `/file/:id` | Gets file content and metadata | URL param: `id` |
 | `GET` | `/tree/:projectId` | Builds nested directory tree hierarchy | URL param: `projectId` |
+
+### Terminal Service (`/api/terminal/*` & WebSockets)
+| Protocol | Method / Event | Endpoint / Event Name | Description | Payload |
+| :--- | :--- | :--- | :--- | :--- |
+| `HTTP` | `POST` | `/api/terminal/sync` | Gateway-routed sync between workspace disk and MongoDB | `{ projectId, userId? }` (Headers: `x-user-id`) |
+| `HTTP` | `POST` | `/sync-disk` | Direct sync endpoint on Terminal Service | `{ projectId, userId? }` |
+| `WS` | `Emit` | `terminalData` | Initializes terminal session and spawns PTY | `{ projectId, userId, cols, rows }` |
+| `WS` | `Listen` | `terminal-ready` | Confirms PTY shell is online | `{ cols, rows }` |
+| `WS` | `Emit` | `terminal-write` | Dispatches user keystrokes to PTY stdin | Raw string / ANSI key codes |
+| `WS` | `Listen` | `terminalData` | Streams raw PTY stdout/stderr ANSI color data | ANSI string stream |
+| `WS` | `Emit` | `terminal-resize` | Synchronizes cols/rows dimensions to PTY | `(cols: number, rows: number)` |
+| `WS` | `Emit` | `sync-to-db` | Manually requests disk-to-DB filesystem sync | None |
+| `WS` | `Listen` | `disk-synced` | Signals that disk changes were persisted to MongoDB | `{ success, added, updated }` |
+| `WS` | `Emit` | `file-saved` | Syncs editor-saved file directly onto workspace disk | `{ relPath, content }` |
+| `WS` | `Emit` | `file-deleted` | Removes deleted file from workspace disk | `{ relPath }` |
 
 ### Project Service (`/api/project/*`)
 | Method | Endpoint | Description |
@@ -435,6 +602,7 @@ AUTH_SERVICE=http://localhost:8001
 PROJECT_SERVICE=http://localhost:8002
 MANAGEMENT_SERVICE=http://localhost:8003
 AI_SERVICE=http://localhost:8004
+TERMINAL_SERVICE=http://localhost:8005
 JWT_SECRET=your_super_secret_jwt_key
 ```
 
