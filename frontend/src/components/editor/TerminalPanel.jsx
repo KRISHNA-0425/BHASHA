@@ -20,7 +20,8 @@ const TerminalPanel = ({
   isMaximized,
   onToggleMaximize,
   projectId,
-  userId
+  userId,
+  onRefreshTree
 }) => {
   const terminalRef = useRef(null)
   const xtermInstance = useRef(null)
@@ -28,6 +29,67 @@ const TerminalPanel = ({
   const socketRef = useRef(null)
   const [activeTab, setActiveTab] = useState('TERMINAL')
   const [connectionStatus, setConnectionStatus] = useState('disconnected') // 'connecting' | 'connected' | 'disconnected' | 'error'
+
+  // Vertical resizability states
+  const [panelHeight, setPanelHeight] = useState(256)
+  const [isDragging, setIsDragging] = useState(false)
+  const isDraggingRef = useRef(false)
+  const panelHeightRef = useRef(256)
+
+  useEffect(() => {
+    panelHeightRef.current = panelHeight
+  }, [panelHeight])
+
+  const handleMouseDown = useCallback((e) => {
+    e.preventDefault()
+    setIsDragging(true)
+    isDraggingRef.current = true
+
+    const startY = e.clientY
+    const startHeight = panelHeightRef.current
+
+    if (isMaximized && onToggleMaximize) {
+      onToggleMaximize()
+    }
+
+    const handleMouseMove = (moveEvent) => {
+      if (!isDraggingRef.current) return
+      const deltaY = startY - moveEvent.clientY
+      const minHeight = 90
+      const maxHeight = Math.floor(window.innerHeight * 0.85)
+      const newHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + deltaY))
+      setPanelHeight(newHeight)
+      panelHeightRef.current = newHeight
+      fitAddonRef.current?.fit()
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+      isDraggingRef.current = false
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+
+      setTimeout(() => {
+        try {
+          fitAddonRef.current?.fit()
+          if (socketRef.current?.connected && xtermInstance.current) {
+            socketRef.current.emit(
+              'terminal-resize',
+              xtermInstance.current.cols,
+              xtermInstance.current.rows
+            )
+          }
+        } catch (e) {}
+      }, 50)
+    }
+
+    document.body.style.cursor = 'row-resize'
+    document.body.style.userSelect = 'none'
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+  }, [isMaximized, onToggleMaximize])
 
   const connectTerminal = useCallback(() => {
     if (!projectId || !userId || !terminalRef.current) return
@@ -116,6 +178,13 @@ const TerminalPanel = ({
       setConnectionStatus('connected')
     })
 
+    // Listen for file sync updates emitted when files are created/updated in the terminal
+    socket.on('disk-synced', () => {
+      if (onRefreshTree) {
+        onRefreshTree(false)
+      }
+    })
+
     // Forward raw PTY output from backend into Xterm
     socket.on('terminalData', (data) => {
       term.write(data)
@@ -185,6 +254,25 @@ const TerminalPanel = ({
     }
   }, [isOpen, connectTerminal])
 
+  // ResizeObserver to automatically fit xterm whenever the container resizes
+  useEffect(() => {
+    if (!terminalRef.current) return
+    const ro = new ResizeObserver(() => {
+      try {
+        fitAddonRef.current?.fit()
+        if (socketRef.current?.connected && xtermInstance.current) {
+          socketRef.current.emit(
+            'terminal-resize',
+            xtermInstance.current.cols,
+            xtermInstance.current.rows
+          )
+        }
+      } catch (err) {}
+    })
+    ro.observe(terminalRef.current)
+    return () => ro.disconnect()
+  }, [])
+
   // Recalculate dimensions on maximize toggle
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -216,10 +304,23 @@ const TerminalPanel = ({
 
   return (
     <div
-      className={`w-full bg-[#07090e] border-t border-white/[0.08] flex flex-col transition-all duration-200 z-10 font-sans ${
-        isMaximized ? 'h-[75vh]' : 'h-64'
+      style={{
+        height: isMaximized ? '75vh' : `${panelHeight}px`
+      }}
+      className={`w-full bg-[#07090e] border-t border-white/[0.08] flex flex-col z-10 font-sans relative ${
+        isDragging ? 'select-none transition-none' : 'transition-[height] duration-150'
       }`}
     >
+      {/* Top Drag Resize Handle (VS Code style) */}
+      <div
+        onMouseDown={handleMouseDown}
+        onDoubleClick={onToggleMaximize}
+        className="h-2 w-full bg-transparent hover:bg-blue-500/40 active:bg-blue-500/60 cursor-row-resize absolute top-0 left-0 z-30 transition-colors group flex items-center justify-center"
+        title="Drag up or down to resize terminal (Double click to toggle maximize)"
+      >
+        <div className="w-8 h-0.5 rounded-full bg-white/20 group-hover:bg-blue-400 group-hover:w-16 transition-all duration-150" />
+      </div>
+
       {/* Terminal Top Bar */}
       <div className="h-8 bg-[#090c13] border-b border-white/[0.06] flex items-center justify-between px-3 text-xs select-none">
         {/* Left Tabs & Status Indicator */}
