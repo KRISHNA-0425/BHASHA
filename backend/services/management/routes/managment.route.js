@@ -6,6 +6,7 @@ import {
     updateFile,
     deleteFile,
     deleteFolder,
+    clearWorkspace,
     getFile,
     getTree,
     getAllProjectFiles
@@ -19,6 +20,7 @@ managmentRouter.post('/createRootFolder', createRootFolder);
 // Folder routes
 managmentRouter.post('/createFolder', createFolder);
 managmentRouter.delete('/deleteFolder/:id', deleteFolder);
+managmentRouter.delete('/clearWorkspace/:projectId', clearWorkspace);
 
 // File routes
 managmentRouter.post('/createFile', createFile);
