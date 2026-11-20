@@ -145,6 +145,17 @@ const sendData = (socket, data) => {
     socket.emit('terminalData', String(data || ''))
 }
 
+// Security audit logger for forensic tracking of terminal events
+const logSecurityEvent = (level, eventType, details = {}) => {
+    const timestamp = new Date().toISOString()
+    const logEntry = `[SECURITY][${level.toUpperCase()}][${timestamp}][${eventType}] ${JSON.stringify(details)}`
+    if (level === 'error' || level === 'warn') {
+        console.warn(logEntry)
+    } else {
+        console.log(logEntry)
+    }
+}
+
 // Validates file/folder names against directory traversal
 const isValidFileName = (name) => {
     if (!name || typeof name !== 'string') return false
