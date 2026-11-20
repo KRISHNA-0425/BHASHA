@@ -157,6 +157,22 @@ const logSecurityEvent = (level, eventType, details = {}) => {
     }
 }
 
+// Session idle timeout to prevent resource exhaustion from zombie PTYs (30 minutes)
+const SESSION_IDLE_TIMEOUT_MS = 30 * 60 * 1000
+
+// Rate limiter: max 10 terminal session spawns per socket per minute to prevent fork-bomb attacks
+const spawnAttempts = new Map()
+const isSpawnRateLimited = (socketId) => {
+    const now = Date.now()
+    const timestamps = (spawnAttempts.get(socketId) || []).filter(t => now - t < 60000)
+    if (timestamps.length >= 10) {
+        return true
+    }
+    timestamps.push(now)
+    spawnAttempts.set(socketId, timestamps)
+    return false
+}
+
 // Validates file/folder names against directory traversal
 const isValidFileName = (name) => {
     if (!name || typeof name !== 'string') return false
