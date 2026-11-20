@@ -828,6 +828,10 @@ io.on('connection', (socket) => {
     socket.on('file-saved', async ({ relPath, content }) => {
         const session = sessions.get(socket.id)
         if (!session || !relPath) return
+        if (!isSafeSubPath(session.cwd, relPath)) {
+            console.warn(`[Security] Blocked path traversal attempt in file-saved: ${relPath}`)
+            return
+        }
         try {
             const fullPath = path.join(session.cwd, relPath)
             await fs.mkdir(path.dirname(fullPath), { recursive: true })
@@ -841,6 +845,10 @@ io.on('connection', (socket) => {
     socket.on('file-deleted', async ({ relPath }) => {
         const session = sessions.get(socket.id)
         if (!session || !relPath) return
+        if (!isSafeSubPath(session.cwd, relPath)) {
+            console.warn(`[Security] Blocked path traversal attempt in file-deleted: ${relPath}`)
+            return
+        }
         try {
             const fullPath = path.join(session.cwd, relPath)
             await fs.rm(fullPath, { recursive: true, force: true })
