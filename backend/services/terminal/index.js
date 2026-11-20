@@ -737,6 +737,12 @@ io.on('connection', (socket) => {
             // Cleanup existing session on reconnect
             const existingSession = sessions.get(socket.id)
             if (existingSession) {
+                if (existingSession.idleTimer) {
+                    clearTimeout(existingSession.idleTimer)
+                }
+                if (existingSession.syncTimeout) {
+                    clearTimeout(existingSession.syncTimeout)
+                }
                 try {
                     existingSession.ptyProcess.kill()
                 } catch (error) {}
@@ -766,16 +772,31 @@ io.on('connection', (socket) => {
                 sendData(socket, `\r\n\x1b[90m[shell exited: ${exitCode}]\x1b[0m\r\n`)
                 const currentSession = sessions.get(socket.id)
                 if (currentSession?.ptyProcess === ptyInstance) {
+                    if (currentSession.idleTimer) {
+                        clearTimeout(currentSession.idleTimer)
+                    }
                     sessions.delete(socket.id)
                 }
             })
+
+            // Arm idle timer to terminate dormant PTY processes after 30 minutes
+            const idleTimer = setTimeout(() => {
+                logSecurityEvent('info', 'PTY_SESSION_IDLE_TIMEOUT', { socketId: socket.id, projectId })
+                sendData(socket, '\r\n\x1b[33m[Session terminated due to 30 minutes of inactivity.]\x1b[0m\r\n')
+                try {
+                    ptyInstance.kill()
+                } catch (e) {}
+                sessions.delete(socket.id)
+            }, SESSION_IDLE_TIMEOUT_MS)
 
             sessions.set(socket.id, {
                 projectId,
                 userId,
                 cwd: root,
                 ptyProcess: ptyInstance,
-                syncTimeout: null
+                syncTimeout: null,
+                idleTimer,
+                lastActivity: Date.now()
             })
             projectUsers.set(projectId, userId)
 
@@ -793,6 +814,21 @@ io.on('connection', (socket) => {
     socket.on('terminal-write', (data) => {
         const session = sessions.get(socket.id)
         if (!session) return
+
+        // Refresh idle timer on user activity
+        if (session.idleTimer) {
+            clearTimeout(session.idleTimer)
+            session.idleTimer = setTimeout(() => {
+                logSecurityEvent('info', 'PTY_SESSION_IDLE_TIMEOUT', { socketId: socket.id, projectId: session.projectId })
+                sendData(socket, '\r\n\x1b[33m[Session terminated due to 30 minutes of inactivity.]\x1b[0m\r\n')
+                try {
+                    session.ptyProcess.kill()
+                } catch (e) {}
+                sessions.delete(socket.id)
+            }, SESSION_IDLE_TIMEOUT_MS)
+        }
+        session.lastActivity = Date.now()
+
         session.ptyProcess.write(String(data || ''))
 
         // If the user hit enter/return, schedule auto-sync after command settles
@@ -889,6 +925,9 @@ io.on('connection', (socket) => {
         console.log('terminal disconnect:', socket.id)
         const session = sessions.get(socket.id)
         if (!session) return
+        if (session.idleTimer) {
+            clearTimeout(session.idleTimer)
+        }
         if (session.syncTimeout) {
             clearTimeout(session.syncTimeout)
         }
