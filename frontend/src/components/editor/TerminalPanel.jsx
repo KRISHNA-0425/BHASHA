@@ -178,6 +178,10 @@ const TerminalPanel = forwardRef(({
     const socket = io(TERMINAL_SERVICE_URL, {
       transports: ['websocket', 'polling'],
       withCredentials: true,
+      auth: {
+        projectId,
+        userId
+      },
       reconnectionAttempts: 5,
       timeout: 10000
     })
@@ -198,6 +202,11 @@ const TerminalPanel = forwardRef(({
         cols,
         rows
       })
+    })
+
+    socket.on('terminal-error', (err) => {
+      setConnectionStatus('error')
+      term.writeln(`\r\n\x1b[31m[Security / Authorization Error: ${err?.error || 'Access denied'}]\x1b[0m\r\n`)
     })
 
     socket.on('terminal-ready', ({ cols, rows }) => {
