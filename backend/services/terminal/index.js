@@ -166,6 +166,28 @@ const isValidFileName = (name) => {
     return true
 }
 
+// Validates project ID format to prevent shell and directory injection
+const isValidProjectId = (projectId) => {
+    if (!projectId || typeof projectId !== 'string') return false
+    const trimmed = projectId.trim()
+    return /^[a-zA-Z0-9_-]{1,64}$/.test(trimmed)
+}
+
+// Validates that a target relative path stays strictly inside base directory
+const isSafeSubPath = (baseDir, targetRelPath) => {
+    if (!targetRelPath || typeof targetRelPath !== 'string' || targetRelPath.includes('\0')) {
+        logSecurityEvent('warn', 'PATH_TRAVERSAL_BLOCKED', { baseDir, targetRelPath, reason: 'invalid_or_null_bytes' })
+        return false
+    }
+    const resolvedBase = path.resolve(baseDir)
+    const resolvedTarget = path.resolve(resolvedBase, targetRelPath)
+    const isSafe = resolvedTarget.startsWith(resolvedBase + path.sep)
+    if (!isSafe) {
+        logSecurityEvent('warn', 'PATH_TRAVERSAL_BLOCKED', { baseDir, targetRelPath, reason: 'escapes_workspace' })
+    }
+    return isSafe
+}
+
 // Generates the workspace path for a specific project
 const getProjectPath = (projectId) => {
     return path.join(WORKSPACE_ROOT, String(projectId))
