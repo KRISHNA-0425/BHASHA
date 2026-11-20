@@ -261,6 +261,70 @@ const verifyProjectOwnership = async (projectId, userId) => {
     return true
 }
 
+// Sensitive environment key pattern blacklist
+const SENSITIVE_KEY_REGEX = /(secret|token|password|passwd|key|mongo|redis|jwt|auth|credential|db_url|database|gemini|openai)/i
+
+// Sanitizes environment passed to child PTY shells to prevent host credential leaks
+const buildSafeEnvironment = (workspaceRoot) => {
+    const safeEnv = {}
+
+    // Whitelist essential system and tool execution variables
+    const ALLOWED_VARS = [
+        'PATH',
+        'Path',
+        'PATHEXT',
+        'SYSTEMROOT',
+        'SystemRoot',
+        'WINDIR',
+        'windir',
+        'COMSPEC',
+        'ComSpec',
+        'TEMP',
+        'TMP',
+        'TERM',
+        'COLORTERM',
+        'LANG',
+        'LC_ALL',
+        'USERPROFILE',
+        'HOME',
+        'PSModulePath',
+        'NODE_PATH',
+        'NVM_HOME',
+        'NVM_SYMLINK',
+        'CARGO_HOME',
+        'RUSTUP_HOME',
+        'JAVA_HOME',
+        'GOROOT',
+        'GOPATH',
+        'PROCESSOR_ARCHITECTURE',
+        'NUMBER_OF_PROCESSORS',
+        'OS',
+        'ALLUSERSPROFILE',
+        'CommonProgramFiles',
+        'CommonProgramFiles(x86)',
+        'CommonProgramW6432',
+        'ProgramData',
+        'ProgramFiles',
+        'ProgramFiles(x86)',
+        'ProgramW6432',
+        'PUBLIC',
+        'SystemDrive'
+    ]
+
+    for (const key of ALLOWED_VARS) {
+        if (process.env[key] !== undefined && !SENSITIVE_KEY_REGEX.test(key)) {
+            safeEnv[key] = process.env[key]
+        }
+    }
+
+    // Force developer terminal configuration
+    safeEnv.FORCE_COLOR = '1'
+    safeEnv.TERM = 'xterm-256color'
+    safeEnv.WORKSPACE_ROOT = workspaceRoot
+
+    return safeEnv
+}
+
 // Guard rails for terminal dimensions
 const normalizingCols = (cols) => {
     const val = Number(cols)
