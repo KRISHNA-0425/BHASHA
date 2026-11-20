@@ -717,8 +717,22 @@ io.on('connection', (socket) => {
             userId = String(userId || '').trim()
 
             if (!projectId || !userId) {
+                logSecurityEvent('warn', 'MISSING_CREDENTIALS', { socketId: socket.id })
                 throw new Error('Project Id and User Id are required')
             }
+
+            if (!isValidProjectId(projectId)) {
+                throw new Error(`Invalid project ID format: "${projectId}"`)
+            }
+
+            // Rate limit checks against rapid socket reconnection / fork-bomb attacks
+            if (isSpawnRateLimited(socket.id)) {
+                logSecurityEvent('warn', 'RATE_LIMIT_EXCEEDED', { socketId: socket.id, projectId, userId })
+                throw new Error('Rate limit exceeded: too many shell initializations. Please wait a minute before retrying.')
+            }
+
+            // Verify project access and ownership
+            await verifyProjectOwnership(projectId, userId)
 
             // Cleanup existing session on reconnect
             const existingSession = sessions.get(socket.id)
@@ -739,11 +753,10 @@ io.on('connection', (socket) => {
                 cols,
                 rows,
                 cwd: root,
-                env: {
-                    ...process.env,
-                    FORCE_COLOR: '1'
-                }
+                env: buildSafeEnvironment(root)
             })
+
+            logSecurityEvent('info', 'PTY_SESSION_SPAWNED', { socketId: socket.id, projectId, userId })
 
             ptyInstance.onData((data) => {
                 sendData(socket, data)
@@ -771,7 +784,9 @@ io.on('connection', (socket) => {
             socket.emit('disk-synced')
         } catch (error) {
             console.error('terminal init error:', error)
-            sendData(socket, `\r\n\x1b[31m${error.message}\x1b[0m\r\n`)
+            sendData(socket, `\r\n\x1b[31m[Security Error: ${error.message}]\x1b[0m\r\n`)
+            socket.emit('terminal-error', { error: error.message })
+            socket.disconnect(true)
         }
     })
 
