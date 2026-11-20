@@ -36,6 +36,7 @@ app.get('/', (_, res) => {
 const server = http.createServer(app)
 
 const fileService = process.env.FILE_SERVICE_URL || process.env.FILE_SERVICE || 'http://localhost:8003'
+const projectService = process.env.PROJECT_SERVICE_URL || 'http://localhost:8002'
 const WORKSPACE_ROOT = path.join(os.tmpdir(), 'BHASHA-AI')
 const SHELL = process.platform === 'win32' ? 'powershell.exe' : 'bash'
 
@@ -201,6 +202,63 @@ const getProjectPath = (projectId) => {
         throw new Error('Path traversal detected: project directory escapes workspace root')
     }
     return targetPath
+}
+
+// Verifies that caller owns or is authorized to access the project workspace
+const verifyProjectOwnership = async (projectId, userId) => {
+    if (!isValidProjectId(projectId)) {
+        logSecurityEvent('warn', 'INVALID_PROJECT_ID_VERIFICATION', { projectId, userId })
+        throw new Error(`Invalid project ID format: "${projectId}"`)
+    }
+    if (!userId || typeof userId !== 'string' || !userId.trim()) {
+        logSecurityEvent('warn', 'UNAUTHENTICATED_ACCESS_ATTEMPT', { projectId })
+        throw new Error('User ID is required for project authentication')
+    }
+
+    const cleanUserId = String(userId).trim()
+    const cleanProjectId = String(projectId).trim()
+
+    // 1. First attempt verification against Project service
+    try {
+        const projRes = await axios.get(`${projectService}/api/project/project/${cleanProjectId}`, {
+            headers: { 'x-user-id': cleanUserId },
+            timeout: 5000
+        })
+        if (projRes.status === 200 && projRes.data) {
+            return true
+        }
+    } catch (projErr) {
+        if (projErr.response && (projErr.response.status === 401 || projErr.response.status === 404)) {
+            // Attempt management service fallback
+            try {
+                const mgmtRes = await axios.get(`${fileService}/api/management/tree/${cleanProjectId}`, {
+                    headers: { 'x-user-id': cleanUserId },
+                    timeout: 5000
+                })
+                if (mgmtRes.status === 200 && Array.isArray(mgmtRes.data) && mgmtRes.data.length > 0) {
+                    return true
+                }
+            } catch (mgmtErr) {}
+            logSecurityEvent('warn', 'UNAUTHORIZED_WORKSPACE_ACCESS', { projectId: cleanProjectId, userId: cleanUserId })
+            throw new Error(`Access Denied: You do not have permission to access project workspace "${cleanProjectId}"`)
+        }
+
+        // Project service might be temporarily unavailable or unrouted, attempt Management service verification
+        try {
+            const mgmtRes = await axios.get(`${fileService}/api/management/tree/${cleanProjectId}`, {
+                headers: { 'x-user-id': cleanUserId },
+                timeout: 5000
+            })
+            if (mgmtRes.status === 200) {
+                return true
+            }
+        } catch (mgmtErr) {
+            logSecurityEvent('error', 'PROJECT_OWNERSHIP_CHECK_ERROR', { error: mgmtErr.message })
+            throw new Error('Access Denied: Failed to verify project workspace authorization')
+        }
+    }
+
+    return true
 }
 
 // Guard rails for terminal dimensions
