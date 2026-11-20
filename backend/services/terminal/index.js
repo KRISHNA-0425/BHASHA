@@ -188,9 +188,19 @@ const isSafeSubPath = (baseDir, targetRelPath) => {
     return isSafe
 }
 
-// Generates the workspace path for a specific project
+// Generates the workspace path for a specific project with strict path traversal prevention
 const getProjectPath = (projectId) => {
-    return path.join(WORKSPACE_ROOT, String(projectId))
+    if (!isValidProjectId(projectId)) {
+        logSecurityEvent('warn', 'INVALID_PROJECT_ID_FORMAT', { projectId })
+        throw new Error(`Invalid projectId format: "${projectId}"`)
+    }
+    const resolvedBase = path.resolve(WORKSPACE_ROOT)
+    const targetPath = path.resolve(resolvedBase, String(projectId).trim())
+    if (!targetPath.startsWith(resolvedBase + path.sep) && targetPath !== resolvedBase) {
+        logSecurityEvent('error', 'WORKSPACE_ROOT_ESCAPE_ATTEMPT', { projectId, targetPath, resolvedBase })
+        throw new Error('Path traversal detected: project directory escapes workspace root')
+    }
+    return targetPath
 }
 
 // Guard rails for terminal dimensions
