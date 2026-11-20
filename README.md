@@ -249,6 +249,34 @@ A subtle and critical bug in filesystem synchronization engines is **zombie file
   4. **Creation Guard**: The disk walk explicitly skips any path registered in `deletedMap`, completely preventing soft-deleted files from ever being resurrected.
   5. **Client-Side Trigger**: When the developer deletes a file or folder in `FileExplorer.jsx`, `handleDeleteFile` in `Project.jsx` dispatches `syncTerminalDisk()` immediately after the API call, ensuring the physical disk is purged synchronously with the UI update.
 
+#### 🔒 Terminal Service Security Hardening & Zero-Leak Isolation
+Because the integrated terminal grants developers interactive shell access (`powershell.exe` on Windows, `bash` on Linux), multiple security guard rails are enforced to prevent host credential leaks, unauthorized workspace tampering, and filesystem escaping:
+1. **Host Environment Variable Sanitization (`buildSafeEnvironment`)**:
+   - `pty.spawn` strictly sanitizes the environment passed to child shells, eliminating host secrets (`MONGO_URL`, `JWT_SECRET`, `REDIS_URL`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`).
+   - Uses an explicit whitelist of developer execution paths (`PATH`, `PATHEXT`, `SYSTEMROOT`, `COMSPEC`, `TEMP`, `TMP`, `TERM`, `USERPROFILE`, `HOME`, `PSModulePath`).
+   - Applies an active regex blacklist `/(secret|token|password|passwd|key|mongo|redis|jwt|auth|credential|db_url|database|gemini|openai)/i` to strip sensitive credentials even if defined on the host system.
+   - Preserves compiler toolchains (`gcc`, `g++`, `python`, `node`, `javac`) while completely isolating sensitive infrastructure keys from commands such as `Get-ChildItem env:` or `env`.
+2. **Directory Traversal Defense & Path Containment**:
+   - `isValidProjectId` enforces a strict alphanumeric pattern (`/^[a-zA-Z0-9_-]{1,64}$/`), blocking shell metacharacters and relative path operators (`..`, `/`, `\`).
+   - `getProjectPath` uses `path.resolve` to guarantee that workspace roots strictly reside within `%TEMP%/BHASHA-AI/`.
+   - `isSafeSubPath` validates all incoming `file-saved` and `file-deleted` paths, blocking path escaping attempts and null-byte injection (`\0`).
+3. **Workspace Ownership Verification & Socket Authentication**:
+   - WebSocket handshakes require `{ projectId, userId }` in both `auth` metadata and `terminalData` session payloads.
+   - The terminal service queries the Project Service (`GET /api/project/project/:id`) and Management Service (`GET /api/management/tree/:id`) with `x-user-id` to verify workspace ownership before instantiating the PTY process.
+   - Unauthorized attempts immediately emit a security error to the client terminal and terminate the WebSocket connection.
+4. **Denial-of-Service Defense & Process Resource Governance**:
+   - **Spawn Rate Limiting**: Enforces a sliding window cap (`10 shell initializations per socket per minute`) to protect the host against rapid connection looping or fork-bombing.
+   - **30-Minute Idle Timeout**: Dormant terminal processes are automatically terminated after 30 minutes of inactivity (`SESSION_IDLE_TIMEOUT_MS = 1800000`), freeing RAM, CPU threads, and file descriptors.
+   - **Security Audit Telemetry**: `logSecurityEvent` provides structured forensic audit logging for unauthenticated access attempts, path traversal blocks, rate-limit violations, and PTY lifecycle events.
+
+| Threat Vector | Attack Scenario | Mitigation in BHASHA IDE |
+| :--- | :--- | :--- |
+| **Credential Exfiltration** | Running `Get-ChildItem env:` or `env` inside terminal to steal MongoDB or Redis credentials | `buildSafeEnvironment()` strips all credentials using whitelist and regex blacklist |
+| **Path Traversal Escape** | Supplying `../../Windows/System32` or `../other-user-project` in project ID or relative path | Strict alphanumeric validation (`/^[a-zA-Z0-9_-]{1,64}$/`) and `isSafeSubPath()` containment check |
+| **Cross-Tenant Hijacking** | Specifying another user's `projectId` in Socket.IO handshake to execute commands in their workspace | `verifyProjectOwnership()` cross-checks project ownership against Project & Management microservices |
+| **Process Fork Bombing** | Rapidly opening hundreds of WebSocket terminal instances to exhaust host CPU and memory | Rate limiter caps spawns to 10/min per socket; idle timer cleans up dormant PTYs after 30 minutes |
+| **Zombie Process Leaks** | Abandoned terminal sessions lingering indefinitely on host server | Automatic 30-minute idle lifecycle termination with graceful `SIGTERM` cleanup |
+
 #### 🚀 In-Terminal Development Server Lifecycle (`npm run dev`)
 Developers executing full-stack development commands within the integrated terminal benefit from a clean development environment:
 - **Missing Script & Dependency Prevention**: Running `npm run dev` in standard frontend setups requires:
