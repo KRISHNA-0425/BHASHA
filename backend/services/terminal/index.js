@@ -646,11 +646,17 @@ const handleSyncRequest = async (req, res) => {
             return res.status(400).json({ message: 'projectId and userId are required' })
         }
 
+        if (!isValidProjectId(String(projectId))) {
+            return res.status(400).json({ message: 'Invalid projectId format' })
+        }
+
+        await verifyProjectOwnership(String(projectId), String(userId))
+
         const result = await syncDiskToDb(String(projectId), String(userId))
         return res.status(200).json(result)
     } catch (error) {
         console.error('sync endpoint error:', error)
-        return res.status(500).json({ message: error.message })
+        return res.status(error.message?.includes('Access Denied') ? 403 : 500).json({ message: error.message })
     }
 }
 
@@ -661,9 +667,19 @@ app.post('/sync-disk', handleSyncRequest)
 const handleClearDiskRequest = async (req, res) => {
     try {
         const { projectId } = req.body || {}
+        const userId = req.headers['x-user-id'] || req.body?.userId || projectUsers.get(String(projectId))
         if (!projectId) {
             return res.status(400).json({ error: 'Missing projectId' })
         }
+
+        if (!isValidProjectId(String(projectId))) {
+            return res.status(400).json({ error: 'Invalid projectId format' })
+        }
+
+        if (userId) {
+            await verifyProjectOwnership(String(projectId), String(userId))
+        }
+
         const root = getProjectPath(String(projectId))
         try {
             const entries = await fs.readdir(root, { withFileTypes: true })
@@ -684,7 +700,7 @@ const handleClearDiskRequest = async (req, res) => {
         return res.status(200).json({ success: true, message: 'Workspace disk cleared successfully' })
     } catch (error) {
         console.error('clear-workspace error:', error)
-        return res.status(500).json({ error: error.message })
+        return res.status(error.message?.includes('Access Denied') ? 403 : 500).json({ error: error.message })
     }
 }
 
