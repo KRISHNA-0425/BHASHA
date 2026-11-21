@@ -18,6 +18,7 @@ const projectService = process.env.PROJECT_SERVICE || 'http://localhost:8002';
 const managementService = process.env.MANAGEMENT_SERVICE || 'http://localhost:8003';
 const aiService = process.env.AI_SERVICE || 'http://localhost:8004';
 const terminalService = process.env.TERMINAL_SERVICE || 'http://localhost:8005';
+const paymentService = process.env.PAYMENT_SERVICE || 'http://localhost:8006';
 const app = express();
 
 // middlewares
@@ -70,6 +71,31 @@ app.use('/api/ai', isAuth, proxy(aiService, {
 app.use('/api/terminal', isAuth, proxy(terminalService, {
     proxyReqPathResolver: (req) => {
         return `/api/terminal${req.url}`;
+    },
+    proxyReqOptDecorator,
+    parseReqBody: false
+}));
+
+// Proxy payment webhook directly without isAuth (Razorpay server calls webhook with signature header)
+app.use('/api/payment/webhook', proxy(paymentService, {
+    proxyReqPathResolver: () => {
+        return '/api/payment/webhook';
+    },
+    parseReqBody: false
+}));
+
+// Proxy public plans endpoint without isAuth so unauthenticated visitors can view pricing
+app.use('/api/payment/plans', proxy(paymentService, {
+    proxyReqPathResolver: () => {
+        return '/api/payment/plans';
+    },
+    parseReqBody: false
+}));
+
+// Proxy authenticated payment requests (order creation, verification, history, subscription)
+app.use('/api/payment', isAuth, proxy(paymentService, {
+    proxyReqPathResolver: (req) => {
+        return `/api/payment${req.url}`;
     },
     proxyReqOptDecorator,
     parseReqBody: false
