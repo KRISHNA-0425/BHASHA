@@ -13,6 +13,7 @@ import {
   FiTrash2,
   FiMail
 } from 'react-icons/fi'
+import Footer from '../components/Footer.jsx'
 
 const PrivacyPolicy = () => {
   const navigate = useNavigate()
@@ -237,21 +238,8 @@ const PrivacyPolicy = () => {
         </div>
       </main>
 
-      {/* Clean Minimal Footer */}
-      <footer className="w-full border-t border-neutral-800 bg-[#090a0f] px-6 sm:px-10 py-6 mt-16 text-xs text-neutral-500 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <span>© 2026 BHASHA Cloud IDE. All rights reserved.</span>
-        <div className="flex items-center gap-6 text-[11px] text-neutral-400">
-          <Link to="/home" className="hover:text-white transition-colors">
-            Dashboard
-          </Link>
-          <Link to="/payment" className="hover:text-white transition-colors">
-            Pricing
-          </Link>
-          <Link to="/privacy" className="text-white hover:underline transition-colors">
-            Privacy Policy
-          </Link>
-        </div>
-      </footer>
+      {/* Reusable Footer */}
+      <Footer theme="dark" />
     </div>
   )
 }

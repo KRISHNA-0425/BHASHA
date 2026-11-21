@@ -18,6 +18,7 @@ import {
   getUserSubscription,
   loadRazorpayScript
 } from '../features/payment'
+import Footer from '../components/Footer.jsx'
 
 const Payment = () => {
   const navigate = useNavigate()
@@ -557,29 +558,8 @@ const Payment = () => {
         </div>
       </main>
 
-      {/* Clean Minimal Footer */}
-      <footer className="w-full border-t border-neutral-800 bg-[#090a0f] px-6 sm:px-10 py-6 mt-16 text-xs text-neutral-500 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span>© 2026 BHASHA Cloud IDE. All rights reserved.</span>
-        </div>
-        <div className="flex items-center gap-6 text-[11px] text-neutral-400">
-          <Link to="/home" className="hover:text-white transition-colors">
-            Dashboard
-          </Link>
-          <Link to="/privacy" className="hover:text-white transition-colors">
-            Privacy Policy
-          </Link>
-          <a
-            href="https://github.com/KRISHNA-0425/BHASHA"
-            target="_blank"
-            rel="noreferrer"
-            className="hover:text-white transition-colors"
-          >
-            GitHub
-          </a>
-          <span>Payments powered by Razorpay</span>
-        </div>
-      </footer>
+      {/* Reusable Footer */}
+      <Footer theme="dark" />
 
       {/* Toast notifications */}
       <ToastContainer

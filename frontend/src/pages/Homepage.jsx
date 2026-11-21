@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ToastContainer, toast } from 'react-toastify'
 import Sidebar from '../components/Sidebar.jsx'
 import TopBar from '../components/TopBar.jsx'
+import Footer from '../components/Footer.jsx'
 import ProjectCard from '../components/ProjectCard.jsx'
 import NewProjectModal from '../components/NewProjectModal.jsx'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal.jsx'
@@ -355,6 +356,7 @@ const Homepage = () => {
                         </>
                     )}
                 </main>
+                <Footer theme={theme} />
             </div>
 
             {/* Modal for Creating New Project */}
