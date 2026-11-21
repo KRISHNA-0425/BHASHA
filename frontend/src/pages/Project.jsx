@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import PricingModal from '../components/payment/PricingModal.jsx'
 import {
   VscFiles,
   VscSearch,
@@ -61,6 +63,8 @@ const initialMockTree = [
 
 const Project = () => {
   const { id: projectId } = useParams()
+  const { userData } = useSelector((state) => state.user)
+  const [isPricingOpen, setIsPricingOpen] = useState(false)
 
   // Layout Toggle States
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -140,8 +144,19 @@ const Project = () => {
           </button>
         </div>
 
-        {/* Right: Panel Toggles */}
+        {/* Right: Panel Toggles & Upgrade */}
         <div className="flex items-center gap-1.5">
+          {/* Upgrade to Pro Button */}
+          <button
+            type="button"
+            onClick={() => setIsPricingOpen(true)}
+            title="View Pro Plans & Pricing"
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-medium transition-all cursor-pointer shadow-xs active:scale-95 mr-1"
+          >
+            <VscSparkle className="text-xs text-amber-400" />
+            <span>Upgrade</span>
+          </button>
+
           {/* Toggle File Explorer */}
           <button
             onClick={() => setIsSidebarOpen((prev) => !prev)}
@@ -295,6 +310,13 @@ const Project = () => {
           isOpen={isAIOpen}
           onClose={() => setIsAIOpen(false)}
           activeFile={activeFile}
+        />
+
+        {/* Pricing & Subscription Modal */}
+        <PricingModal
+          isOpen={isPricingOpen}
+          onClose={() => setIsPricingOpen(false)}
+          user={userData}
         />
       </div>
     </div>
