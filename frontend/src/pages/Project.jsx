@@ -22,6 +22,7 @@ import CodeEditor from '../components/editor/CodeEditor.jsx'
 import TerminalPanel from '../components/editor/TerminalPanel.jsx'
 import AIAgentPanel from '../components/editor/AIAgentPanel.jsx'
 import PreviewPanel from '../components/editor/PreviewPanel.jsx'
+import PricingModal from '../components/payment/PricingModal.jsx'
 import { buildFileMap, detectProjectKind } from '../utils/previewBuilder.js'
 import { getProjectById } from '../features/project.js'
 import {
@@ -123,6 +124,7 @@ const Project = () => {
   const [activeActivityTab, setActiveActivityTab] = useState('explorer')
   const [workspaceView, setWorkspaceView] = useState('code') // 'code' | 'split' | 'preview'
   const [previewVersion, setPreviewVersion] = useState(0)
+  const [isPricingOpen, setIsPricingOpen] = useState(false)
 
   // Editor and File States
   const [openTabs, setOpenTabs] = useState([])
@@ -774,8 +776,19 @@ const Project = () => {
           )}
         </div>
 
-        {/* Right: Panel Toggles */}
+        {/* Right: Panel Toggles & Upgrade */}
         <div className="flex items-center gap-1.5">
+          {/* Upgrade to Pro Button */}
+          <button
+            type="button"
+            onClick={() => setIsPricingOpen(true)}
+            title="View Pro Plans & Pricing"
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-medium transition-all cursor-pointer shadow-xs active:scale-95 mr-1"
+          >
+            <VscSparkle className="text-xs text-amber-400" />
+            <span>Upgrade</span>
+          </button>
+
           {/* Toggle File Explorer */}
           <button
             onClick={() => setIsSidebarOpen((prev) => !prev)}
@@ -973,6 +986,13 @@ const Project = () => {
             setWorkspaceView('split')
             setPreviewVersion((v) => v + 1)
           }}
+        />
+
+        {/* Pricing & Subscription Modal */}
+        <PricingModal
+          isOpen={isPricingOpen}
+          onClose={() => setIsPricingOpen(false)}
+          user={userData}
         />
       </div>
     </div>

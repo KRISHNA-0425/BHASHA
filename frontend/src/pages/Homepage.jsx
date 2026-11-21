@@ -8,6 +8,7 @@ import TopBar from '../components/TopBar.jsx'
 import ProjectCard from '../components/ProjectCard.jsx'
 import NewProjectModal from '../components/NewProjectModal.jsx'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal.jsx'
+import PricingModal from '../components/payment/PricingModal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { getAllProject, toggleLike, deleteProject } from '../features/project.js'
 
@@ -19,6 +20,7 @@ const Homepage = () => {
     const [searchQuery, setSearchQuery] = useState('')
     const [activeTab, setActiveTab] = useState('projects') // 'projects' | 'starred'
     const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false)
+    const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
     const [projectToDelete, setProjectToDelete] = useState(null)
     const [isDeleting, setIsDeleting] = useState(false)
 
@@ -203,6 +205,7 @@ const Homepage = () => {
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
                     onOpenNewProject={() => setIsNewProjectModalOpen(true)}
+                    onOpenPricing={() => setIsPricingModalOpen(true)}
                     theme={theme}
                     toggleTheme={toggleTheme}
                 />
@@ -370,6 +373,13 @@ const Homepage = () => {
                 onConfirm={handleDeleteConfirm}
                 isLoading={isDeleting}
                 theme={theme}
+            />
+
+            {/* Modal for Pricing & Upgrades */}
+            <PricingModal
+                isOpen={isPricingModalOpen}
+                onClose={() => setIsPricingModalOpen(false)}
+                user={userData}
             />
 
             {/* Bottom-right Toast Notifications */}
