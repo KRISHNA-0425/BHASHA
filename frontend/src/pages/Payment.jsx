@@ -19,6 +19,8 @@ import {
   loadRazorpayScript
 } from '../features/payment'
 
+import Footer from '../components/Footer.jsx'
+
 const Payment = () => {
   const navigate = useNavigate()
   const { userData } = useSelector((state) => state.user)
@@ -151,55 +153,21 @@ const Payment = () => {
   ]
 
   return (
-    <div className="min-h-screen w-full bg-[#090a0f] text-neutral-200 font-sans selection:bg-neutral-800 selection:text-white">
-      {/* Top Header */}
-      <header className="w-full border-b border-neutral-800 bg-[#090a0f]/90 backdrop-blur-md sticky top-0 z-20 px-6 sm:px-10 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link to="/home" className="flex items-center gap-2.5 text-white font-semibold tracking-tight hover:opacity-90 transition-opacity">
-            <div className="w-7 h-7 rounded-lg bg-neutral-800 border border-neutral-700 flex items-center justify-center text-xs font-bold font-mono">
-              B
-            </div>
-            <span className="text-sm font-bold tracking-wider">BHASHA</span>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-6 text-xs text-neutral-400">
-            <Link to="/home" className="hover:text-white transition-colors">
-              Dashboard
-            </Link>
-            <span className="text-white font-medium">
-              Pricing
-            </span>
-            <a
-              href="https://github.com/KRISHNA-0425/BHASHA"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-white transition-colors"
-            >
-              Docs
-            </a>
-          </nav>
-        </div>
-
-        <div className="flex items-center gap-3">
+    <div className="min-h-screen w-full bg-[#090a0f] text-neutral-200 font-sans selection:bg-neutral-800 selection:text-white flex flex-col justify-between">
+      <div>
+        {/* Top Back Action */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
           <button
             onClick={() => navigate('/home')}
-            className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white px-3 py-1.5 rounded-lg border border-neutral-800 hover:border-neutral-700 bg-neutral-900/60 transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-neutral-400 hover:text-white px-3.5 py-2 rounded-xl border border-neutral-800 hover:border-neutral-700 bg-neutral-900/80 transition-all cursor-pointer shadow-xs active:scale-95"
           >
-            <FiArrowLeft className="text-xs" />
-            <span>Back to Dashboard</span>
+            <FiArrowLeft className="text-sm" />
+            <span>Go back to the dashboard</span>
           </button>
-
-          {userData && (
-            <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-neutral-800 text-xs text-neutral-400">
-              <FiUser className="text-neutral-500" />
-              <span>{userData.name || userData.email}</span>
-            </div>
-          )}
         </div>
-      </header>
 
-      {/* Main Container */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        {/* Main Container */}
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Active Subscription Alert */}
         {isPro && (
           <div className="mb-8 p-4 rounded-xl bg-neutral-900 border border-neutral-700 flex items-center justify-between gap-4">
@@ -556,27 +524,10 @@ const Payment = () => {
           </div>
         </div>
       </main>
+      </div>
 
-      {/* Clean Minimal Footer */}
-      <footer className="w-full border-t border-neutral-800 bg-[#090a0f] px-6 sm:px-10 py-6 mt-16 text-xs text-neutral-500 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span>© 2026 BHASHA Cloud IDE. All rights reserved.</span>
-        </div>
-        <div className="flex items-center gap-6 text-[11px] text-neutral-400">
-          <Link to="/home" className="hover:text-white transition-colors">
-            Dashboard
-          </Link>
-          <a
-            href="https://github.com/KRISHNA-0425/BHASHA"
-            target="_blank"
-            rel="noreferrer"
-            className="hover:text-white transition-colors"
-          >
-            GitHub
-          </a>
-          <span>Payments powered by Razorpay</span>
-        </div>
-      </footer>
+      {/* Reusable Footer */}
+      <Footer theme="dark" />
 
       {/* Toast notifications */}
       <ToastContainer
