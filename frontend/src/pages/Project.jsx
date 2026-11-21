@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { toast, ToastContainer } from 'react-toastify'
+import { FiZap } from 'react-icons/fi'
 import {
   VscFiles,
   VscSearch,
@@ -784,9 +785,9 @@ const Project = () => {
             type="button"
             onClick={() => navigate('/payment')}
             title="View Pro Plans & Pricing"
-            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-medium transition-all cursor-pointer shadow-xs active:scale-95 mr-1"
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-xs font-medium transition-all cursor-pointer shadow-xs active:scale-95 mr-1"
           >
-            <VscSparkle className="text-xs text-amber-400" />
+            <FiZap className="text-xs text-amber-400" />
             <span>Upgrade</span>
           </button>
 

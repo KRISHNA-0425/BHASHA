@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { FiSearch, FiPlus, FiMoon, FiSun } from 'react-icons/fi'
+import { FiSearch, FiPlus, FiMoon, FiSun, FiZap } from 'react-icons/fi'
 import { VscSparkle } from 'react-icons/vsc'
 
 const TopBar = ({ searchQuery, setSearchQuery, onOpenNewProject, onOpenPricing, theme = 'dark', toggleTheme }) => {
@@ -85,9 +85,13 @@ const TopBar = ({ searchQuery, setSearchQuery, onOpenNewProject, onOpenPricing, 
                     type="button"
                     onClick={onOpenPricing}
                     title="View Pro Plans & Pricing"
-                    className="text-xs sm:text-sm font-semibold px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-indigo-500/20"
+                    className={`text-xs sm:text-sm font-semibold px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border ${
+                        isDark
+                            ? 'bg-neutral-800 hover:bg-neutral-700 text-white border-neutral-700 shadow-xs'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-300 shadow-xs'
+                    }`}
                 >
-                    <VscSparkle className="text-base text-amber-300" />
+                    <FiZap className="text-sm text-amber-400" />
                     <span>Upgrade</span>
                 </motion.button>
 
