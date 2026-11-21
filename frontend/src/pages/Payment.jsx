@@ -566,6 +566,9 @@ const Payment = () => {
           <Link to="/home" className="hover:text-white transition-colors">
             Dashboard
           </Link>
+          <Link to="/privacy" className="hover:text-white transition-colors">
+            Privacy Policy
+          </Link>
           <a
             href="https://github.com/KRISHNA-0425/BHASHA"
             target="_blank"

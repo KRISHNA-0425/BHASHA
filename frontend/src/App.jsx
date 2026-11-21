@@ -4,6 +4,7 @@ import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Homepage from './pages/Homepage.jsx'
 import Payment from './pages/Payment.jsx'
+import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
 import NotFound from './pages/NotFound.jsx'
 
 import { currentUser } from './features/currentUser'
@@ -54,6 +55,8 @@ const App = () => {
       <Route path="/register" element={userData ? <Navigate to="/home" replace /> : <Register />} />
       <Route path="/home" element={userData ? <Homepage /> : <Navigate to="/login" replace />} />
       <Route path="/payment" element={userData ? <Payment /> : <Navigate to="/login" replace />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path='/project/:id' element={userData ? <Project /> : <Navigate to='/login' replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
