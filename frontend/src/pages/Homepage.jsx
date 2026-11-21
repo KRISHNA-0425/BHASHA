@@ -205,7 +205,7 @@ const Homepage = () => {
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
                     onOpenNewProject={() => setIsNewProjectModalOpen(true)}
-                    onOpenPricing={() => setIsPricingModalOpen(true)}
+                    onOpenPricing={() => navigate('/payment')}
                     theme={theme}
                     toggleTheme={toggleTheme}
                 />

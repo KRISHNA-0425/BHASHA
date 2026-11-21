@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { toast, ToastContainer } from 'react-toastify'
 import {
@@ -106,6 +106,7 @@ const findFirstFile = (nodes) => {
 }
 
 const Project = () => {
+  const navigate = useNavigate()
   const { id: projectId } = useParams()
   const { userData } = useSelector((state) => state.user)
   const userId = userData?._id || userData?.id
@@ -781,7 +782,7 @@ const Project = () => {
           {/* Upgrade to Pro Button */}
           <button
             type="button"
-            onClick={() => setIsPricingOpen(true)}
+            onClick={() => navigate('/payment')}
             title="View Pro Plans & Pricing"
             className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-medium transition-all cursor-pointer shadow-xs active:scale-95 mr-1"
           >
