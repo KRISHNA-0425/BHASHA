@@ -25,7 +25,7 @@ export const getLikedProjects = async () => {
 // export const getProjectByLiked = getLikedProjects;
 
 export const toggleLike = async (id) => {
-    const { data } = await api.patch(`/api/project/like/${id}`);
+    const { data } = await api.patch(`/api/project/like/${id}`, {});
     return data;
 };
 

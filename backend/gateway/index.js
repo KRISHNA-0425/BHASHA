@@ -34,7 +34,8 @@ app.use(morgan('dev')); // creates logs of the requests
 app.use('/api/auth', proxy(authService, {
     proxyReqPathResolver: (req) => {
         return `/api/auth${req.url}`;
-    }
+    },
+    parseReqBody: false
 }));
 
 // Proxy project requests with preserved path
@@ -43,6 +44,7 @@ app.use('/api/project', isAuth, proxy(projectService, {
         return `/api/project${req.url}`;
     },
     proxyReqOptDecorator,
+    parseReqBody: false
 }));
 
 // Proxy management requests with preserved path
@@ -51,6 +53,7 @@ app.use('/api/management', isAuth, proxy(managementService, {
         return `/api/management${req.url}`;
     },
     proxyReqOptDecorator,
+    parseReqBody: false
 }));
 
 // Proxy payment webhook directly without isAuth (Razorpay server calls webhook with signature header)

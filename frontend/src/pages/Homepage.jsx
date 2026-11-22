@@ -1,15 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ToastContainer, toast } from 'react-toastify'
 import Sidebar from '../components/Sidebar.jsx'
 import TopBar from '../components/TopBar.jsx'
+import Footer from '../components/Footer.jsx'
 import ProjectCard from '../components/ProjectCard.jsx'
 import NewProjectModal from '../components/NewProjectModal.jsx'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal.jsx'
+import PricingModal from '../components/payment/PricingModal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { getAllProject, toggleLike, deleteProject } from '../features/project.js'
+import { animateHeroReveal } from '../utils/animations.js'
 
 const Homepage = () => {
     const navigate = useNavigate()
@@ -19,8 +22,10 @@ const Homepage = () => {
     const [searchQuery, setSearchQuery] = useState('')
     const [activeTab, setActiveTab] = useState('projects') // 'projects' | 'starred'
     const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false)
+    const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
     const [projectToDelete, setProjectToDelete] = useState(null)
     const [isDeleting, setIsDeleting] = useState(false)
+    const heroRef = useRef(null)
 
     // Local theme management: get & set from localStorage
     const [theme, setTheme] = useState(() => {
@@ -68,6 +73,13 @@ const Homepage = () => {
         }
         fetchProjects()
     }, [])
+
+    // Animate hero on ready
+    useEffect(() => {
+        if (!isLoading && heroRef.current) {
+            animateHeroReveal(heroRef.current)
+        }
+    }, [isLoading])
 
     // Handle toggle like/star
     const handleToggleLike = async (projectId) => {
@@ -159,64 +171,74 @@ const Homepage = () => {
         : filteredProjects.length === 0
 
     return (
-        <div className={`flex h-screen w-full overflow-hidden font-sans transition-colors duration-200 ${
+        <div className={`min-h-screen w-full flex flex-col font-sans transition-colors duration-200 overflow-x-hidden ${
             isDark 
                 ? 'bg-[#07090e] text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200' 
                 : 'bg-[#f8fafc] text-slate-900 selection:bg-indigo-100 selection:text-indigo-900'
         }`}>
-            {/* Left Sidebar */}
-            <Sidebar
-                user={userData}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                totalProjectsCount={totalProjectsCount}
-                starredProjectsCount={starredProjectsCount}
-                theme={theme}
-            />
-
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col h-screen overflow-y-auto overflow-x-hidden relative">
-                {/* Ambient Cyber Lighting / Radial Glow */}
-                <div 
-                    className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
-                    style={{
-                        opacity: isDark ? 0.45 : 0.35,
-                        background: isDark
-                            ? 'radial-gradient(ellipse 65% 55% at 50% 20%, rgba(22, 40, 72, 0.45) 0%, rgba(12, 18, 30, 0.3) 40%, rgba(7, 9, 14, 0.98) 75%)'
-                            : 'radial-gradient(ellipse 65% 55% at 50% 15%, rgba(226, 232, 240, 0.7) 0%, rgba(241, 245, 249, 0.3) 50%, transparent 80%)'
-                    }}
-                />
-
-                {/* Subtle tech grid */}
-                <div 
-                    className="pointer-events-none fixed inset-0 z-0 opacity-[0.03]"
-                    style={{
-                        backgroundImage: isDark
-                            ? 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)'
-                            : 'linear-gradient(to right, #000000 1px, transparent 1px), linear-gradient(to bottom, #000000 1px, transparent 1px)',
-                        backgroundSize: '48px 48px'
-                    }}
-                />
-
-                {/* Top Bar with Search, Theme Toggle, & New Project Action */}
-                <TopBar
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    onOpenNewProject={() => setIsNewProjectModalOpen(true)}
+            {/* Upper Workspace: Sidebar on left + Projects workspace on right */}
+            <div className="flex-1 flex w-full relative">
+                {/* Left Sidebar */}
+                <Sidebar
+                    user={userData}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    totalProjectsCount={totalProjectsCount}
+                    starredProjectsCount={starredProjectsCount}
                     theme={theme}
-                    toggleTheme={toggleTheme}
                 />
 
-                {/* Dashboard Scrollable Body */}
-                <main className="relative z-10 flex-1 px-8 sm:px-10 py-8 max-w-7xl w-full mx-auto space-y-10">
-                    {/* Welcome Back Hero */}
-                    <div className="flex items-center justify-between">
-                        <h1 className={`text-2xl sm:text-3xl font-semibold tracking-tight ${
-                            isDark ? 'text-white' : 'text-slate-900'
-                        }`}>
-                            Welcome Back, <span>{firstName}</span>
-                        </h1>
-                    </div>
+                {/* Main Content Area */}
+                <div className="flex-1 flex flex-col min-w-0 relative">
+                    {/* Ambient Cyber Lighting / Radial Glow */}
+                    <div 
+                        className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
+                        style={{
+                            opacity: isDark ? 0.45 : 0.35,
+                            background: isDark
+                                ? 'radial-gradient(ellipse 65% 55% at 50% 20%, rgba(22, 40, 72, 0.45) 0%, rgba(12, 18, 30, 0.3) 40%, rgba(7, 9, 14, 0.98) 75%)'
+                                : 'radial-gradient(ellipse 65% 55% at 50% 15%, rgba(226, 232, 240, 0.7) 0%, rgba(241, 245, 249, 0.3) 50%, transparent 80%)'
+                        }}
+                    />
+
+                    {/* Subtle tech grid */}
+                    <div 
+                        className="pointer-events-none fixed inset-0 z-0 opacity-[0.03]"
+                        style={{
+                            backgroundImage: isDark
+                                ? 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)'
+                                : 'linear-gradient(to right, #000000 1px, transparent 1px), linear-gradient(to bottom, #000000 1px, transparent 1px)',
+                            backgroundSize: '48px 48px'
+                        }}
+                    />
+
+                    {/* Top Bar with Search, Theme Toggle, & New Project Action */}
+                    <TopBar
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        onOpenNewProject={() => setIsNewProjectModalOpen(true)}
+                        onOpenPricing={() => navigate('/payment')}
+                        theme={theme}
+                        toggleTheme={toggleTheme}
+                    />
+
+                    {/* Dashboard Scrollable Body */}
+                    <main className="relative z-10 flex-1 px-8 sm:px-10 py-8 max-w-7xl w-full mx-auto space-y-10">
+                        {/* Welcome Back Hero */}
+                        <div ref={heroRef} className="flex items-center justify-between">
+                            <div>
+                                <h1 className={`text-xl sm:text-2xl font-bold tracking-tight ${
+                                    isDark ? 'text-white' : 'text-slate-900'
+                                }`}>
+                                    Welcome Back, <span>{firstName}</span>
+                                </h1>
+                                <p className={`text-xs sm:text-sm mt-1 leading-relaxed ${
+                                    isDark ? 'text-slate-400' : 'text-slate-600'
+                                }`}>
+                                    Select a cloud workspace to resume building or create a new project.
+                                </p>
+                            </div>
+                        </div>
 
                     {/* Loading Skeleton */}
                     {isLoading ? (
@@ -247,15 +269,15 @@ const Homepage = () => {
                                 <section className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2.5">
-                                            <h2 className={`text-sm sm:text-base font-semibold tracking-tight ${
+                                            <h2 className={`text-base sm:text-lg font-semibold tracking-tight ${
                                                 isDark ? 'text-slate-100' : 'text-slate-900'
                                             }`}>
                                                 Starred Projects
                                             </h2>
-                                            <span className={`text-xs sm:text-sm font-mono font-medium ${
-                                                isDark ? 'text-slate-400' : 'text-slate-500'
+                                            <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded-md ${
+                                                isDark ? 'bg-white/[0.06] text-slate-400' : 'bg-slate-100 text-slate-600'
                                             }`}>
-                                                ({starredProjects.length})
+                                                {starredProjects.length}
                                             </span>
                                         </div>
 
@@ -295,15 +317,15 @@ const Homepage = () => {
                                 <section className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2.5">
-                                            <h2 className={`text-sm sm:text-base font-semibold tracking-tight ${
+                                            <h2 className={`text-base sm:text-lg font-semibold tracking-tight ${
                                                 isDark ? 'text-slate-100' : 'text-slate-900'
                                             }`}>
                                                 Projects
                                             </h2>
-                                            <span className={`text-xs sm:text-sm font-mono font-medium ${
-                                                isDark ? 'text-slate-400' : 'text-slate-500'
+                                            <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded-md ${
+                                                isDark ? 'bg-white/[0.06] text-slate-400' : 'bg-slate-100 text-slate-600'
                                             }`}>
-                                                ({regularProjects.length})
+                                                {regularProjects.length}
                                             </span>
                                         </div>
 
@@ -353,6 +375,10 @@ const Homepage = () => {
                     )}
                 </main>
             </div>
+        </div>
+
+        {/* Full-width Footer spanning 100% of the screen across the bottom */}
+        <Footer theme={theme} />
 
             {/* Modal for Creating New Project */}
             <NewProjectModal
@@ -370,6 +396,13 @@ const Homepage = () => {
                 onConfirm={handleDeleteConfirm}
                 isLoading={isDeleting}
                 theme={theme}
+            />
+
+            {/* Modal for Pricing & Upgrades */}
+            <PricingModal
+                isOpen={isPricingModalOpen}
+                onClose={() => setIsPricingModalOpen(false)}
+                user={userData}
             />
 
             {/* Bottom-right Toast Notifications */}
