@@ -1,8 +1,9 @@
 import React, { useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { FiSearch, FiPlus, FiMoon, FiSun } from 'react-icons/fi'
+import { FiSearch, FiPlus, FiMoon, FiSun, FiZap } from 'react-icons/fi'
+import { VscSparkle } from 'react-icons/vsc'
 
-const TopBar = ({ searchQuery, setSearchQuery, onOpenNewProject, theme = 'dark', toggleTheme }) => {
+const TopBar = ({ searchQuery, setSearchQuery, onOpenNewProject, onOpenPricing, theme = 'dark', toggleTheme }) => {
     const isDark = theme === 'dark'
     const inputRef = useRef(null)
 
@@ -75,6 +76,23 @@ const TopBar = ({ searchQuery, setSearchQuery, onOpenNewProject, theme = 'dark',
                     ) : (
                         <FiSun className="text-base text-amber-500" />
                     )}
+                </motion.button>
+
+                {/* Upgrade to Pro Button */}
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    onClick={onOpenPricing}
+                    title="View Pro Plans & Pricing"
+                    className={`text-xs sm:text-sm font-semibold px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border ${
+                        isDark
+                            ? 'bg-neutral-800 hover:bg-neutral-700 text-white border-neutral-700 shadow-xs'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-300 shadow-xs'
+                    }`}
+                >
+                    <FiZap className="text-sm text-amber-400" />
+                    <span>Upgrade</span>
                 </motion.button>
 
                 {/* + New Project Button */}

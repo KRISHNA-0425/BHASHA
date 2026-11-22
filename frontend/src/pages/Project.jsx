@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { toast, ToastContainer } from 'react-toastify'
+import { FiZap } from 'react-icons/fi'
 import {
   VscFiles,
   VscSearch,
@@ -22,6 +23,7 @@ import CodeEditor from '../components/editor/CodeEditor.jsx'
 import TerminalPanel from '../components/editor/TerminalPanel.jsx'
 import AIAgentPanel from '../components/editor/AIAgentPanel.jsx'
 import PreviewPanel from '../components/editor/PreviewPanel.jsx'
+import PricingModal from '../components/payment/PricingModal.jsx'
 import { buildFileMap, detectProjectKind } from '../utils/previewBuilder.js'
 import { getProjectById } from '../features/project.js'
 import {
@@ -32,7 +34,10 @@ import {
   createFile,
   updateFile,
   deleteFile,
-  deleteFolder
+  deleteFolder,
+  clearWorkspace,
+  clearTerminalDisk,
+  syncTerminalDisk
 } from '../features/management.js'
 
 /**
@@ -102,6 +107,7 @@ const findFirstFile = (nodes) => {
 }
 
 const Project = () => {
+  const navigate = useNavigate()
   const { id: projectId } = useParams()
   const { userData } = useSelector((state) => state.user)
   const userId = userData?._id || userData?.id
@@ -120,6 +126,7 @@ const Project = () => {
   const [activeActivityTab, setActiveActivityTab] = useState('explorer')
   const [workspaceView, setWorkspaceView] = useState('code') // 'code' | 'split' | 'preview'
   const [previewVersion, setPreviewVersion] = useState(0)
+  const [isPricingOpen, setIsPricingOpen] = useState(false)
 
   // Editor and File States
   const [openTabs, setOpenTabs] = useState([])
@@ -129,6 +136,7 @@ const Project = () => {
   // Refs for debounced auto-save & manual save without closure staleness
   const activeFileRef = useRef(activeFile)
   const saveTimeoutRef = useRef(null)
+  const terminalRef = useRef(null)
 
   useEffect(() => {
     activeFileRef.current = activeFile
@@ -201,6 +209,17 @@ const Project = () => {
           }
         }
 
+        // Run terminal disk-to-DB sync to detect any files created via CLI
+        try {
+          await syncTerminalDisk(projectId, userId)
+          const syncedTree = await getTree(projectId)
+          if (Array.isArray(syncedTree) && syncedTree.length > 0) {
+            tree = syncedTree
+          }
+        } catch (syncErr) {
+          console.warn("Initial terminal disk sync notice:", syncErr)
+        }
+
         if (isMounted) {
           const validTree = Array.isArray(tree) ? tree : []
           setFileTree(validTree)
@@ -244,18 +263,100 @@ const Project = () => {
   }
 
   // 4. Save logic: updates file on backend
-  const performSave = async (fileId, contentToSave) => {
+  // 4a. Path resolver & language validation
+  const getFileRelativePath = useCallback((node) => {
+    if (!node || !node.name) return ''
+    const parts = [node.name]
+    let current = node
+    let depth = 0
+    while (current.parentId && depth < 20) {
+      depth++
+      const parentIdStr = String(current.parentId)
+      if (rootFolderId && parentIdStr === String(rootFolderId)) break
+      const parent = fileTree.find((n) => String(n._id || n.id) === parentIdStr)
+      if (!parent) break
+      parts.unshift(parent.name)
+      current = parent
+    }
+    return parts.join('/')
+  }, [fileTree, rootFolderId])
+
+  const isRunnableFile = useCallback((fileNode) => {
+    if (!fileNode || !fileNode.name) return false
+    const ext = fileNode.name.split('.').pop().toLowerCase()
+    return ['py', 'pyw', 'pyi', 'c', 'cpp', 'c++', 'cc', 'cxx', 'cp', 'js', 'mjs', 'cjs', 'ts', 'java', 'go', 'rs', 'sh', 'bash'].includes(ext)
+  }, [])
+
+  // 4b. Save logic: updates file on backend and writes directly to workspace disk
+  const performSave = useCallback(async (fileId, contentToSave) => {
     if (!fileId) return
     setSaveStatus('saving')
     try {
       await updateFile(fileId, { content: contentToSave })
       setSaveStatus('saved')
+
+      // Flush to disk workspace immediately
+      if (activeFileRef.current && (activeFileRef.current._id === fileId || activeFileRef.current.id === fileId)) {
+        const relPath = getFileRelativePath(activeFileRef.current)
+        if (relPath) {
+          terminalRef.current?.saveFileToDisk(relPath, contentToSave)
+        }
+      }
     } catch (err) {
       console.error("Auto-save failed:", err)
       setSaveStatus('error')
       toast.error("Failed to save changes")
     }
-  }
+  }, [getFileRelativePath])
+
+  // 4c. Multi-language Runner: executes Python, C, C++, Node.js, etc. in integrated terminal
+  const handleRunFile = useCallback(async (targetFile = activeFile) => {
+    if (!targetFile) return
+    const fileId = targetFile._id || targetFile.id
+    const content = targetFile.content || ''
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    await performSave(fileId, content)
+
+    const relPath = getFileRelativePath(targetFile)
+    if (!relPath) return
+
+    terminalRef.current?.saveFileToDisk(relPath, content)
+
+    if (!isTerminalOpen) {
+      setIsTerminalOpen(true)
+    }
+
+    const ext = targetFile.name?.split('.').pop()?.toLowerCase()
+    let cmd = ''
+    if (ext === 'py' || ext === 'pyw' || ext === 'pyi') {
+      cmd = `python "${relPath}"`
+    } else if (ext === 'c') {
+      cmd = `gcc "${relPath}" -o output.exe; if ($?) { & .\\output.exe }`
+    } else if (ext === 'cpp' || ext === 'c++' || ext === 'cc' || ext === 'cxx' || ext === 'cp') {
+      cmd = `g++ "${relPath}" -o output.exe; if ($?) { & .\\output.exe }`
+    } else if (ext === 'js' || ext === 'mjs' || ext === 'cjs') {
+      cmd = `node "${relPath}"`
+    } else if (ext === 'ts') {
+      cmd = `npx ts-node "${relPath}"`
+    } else if (ext === 'java') {
+      const className = targetFile.name.replace(/\.java$/, '')
+      cmd = `javac "${relPath}"; if ($?) { java "${className}" }`
+    } else if (ext === 'go') {
+      cmd = `go run "${relPath}"`
+    } else if (ext === 'rs') {
+      cmd = `rustc "${relPath}" -o output.exe; if ($?) { & .\\output.exe }`
+    } else if (ext === 'sh' || ext === 'bash') {
+      cmd = `bash "${relPath}"`
+    }
+
+    if (cmd) {
+      terminalRef.current?.executeCommand(cmd)
+      toast.success(`Running ${targetFile.name} in terminal`, { duration: 2500 })
+    }
+  }, [activeFile, getFileRelativePath, isTerminalOpen, performSave])
 
   // 5. Code change in Monaco Editor: instant local state + debounced auto-save
   const handleCodeChange = (newCode) => {
@@ -378,6 +479,13 @@ const Project = () => {
         return remaining
       })
 
+      // Immediately synchronize deletion with terminal workspace disk
+      try {
+        await syncTerminalDisk(projectId, userId)
+      } catch (syncErr) {
+        console.warn("Terminal disk sync after delete notice:", syncErr)
+      }
+
       // Refresh tree
       const updatedTree = await getTree(projectId)
       setFileTree(Array.isArray(updatedTree) ? updatedTree : [])
@@ -392,6 +500,13 @@ const Project = () => {
     try {
       await deleteFolder(folderId)
       toast.success("Folder deleted successfully")
+
+      // Immediately synchronize deletion with terminal workspace disk
+      try {
+        await syncTerminalDisk(projectId, userId)
+      } catch (syncErr) {
+        console.warn("Terminal disk sync after delete folder notice:", syncErr)
+      }
 
       // Refresh tree
       const updatedTree = await getTree(projectId)
@@ -412,16 +527,60 @@ const Project = () => {
     }
   }
 
-  // 11. Refresh File Tree
-  const handleRefreshTree = async () => {
-    setIsLoadingTree(true)
+  // 11. Clear Workspace Handler (Delete All Files)
+  const handleClearWorkspace = async () => {
     try {
+      await clearWorkspace(projectId)
+      toast.success("All files deleted. Workspace cleared.")
+
+      // Clear open editor tabs and active file canvas
+      setOpenTabs([])
+      setActiveFile(null)
+
+      // Purge terminal workspace disk directly
+      try {
+        await clearTerminalDisk(projectId)
+        terminalRef.current?.clearWorkspaceDisk()
+      } catch (diskErr) {
+        console.warn("Terminal disk clear notice:", diskErr)
+      }
+
+      // Re-sync with terminal disk to ensure full clean state
+      try {
+        await syncTerminalDisk(projectId, userId)
+      } catch (syncErr) {
+        console.warn("Terminal sync notice:", syncErr)
+      }
+
+      // Refresh file tree
       const updatedTree = await getTree(projectId)
       setFileTree(Array.isArray(updatedTree) ? updatedTree : [])
-      toast.info("Workspace file tree refreshed")
+      setPreviewVersion((v) => v + 1)
+    } catch (err) {
+      console.error("Error clearing workspace:", err)
+      toast.error(err.response?.data?.message || "Failed to clear workspace")
+    }
+  }
+
+  // 12. Refresh File Tree
+  const handleRefreshTree = async (showToast = true) => {
+    setIsLoadingTree(true)
+    try {
+      try {
+        await syncTerminalDisk(projectId, userId)
+      } catch (e) {
+        console.warn("Terminal disk sync notice:", e)
+      }
+      const updatedTree = await getTree(projectId)
+      setFileTree(Array.isArray(updatedTree) ? updatedTree : [])
+      if (showToast) {
+        toast.info("Workspace file tree refreshed")
+      }
     } catch (err) {
       console.error("Failed to refresh file tree:", err)
-      toast.error("Failed to refresh workspace")
+      if (showToast) {
+        toast.error("Failed to refresh workspace")
+      }
     } finally {
       setIsLoadingTree(false)
     }
@@ -594,21 +753,44 @@ const Project = () => {
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setWorkspaceView((curr) => (curr === 'code' ? 'split' : curr))
-              setPreviewVersion((v) => v + 1)
-            }}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/[0.12] text-xs font-mono transition-all cursor-pointer shadow-xs"
-          >
-            <VscPlay className="text-xs text-emerald-400" />
-            <span>Run Preview</span>
-          </button>
+          {activeFile && isRunnableFile(activeFile) ? (
+            <button
+              type="button"
+              onClick={() => handleRunFile(activeFile)}
+              title={`Run ${activeFile.name} in Integrated Terminal`}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-medium transition-all cursor-pointer shadow-xs active:scale-95"
+            >
+              <VscPlay className="text-xs text-emerald-400 fill-current" />
+              <span>Run {activeFile.name}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setWorkspaceView((curr) => (curr === 'code' ? 'split' : curr))
+                setPreviewVersion((v) => v + 1)
+              }}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/[0.12] text-xs font-mono transition-all cursor-pointer shadow-xs"
+            >
+              <VscPlay className="text-xs text-emerald-400" />
+              <span>Run Preview</span>
+            </button>
+          )}
         </div>
 
-        {/* Right: Panel Toggles */}
+        {/* Right: Panel Toggles & Upgrade */}
         <div className="flex items-center gap-1.5">
+          {/* Upgrade to Pro Button */}
+          <button
+            type="button"
+            onClick={() => navigate('/payment')}
+            title="View Pro Plans & Pricing"
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-xs font-medium transition-all cursor-pointer shadow-xs active:scale-95 mr-1"
+          >
+            <FiZap className="text-xs text-amber-400" />
+            <span>Upgrade</span>
+          </button>
+
           {/* Toggle File Explorer */}
           <button
             onClick={() => setIsSidebarOpen((prev) => !prev)}
@@ -734,6 +916,7 @@ const Project = () => {
               onCreateFolder={handleCreateFolder}
               onDeleteFile={handleDeleteFile}
               onDeleteFolder={handleDeleteFolder}
+              onClearWorkspace={handleClearWorkspace}
               onRefreshTree={handleRefreshTree}
               projectName={project?.name || 'workspace'}
               rootFolderId={rootFolderId}
@@ -760,6 +943,7 @@ const Project = () => {
                   onSelectTab={(tab) => selectFileWithContent(tab)}
                   onCloseTab={handleCloseTab}
                   onCodeChange={handleCodeChange}
+                  onRunFile={handleRunFile}
                   saveStatus={saveStatus}
                   projectName={project?.name || 'workspace'}
                 />
@@ -781,12 +965,14 @@ const Project = () => {
 
           {/* Bottom Terminal Panel */}
           <TerminalPanel
+            ref={terminalRef}
             isOpen={isTerminalOpen}
             onClose={() => setIsTerminalOpen(false)}
             isMaximized={isTerminalMaximized}
             onToggleMaximize={() => setIsTerminalMaximized((prev) => !prev)}
             projectId={projectId}
             userId={userId}
+            onRefreshTree={handleRefreshTree}
           />
         </div>
 
@@ -802,6 +988,13 @@ const Project = () => {
             setWorkspaceView('split')
             setPreviewVersion((v) => v + 1)
           }}
+        />
+
+        {/* Pricing & Subscription Modal */}
+        <PricingModal
+          isOpen={isPricingOpen}
+          onClose={() => setIsPricingOpen(false)}
+          user={userData}
         />
       </div>
     </div>
