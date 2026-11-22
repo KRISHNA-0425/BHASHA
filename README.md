@@ -1039,22 +1039,22 @@ flowchart TD
     subgraph ExecutionDock["2. Integrated Terminal Dispatch"]
         D & E --> F["setIsTerminalOpen(true)"]
         F --> G{"Target Language Detector"}
-        G -->|Python .py| H["python 'path/test.py'"]
-        G -->|C .c| I["gcc 'path/main.c' -o output.exe; if ($?) { .\\output.exe }"]
-        G -->|C++ .cpp| J["g++ 'path/main.cpp' -o output.exe; if ($?) { .\\output.exe }"]
-        G -->|Node.js .js| K["node 'path/index.js'"]
-        G -->|TypeScript .ts| L["npx ts-node 'path/main.ts'"]
-        G -->|Java .java| M["javac 'path/Main.java'; if ($?) { java Main }"]
+        G -->|Python .py| H["python path/test.py"]
+        G -->|C .c| I["gcc path/main.c -o output.exe && ./output.exe"]
+        G -->|C++ .cpp| J["g++ path/main.cpp -o output.exe && ./output.exe"]
+        G -->|Node.js .js| K["node path/index.js"]
+        G -->|TypeScript .ts| L["npx ts-node path/main.ts"]
+        G -->|Java .java| M["javac path/Main.java && java Main"]
     end
 
     subgraph TerminalPTY["3. Native PTY Process Execution"]
         H & I & J & K & L & M --> N["node-pty (PowerShell / Bash)"]
         N --> O["Live Streaming stdout / stderr (xterm.js)"]
-        N --> P["Interactive stdin (input(), cin, scanf)"]
+        N --> P["Interactive stdin: input, cin, scanf"]
     end
 
     subgraph Shielding["4. Build Artifact Shielding"]
-        N -.->|Generates __pycache__, .exe, .o| Q[Disk Workspace]
+        N -.->|Generates build artifacts| Q[Disk Workspace]
         Q -->|Filtered by IGNORED_NAMES & IGNORED_EXTENSIONS| R[MongoDB Sync Engine]
         R -->|Clean File Tree| S[Explorer Sidebar Untouched]
     end
@@ -1099,22 +1099,22 @@ sequenceDiagram
     participant UI as CodeEditor / TopBar
     participant Mgmt as Management Service (Port 8003)
     participant Term as Terminal Service (Port 8005)
-    participant Disk as %TEMP%/BHASHA-AI (Disk)
-    participant PTY as PowerShell / Bash PTY
+    participant Disk as Disk Cache (%TEMP%)
+    participant PTY as Native PTY (PowerShell / Bash)
     participant Xterm as Xterm.js Terminal Dock
 
-    Dev->>UI: Click '▶ Run [filename]' (e.g. test.c++, test.py, test.c)
-    UI->>Mgmt: PUT /updateFile/:id (Immediate flush to MongoDB)
-    UI->>Term: WS emit('file-saved', { relPath, content })
+    Dev->>UI: Click Run Action (e.g. test.py, main.cpp, main.c)
+    UI->>Mgmt: PUT /updateFile/:id (Flush to MongoDB)
+    UI->>Term: WS emit file-saved (relPath, content)
     Term->>Disk: fs.writeFile(fullPath, content)
-    UI->>Term: WS emit('terminal-write', cmd + '\r')
-    Note over Term,PTY: Invokes runtime or compiler:<br/>Python: python "test.py"<br/>C++: g++ "test.c++" -o output.exe; if ($?) { & .\output.exe }<br/>C: gcc "test.c" -o output.exe; if ($?) { & .\output.exe }<br/>Node: node "index.js"
+    UI->>Term: WS emit terminal-write with execution command
+    Note over Term,PTY: Invokes runtime or compiler<br/>Python: python test.py<br/>C/C++: g++ main.cpp -o output.exe<br/>Node: node index.js
     Term->>PTY: Write formatted command to shell stdin
-    PTY->>Disk: Read source file & compile
+    PTY->>Disk: Read source file and compile
     PTY->>Disk: Emit output.exe (Shielded from DB sync)
-    PTY-->>Term: Stream stdout / stderr (ANSI color chunks)
-    Term-->>Xterm: WS emit('terminalData', data)
-    Xterm-->>Dev: Live ANSI output display (Supports input() / cin / Ctrl+C)
+    PTY-->>Term: Stream stdout / stderr ANSI color chunks
+    Term-->>Xterm: WS emit terminalData stream
+    Xterm-->>Dev: Live ANSI output display with interactive stdin
 ```
 
 ---
