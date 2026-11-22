@@ -36,7 +36,67 @@
 
 ## 📌 Project Overview
 
-**BHASHA AI-IDE** is an end-to-end cloud development environment designed to provide developers with a lightweight, browser-based coding platform coupled with an agentic AI pair programmer. Rather than a monolithic backend, the platform is architected as decoupled microservices routed through a high-performance Express reverse proxy API Gateway, backed by MongoDB Atlas, LangGraph, and OpenRouter LLMs.
+**BHASHA AI-IDE** is an end-to-end cloud development environment designed to provide developers with a lightweight, browser-based coding platform coupled with an agentic AI pair programmer. Rather than a monolithic backend, the platform is architected as decoupled microservices routed through a high-performance Express reverse proxy API Gateway, backed by MongoDB Atlas, Redis, LangGraph, and OpenRouter LLMs.
+
+---
+
+## 🗺️ Complete Website User Journey & Flow
+
+The following flow diagram illustrates the complete end-to-end user experience, navigation pathways, and operational stages across the entire BHASHA web platform:
+
+```mermaid
+flowchart TD
+    subgraph Onboarding["1. User Entry & Onboarding"]
+        VISITOR["New / Returning Visitor"] --> ENTRY{"Has Active Session Cookie?"}
+        ENTRY -->|No| AUTH_VIEW["Auth Gate (/login & /register)"]
+        AUTH_VIEW --> LOGIN_ACTION["Local Email/Password Login"]
+        AUTH_VIEW --> GOOGLE_ACTION["Google OAuth 2.0 (Firebase)"]
+        LOGIN_ACTION --> VERIFY_AUTH["Auth Microservice (:8001)<br/>JWT Sign + Redis Session"]
+        GOOGLE_ACTION --> VERIFY_AUTH
+        ENTRY -->|Yes| DASHBOARD
+    end
+
+    subgraph Dashboard["2. Cloud Dashboard Experience (/home)"]
+        VERIFY_AUTH --> DASHBOARD["Workspace Dashboard"]
+        DASHBOARD --> PROJECT_LIST["Project Explorer Grid<br/>All & Starred Workspaces"]
+        DASHBOARD --> SEARCH_BAR["Filter & Fuzzy Search (⌘K)"]
+        DASHBOARD --> NEW_MODAL["Create Workspace Modal"]
+        DASHBOARD --> LIKE_TOGGLE["Star / Favorite Toggle"]
+        DASHBOARD --> THEME_TOGGLE["Theme Toggle (Dark / Light)"]
+        DASHBOARD --> FOOTER["Full-Width Responsive Footer<br/>Status, Docs, Privacy, Terms"]
+    end
+
+    subgraph WorkspaceIDE["3. Full-Stack Workspace IDE (/project/:id)"]
+        PROJECT_LIST -->|Select Project| IDE_CORE["Monaco Editor Workspace"]
+        NEW_MODAL -->|Confirm Creation| IDE_CORE
+
+        IDE_CORE --> MONACO["Monaco Editor Engine<br/>Multi-tab, Syntax, Auto-save"]
+        IDE_CORE --> FILE_TREE["Virtual File Explorer Tree<br/>Create, Rename, Delete Files"]
+        IDE_CORE --> TERMINAL["Interactive Virtual Terminal<br/>Xterm.js + PTY Stdin/Stdout"]
+        IDE_CORE --> RUNNER["Multi-Language Runner<br/>C, C++, Python, Java, Node.js"]
+        IDE_CORE --> PREVIEW["Dual-Engine Live Preview<br/>Static HTML/CSS/JS + React/Vite"]
+        IDE_CORE --> AI_AGENT["Autonomous LangGraph Agent<br/>SSE Stream, Multi-File Tools"]
+    end
+
+    subgraph Monetization["4. Billing & Subscription Tier (/payment)"]
+        DASHBOARD -.->|Click Upgrade| PRICING_PAGE["Dedicated Pricing Page (/payment)"]
+        IDE_CORE -.->|Click Upgrade| PRICING_MODAL["In-Workspace Pricing Modal"]
+        PRICING_PAGE --> SELECT_PLAN{"Choose Subscription Plan"}
+        PRICING_MODAL --> SELECT_PLAN
+
+        SELECT_PLAN -->|Starter| FREE_TIER["Starter Tier (Free forever, 5 projects)"]
+        SELECT_PLAN -->|Pro Monthly / Yearly| RZP_FLOW["Razorpay Secure Checkout Modal<br/>UPI, Cards, NetBanking"]
+        RZP_FLOW --> VERIFY_PAYMENT["Payment Service (:8006)<br/>HMAC-SHA256 Signature Verification"]
+        VERIFY_PAYMENT --> PRO_ACTIVE["Pro Subscription Activated<br/>Unlimited Workspaces + Priority AI"]
+    end
+
+    subgraph Auxiliary["5. Auxiliary & Informational Pages"]
+        FOOTER --> PRIVACY_PAGE["Privacy Policy (/privacy)"]
+        FOOTER --> GITHUB_REPO["GitHub Repository & Docs"]
+        VISITOR -.->|Invalid Route| 404_PAGE["Animated Custom 404 Page (NotFound)"]
+        404_PAGE -->|Return| DASHBOARD
+    end
+```
 
 ---
 
@@ -56,63 +116,124 @@
 
 ## 🏗️ System Architecture
 
+BHASHA AI-IDE is organized into three decoupled layers: **Client SPA Tier**, **API Ingress Controller (Gateway)**, and **Microservice Compute Cluster**, integrated with persistent NoSQL/cache databases and external developer APIs.
+
+### 1. High-Level Ingress & Microservices Topology
+
 ```mermaid
 flowchart TD
     subgraph Client["🖥️ Frontend Client (Port 5173)"]
         UI["React 19 SPA + Vite"]
         DASH["Dashboard & Projects View"]
         IDE["Workspace (/project/:id)"]
-        MONACO["Monaco Editor"]
-        XTERM["Xterm.js Terminal"]
-        EXPLORER["File Explorer Tree"]
-        AGENT_PANEL["AI Agent Chat & Actions"]
+        MONACO["Monaco Editor Core"]
+        XTERM["Xterm.js Terminal Dock"]
+        EXPLORER["File Explorer Sidebar"]
+        AGENT_PANEL["LangGraph AI Agent Panel"]
+        PREVIEW_SANDBOX["Dual Live Preview Sandbox"]
+        PAYMENT_VIEW["Payment & Pricing View (/payment)"]
     end
 
     subgraph Gateway["🚪 API Gateway (Port 3000)"]
-        PROXY["Express Reverse Proxy"]
-        AUTH_MW["isAuth Middleware & Header Decorator"]
+        PROXY["Express Reverse Proxy Engine"]
+        CORS_MW["CORS & Cookie Parser"]
+        AUTH_MW["isAuth Middleware & Header Decorator<br/>(x-user-id, x-user-email)"]
+        STREAM_GUARD["Stream Pass-Through Guard<br/>(parseReqBody: false)"]
     end
 
-    subgraph Microservices["⚙️ Backend Microservices"]
-        AUTH_SVC["Auth Service (Port 8001)<br/>JWT, Firebase, Users"]
-        PROJ_SVC["Project Service (Port 8002)<br/>Workspaces, Stars, Metadata"]
-        MGMT_SVC["Management Service (Port 8003)<br/>File Tree, Nested CRUD, buildTree"]
-        AI_SVC["AI Service (Port 8004)<br/>LangGraph, OpenRouter, Tools"]
-        TERM_SVC["Terminal Service (Port 8005)<br/>Socket.IO, node-pty, Disk Sync"]
+    subgraph Microservices["⚙️ Backend Microservice Cluster"]
+        AUTH_SVC["Auth Service (Port 8001)<br/>JWT, Bcrypt, Firebase Admin, Users"]
+        PROJ_SVC["Project Service (Port 8002)<br/>Workspaces, Stars, Metadata, Redis Cache"]
+        MGMT_SVC["Management Service (Port 8003)<br/>Virtual Filesystem, buildTree, Cascade Deletion"]
+        AI_SVC["AI Service (Port 8004)<br/>LangGraph StateGraph, Tools, SSE Stream"]
+        TERM_SVC["Terminal Service (Port 8005)<br/>Socket.IO, node-pty, Disk Sync, Multi-Runner"]
+        PAY_SVC["Payment Service (Port 8006)<br/>Razorpay SDK, HMAC-SHA256, Subscriptions"]
     end
 
     subgraph HostSystem["💻 Host Operating System"]
-        SHELL["PowerShell.exe / Bash<br/>Native PTY Process"]
+        SHELL["PowerShell.exe / /bin/bash<br/>Native PTY Child Process"]
         DISK_WS[("OS Temp Disk Cache<br/>%TEMP%/BHASHA-AI/:projectId")]
     end
 
-    subgraph Storage["🗄️ Databases & External APIs"]
+    subgraph Storage["🗄️ Databases & External Cloud APIs"]
         MONGO_DB[("MongoDB Atlas<br/>Multi-Tenant Collections")]
-        REDIS_CACHE[("Redis Cache<br/>Session Store & Tokens")]
-        OPENROUTER["OpenRouter API<br/>Free Tier Router"]
+        REDIS_CACHE[("Redis Cache<br/>Session Store & Project Cache")]
+        OPENROUTER["OpenRouter API<br/>Zero-Cost LLM Model Ladder"]
+        RAZORPAY["Razorpay Payment Gateway<br/>Orders & Cryptographic Webhooks"]
     end
 
-    UI -->|HTTP / Axios| PROXY
-    XTERM <-->|WebSockets (Socket.IO)| TERM_SVC
-    PROXY --> AUTH_MW
+    %% Client Routing
+    UI -->|HTTP REST / Axios| PROXY
+    XTERM <-->|WebSockets - Socket.IO| TERM_SVC
+    PAYMENT_VIEW -->|Razorpay Checkout SDK| RAZORPAY
+
+    %% Gateway Routing
+    PROXY --> CORS_MW --> STREAM_GUARD --> AUTH_MW
     AUTH_MW -->|/api/auth/*| AUTH_SVC
     AUTH_MW -->|/api/project/*| PROJ_SVC
     AUTH_MW -->|/api/management/*| MGMT_SVC
     AUTH_MW -->|/api/ai/*| AI_SVC
     AUTH_MW -->|/api/terminal/*| TERM_SVC
+    AUTH_MW -->|/api/payment/*| PAY_SVC
 
+    %% Service to Storage & Dependencies
     AUTH_SVC --> MONGO_DB
     AUTH_SVC --> REDIS_CACHE
     PROJ_SVC --> MONGO_DB
+    PROJ_SVC --> REDIS_CACHE
     MGMT_SVC --> MONGO_DB
+    PAY_SVC --> MONGO_DB
+    PAY_SVC <-->|Orders & Webhooks| RAZORPAY
+
+    %% Inter-Service Communication
     TERM_SVC --> MONGO_DB
     TERM_SVC -->|GET /api/management/tree| MGMT_SVC
     TERM_SVC -->|POST createFile / createFolder / updateFile| MGMT_SVC
-    TERM_SVC <-->|Two-Way Disk Sync (syncDiskToDb / writeNode)| DISK_WS
+    TERM_SVC <-->|Two-Way Disk Sync| DISK_WS
     TERM_SVC <-->|pty.spawn stdio stream| SHELL
     AI_SVC -->|fetchFileApi HTTP Client| MGMT_SVC
     AI_SVC --> MONGO_DB
     AI_SVC --> OPENROUTER
+```
+
+### 2. Multi-Service Data Lifecycle & Real-Time Sync Flow
+
+```mermaid
+flowchart LR
+    subgraph FrontendActions["Developer In-Browser Interaction"]
+        EDITS["Code Edit in Monaco"]
+        TERMINAL_CMD["Terminal Input (npm, gcc, python)"]
+        AI_PROMPT["AI Agent Refactor Prompt"]
+        CHECKOUT["Pro Plan Upgrade"]
+    end
+
+    subgraph IngressGateway["Ingress Layer (:3000)"]
+        GW["API Gateway<br/>Auth Header Injection"]
+    end
+
+    subgraph ServiceMesh["Microservices Mesh"]
+        MGMT["Management Service (:8003)"]
+        TERM["Terminal Service (:8005)"]
+        AI["AI Service (:8004)"]
+        PAY["Payment Service (:8006)"]
+    end
+
+    subgraph Persistence["Storage & Execution Target"]
+        DB[("MongoDB Atlas Record")]
+        DISK[("Host Disk Cache (%TEMP%)")]
+        LLM["OpenRouter LLM"]
+        RZP["Razorpay Gateway"]
+    end
+
+    %% Flows
+    EDITS -->|Auto-save PUT /updateFile| GW --> MGMT --> DB
+    EDITS -.->|Socket.IO file-saved| TERM --> DISK
+    TERMINAL_CMD -->|Keystrokes| TERM --> DISK
+    DISK -.->|syncDiskToDb Background Crawl| TERM -->|Sync New Files| MGMT --> DB
+    AI_PROMPT -->|SSE Stream /chat| GW --> AI --> LLM
+    AI -->|Tool Call: create_file / update_file| MGMT --> DB
+    CHECKOUT -->|POST /create-order| GW --> PAY --> RZP
+    RZP -.->|Signature Verification| PAY --> DB
 ```
 
 ---
@@ -157,7 +278,9 @@ backend/
     ├── auth/             # Authentication & User Management (Port 8001)
     ├── project/          # Project Workspaces & Metadata (Port 8002)
     ├── management/       # Virtual Filesystem & Directory Trees (Port 8003)
-    └── AI/               # LangGraph Autonomous Agent & LLM Tools (Port 8004)
+    ├── AI/               # LangGraph Autonomous Agent & LLM Tools (Port 8004)
+    ├── terminal/         # Interactive Terminal & Real-Time Sync (Port 8005)
+    └── payment/          # Monetization & Razorpay Payment Service (Port 8006)
 ```
 
 ### 1. API Gateway (`backend/gateway`)
@@ -174,8 +297,160 @@ The central ingress controller for the entire architecture.
     - `/api/auth` ➔ `AUTH_SERVICE` (8001)
     - `/api/project` ➔ `PROJECT_SERVICE` (8002)
     - `/api/management` ➔ `MANAGEMENT_SERVICE` (8003)
+    - `/api/ai` ➔ `AI_SERVICE` (8004)
+    - `/api/terminal` ➔ `TERMINAL_SERVICE` (8005)
+    - `/api/payment` ➔ `PAYMENT_SERVICE` (8006)
 
-### 2. Management Microservice (`backend/services/management`)
+#### 🔄 API Gateway Ingress & Request Pipeline Flow
+```mermaid
+flowchart TD
+    REQ["Incoming HTTP / SSE Client Request"] --> CORS["CORS Middleware<br/>origin: FRONTEND_URL, credentials: true"]
+    CORS --> LOG["Morgan Logger & Cookie Parser"]
+    LOG --> ROUTE_CHECK{"Is Route Public or Protected?"}
+    
+    ROUTE_CHECK -->|Public Route<br/>/api/auth/login, /register, /google-login<br/>/api/payment/plans, /webhook| PROXY_DISPATCH
+    
+    ROUTE_CHECK -->|Protected Route<br/>/api/project/*, /api/management/*<br/>/api/ai/*, /api/terminal/*, /api/payment/*| AUTH_GUARD["isAuth Middleware<br/>Extract token from Cookie or Bearer"]
+    
+    AUTH_GUARD --> VERIFY_TOKEN{"jwt.verify(token, JWT_SECRET)"}
+    VERIFY_TOKEN -->|Invalid or Expired| ERR_401["Return 401 Unauthorized<br/>{ message: 'Authentication required' }"]
+    
+    VERIFY_TOKEN -->|Valid Token| DECORATE["Inject Identity Headers<br/>x-user-id = decoded.id<br/>x-user-email = decoded.email"]
+    
+    DECORATE --> PROXY_DISPATCH{"Express HTTP Proxy Router"}
+    
+    PROXY_DISPATCH -->|/api/auth/*| AUTH_UP["Auth Service (:8001)"]
+    PROXY_DISPATCH -->|/api/project/*| PROJ_UP["Project Service (:8002)"]
+    PROXY_DISPATCH -->|/api/management/*| MGMT_UP["Management Service (:8003)"]
+    PROXY_DISPATCH -->|/api/ai/* - SSE Stream| AI_UP["AI Agent Service (:8004)"]
+    PROXY_DISPATCH -->|/api/terminal/*| TERM_UP["Terminal Service (:8005)"]
+    PROXY_DISPATCH -->|/api/payment/*| PAY_UP["Payment Service (:8006)"]
+```
+
+---
+
+### 2. Authentication Microservice (`backend/services/auth`)
+Responsible for identity lifecycle, credential verification, and session persistence.
+- **Port**: `8001`
+- **Core Technologies**: `bcryptjs`, `jsonwebtoken`, `firebase-admin`, `redis`, `mongoose`.
+- **Key Features**:
+  - **Local Credentials**: Safe registration with 10-round bcrypt password hashing and uniqueness validation.
+  - **Google OAuth 2.0 Integration**: Verifies Firebase Google ID tokens via `firebaseAdmin.auth().verifyIdToken()`, creating or updating user profiles dynamically.
+  - **JWT Session Issuance**: Issues tamper-evident 7-day signed JSON Web Tokens stored in `httpOnly` cookies.
+  - **Redis Session Caching**: In-memory caching for `GET /api/auth/user` reducing MongoDB query load.
+
+#### 🔐 Authentication & Session Lifecycle Flow
+```mermaid
+flowchart TD
+    subgraph Ingress["Client Authentication Request"]
+        LOCAL_LOGIN["POST /api/auth/login<br/>{ email, password }"]
+        LOCAL_REG["POST /api/auth/register<br/>{ username, email, password }"]
+        GOOGLE_LOGIN["POST /api/auth/google-login<br/>{ idToken }"]
+        GET_USER["GET /api/auth/user<br/>Cookie: token"]
+        LOGOUT["POST /api/auth/logout"]
+    end
+
+    subgraph AuthLogic["Auth Service Engine (:8001)"]
+        LOCAL_REG --> HASH["bcrypt.hash(password, 10)"]
+        HASH --> CREATE_USER["Create User Document in MongoDB"]
+        
+        LOCAL_LOGIN --> FIND_USER["User.findOne({ email })"]
+        FIND_USER --> BCRYPT_COMPARE{"bcrypt.compare(password, hash)"}
+        BCRYPT_COMPARE -->|Mismatch| ERR_CRED["400 Invalid Credentials"]
+        
+        GOOGLE_LOGIN --> FB_VERIFY{"firebaseAdmin.auth().verifyIdToken(idToken)"}
+        FB_VERIFY -->|Valid| UPSERT_USER["Upsert User by Google UID/Email"]
+        
+        CREATE_USER --> SIGN_JWT["jwt.sign({ id, email }, JWT_SECRET, { expiresIn: '7d' })"]
+        BCRYPT_COMPARE -->|Match| SIGN_JWT
+        UPSERT_USER --> SIGN_JWT
+        
+        SIGN_JWT --> SET_COOKIE["res.cookie('token', token, { httpOnly: true, sameSite: 'lax' })"]
+        SET_COOKIE --> CACHE_SESSION["redisClient.setEx('user:' + id, 86400, userData)"]
+        
+        GET_USER --> CHECK_CACHE{"Redis Cache Hit?"}
+        CHECK_CACHE -->|Yes| RETURN_CACHED["Return Cached User Payload"]
+        CHECK_CACHE -->|No| QUERY_MONGO["User.findById(userId) -> Cache in Redis"]
+        
+        LOGOUT --> CLEAR_COOKIE["res.clearCookie('token')"]
+        LOGOUT --> DEL_CACHE["redisClient.del('user:' + id)"]
+    end
+
+    subgraph Storage["Databases"]
+        MONGO_USER[("MongoDB Atlas<br/>Users Collection")]
+        REDIS_STORE[("Redis Store<br/>Session Cache")]
+    end
+
+    CREATE_USER --> MONGO_USER
+    FIND_USER --> MONGO_USER
+    UPSERT_USER --> MONGO_USER
+    QUERY_MONGO --> MONGO_USER
+    CACHE_SESSION --> REDIS_STORE
+    DEL_CACHE --> REDIS_STORE
+```
+
+---
+
+### 3. Project Microservice (`backend/services/project`)
+Responsible for project workspace management, metadata indexing, favorites/starring, and workspace lifecycle hooks.
+- **Port**: `8002`
+- **Core Technologies**: `express`, `mongoose`, `redis`, `axios`.
+- **Key Features**:
+  - **Workspace Provisioning**: Creates workspace records and invokes the Management Service to automatically scaffold the root project directory.
+  - **High-Performance Caching**: Caches user project listings in Redis (`projects-${userId}`) with automatic invalidation on any write, edit, like, or delete.
+  - **Favorite / Star Toggle**: `PATCH /api/project/like/:id` updates MongoDB array `$push` / `$pull` atomically.
+  - **Safe Cascading Deletion**: Flags project as `isDeleted: true` and coordinates sub-tree purging.
+
+#### 📁 Project Management & Cache Invalidation Flow
+```mermaid
+flowchart TD
+    subgraph ClientRequests["Project CRUD Operations"]
+        CREATE_PROJ["POST /api/project/create<br/>{ title, description, tags, isPublic }"]
+        LIST_PROJS["GET /api/project/all<br/>Header: x-user-id"]
+        GET_PROJ["GET /api/project/project/:id"]
+        LIKE_PROJ["PATCH /api/project/like/:id"]
+        DEL_PROJ["DELETE /api/project/delete/:id"]
+    end
+
+    subgraph ProjectEngine["Project Service Engine (:8002)"]
+        CREATE_PROJ --> SAVE_PROJ["Project.create({ owner: userId, title, ... })"]
+        SAVE_PROJ --> INIT_ROOT["Call Management Service<br/>POST /createRootFolder"]
+        
+        LIST_PROJS --> CHECK_REDIS{"Redis Key<br/>projects-{userId} exists?"}
+        CHECK_REDIS -->|Hit| RETURN_CACHE["Return Cached JSON Projects"]
+        CHECK_REDIS -->|Miss| QUERY_PROJS["Project.find({ owner: userId })<br/>.sort({ updatedAt: -1 })"]
+        QUERY_PROJS --> STORE_REDIS["redisClient.setEx('projects-' + userId, 300, projects)"]
+        
+        LIKE_PROJ --> TOGGLE_LIKE{"Is userId in project.likes array?"}
+        TOGGLE_LIKE -->|Present| PULL_LIKE["Project.findByIdAndUpdate<br/>$pull: { likes: userId }"]
+        TOGGLE_LIKE -->|Absent| PUSH_LIKE["Project.findByIdAndUpdate<br/>$push: { likes: userId }"]
+        
+        DEL_PROJ --> VERIFY_OWNER{"project.owner === userId?"}
+        VERIFY_OWNER -->|Yes| SOFT_DEL["Project.findByIdAndUpdate<br/>{ isDeleted: true }"]
+        SOFT_DEL --> CASCADE_PURGE["Notify Management & Terminal Services<br/>Clear workspace data & disk"]
+        
+        SAVE_PROJ & PULL_LIKE & PUSH_LIKE & SOFT_DEL --> INVALIDATE["Invalidate Redis Cache<br/>DEL 'projects-' + userId"]
+    end
+
+    subgraph Persistence["Storage & External Services"]
+        MONGO_PROJ[("MongoDB Atlas<br/>Projects Collection")]
+        REDIS_CACHE[("Redis Key-Value Cache")]
+        MGMT_SERVICE["Management Service (:8003)"]
+    end
+
+    SAVE_PROJ --> MONGO_PROJ
+    QUERY_PROJS --> MONGO_PROJ
+    PULL_LIKE --> MONGO_PROJ
+    PUSH_LIKE --> MONGO_PROJ
+    SOFT_DEL --> MONGO_PROJ
+    STORE_REDIS --> REDIS_CACHE
+    INVALIDATE --> REDIS_CACHE
+    INIT_ROOT --> MGMT_SERVICE
+```
+
+---
+
+### 4. Management Microservice (`backend/services/management`)
 Responsible for modeling, storing, and organizing nested project filesystems.
 - **Port**: `8003`
 - **Database Model (`File` Schema)**:
@@ -196,7 +471,57 @@ Responsible for modeling, storing, and organizing nested project filesystems.
 - **Cascade Deletion**:
   - `deleteFolder` iteratively resolves all nested child folder and file IDs across arbitrary tree depths and soft-deletes the entire sub-tree atomically.
 
-### 3. AI Agent Microservice (`backend/services/AI`)
+#### 🗂️ Virtual Filesystem & Recursive Tree Flow
+```mermaid
+flowchart TD
+    subgraph Requests["Filesystem Operations"]
+        ROOT_REQ["POST /createRootFolder"]
+        FOLDER_REQ["POST /createFolder"]
+        FILE_REQ["POST /createFile"]
+        UPDATE_REQ["PUT /updateFile/:id"]
+        TREE_REQ["GET /tree/:projectId"]
+        DEL_FILE_REQ["DELETE /deleteFile/:id"]
+        DEL_FOLDER_REQ["DELETE /deleteFolder/:id"]
+    end
+
+    subgraph MgmtCore["Management Core Engine (:8003)"]
+        ROOT_REQ --> CREATE_ROOT["Create root Document<br/>parentId = null, type = 'folder'"]
+        
+        FOLDER_REQ --> CHECK_UNIQUE_DIR{"Unique Index Check<br/>(projectId, parentId, name)"}
+        CHECK_UNIQUE_DIR -->|Unique| INSERT_DIR["File.create({ type: 'folder', ... })"]
+        CHECK_UNIQUE_DIR -->|Duplicate| ERR_DIR["400 Directory already exists"]
+
+        FILE_REQ --> CHECK_UNIQUE_FILE{"Unique Index Check<br/>(projectId, parentId, name)"}
+        CHECK_UNIQUE_FILE -->|Unique| INSERT_FILE["File.create({ type: 'file', content, language })"]
+        
+        UPDATE_REQ --> ATOMIC_UPDATE["File.findByIdAndUpdate(id, { content, name, language, updatedAt })"]
+        
+        TREE_REQ --> FETCH_ACTIVE["File.find({ projectId, isDeleted: false })"]
+        FETCH_ACTIVE --> BUILD_TREE["buildTree(items)<br/>1. Map ID -> Node<br/>2. Link child to parent.children<br/>3. Sort folders first alphabetically"]
+        BUILD_TREE --> RETURN_TREE["Return nested JSON Tree"]
+        
+        DEL_FILE_REQ --> SOFT_DEL_FILE["File.findByIdAndUpdate(id, { isDeleted: true })"]
+        
+        DEL_FOLDER_REQ --> RECURSIVE_GATHER["Recursively traverse child IDs<br/>Collect all nested folders & files"]
+        RECURSIVE_GATHER --> BULK_SOFT_DEL["File.updateMany({ _id: { $in: allIds } }, { isDeleted: true })"]
+    end
+
+    subgraph MongoDBLayer["MongoDB Storage"]
+        FILE_COLL[("Files Collection<br/>Self-referencing parentId hierarchy")]
+    end
+
+    CREATE_ROOT --> FILE_COLL
+    INSERT_DIR --> FILE_COLL
+    INSERT_FILE --> FILE_COLL
+    ATOMIC_UPDATE --> FILE_COLL
+    FETCH_ACTIVE --> FILE_COLL
+    SOFT_DEL_FILE --> FILE_COLL
+    BULK_SOFT_DEL --> FILE_COLL
+```
+
+---
+
+### 5. AI Agent Microservice (`backend/services/AI`)
 Responsible for intelligent pair-programming, automated workspace scaffolding, and code editing over real-time SSE streaming.
 - **Port**: `8004`
 - **Engine**: LangGraph state machine powered by `@langchain/openrouter` with safe `ToolMessage`-aware context window trimming (`maxMessage = 30`).
@@ -213,7 +538,58 @@ Responsible for intelligent pair-programming, automated workspace scaffolding, a
 - **Internal API Client (`fetchFileApi.js`)**:
   - Provides reliable inter-service HTTP communication directly to the Management Service with `x-user-id` forwarding.
 
-### 4. Interactive Terminal Microservice (`backend/services/terminal`)
+#### 🤖 LangGraph Agent SSE Streaming & Tool Execution Loop
+```mermaid
+flowchart TD
+    subgraph Client["Frontend Client (AIAgentPanel.jsx)"]
+        PROMPT["Developer Prompt & Conversation History"] --> SSE_REQ["POST /api/ai/chat (SSE Stream)"]
+        SSE_REQ --> CONSUME_SSE["EventSource / ReadableStream Parser"]
+        CONSUME_SSE --> RENDER_MSG["Render Markdown Message Chunk"]
+        CONSUME_SSE --> RENDER_TOOL["Render Interactive Tool Step Card"]
+        RENDER_TOOL --> JUMP_FILE["Click Badge -> Open in Monaco"]
+    end
+
+    subgraph AIAgentSvc["AI Agent Microservice (:8004)"]
+        SSE_REQ --> INIT_SSE["Set SSE Headers<br/>Content-Type: text/event-stream<br/>Cache-Control: no-cache"]
+        INIT_SSE --> MSG_TRIM["Context Guard: trimMessages()<br/>Safe ToolMessage window trimming (max 30)"]
+        MSG_TRIM --> STATE_GRAPH["LangGraph Compiled Graph (createReactAgent)"]
+        
+        subgraph GraphLoop["LangGraph Execution Loop"]
+            STATE_GRAPH --> INVOKE_LLM["Invoke LLM (OpenRouter Free Tier Ladder)<br/>1. cohere/north-mini-code:free<br/>2. nvidia/nemotron-3-ultra-550b-a55b:free<br/>3. openrouter/free"]
+            
+            INVOKE_LLM --> HAS_TOOLS{"Model generated Tool Calls?"}
+            
+            HAS_TOOLS -->|No: Text Response| STREAM_TEXT["Emit SSE event: 'message'<br/>data: { content: chunk }"]
+            STREAM_TEXT --> END_NODE["Emit SSE event: 'done'<br/>Close Stream"]
+            
+            HAS_TOOLS -->|Yes: Tool Invocation| EMIT_TOOL_STEP["Emit SSE event: 'tool_step'<br/>data: { step: 'calling', tool: name }"]
+            EMIT_TOOL_STEP --> DISPATCH_TOOL{"Tool Router"}
+            
+            DISPATCH_TOOL -->|get_tree| EXEC_GET_TREE["fetchFileApi: GET /api/management/tree"]
+            DISPATCH_TOOL -->|get_file| EXEC_GET_FILE["fetchFileApi: GET /api/management/file/:id"]
+            DISPATCH_TOOL -->|create_folder| EXEC_CREATE_DIR["fetchFileApi: POST /createFolder"]
+            DISPATCH_TOOL -->|create_file| EXEC_CREATE_FILE["fetchFileApi: POST /createFile"]
+            DISPATCH_TOOL -->|update_file| EXEC_UPDATE_FILE["fetchFileApi: PUT /updateFile/:id"]
+            DISPATCH_TOOL -->|delete_file| EXEC_DEL_FILE["fetchFileApi: DELETE /deleteFile/:id"]
+            
+            EXEC_GET_TREE & EXEC_GET_FILE & EXEC_CREATE_DIR & EXEC_CREATE_FILE & EXEC_UPDATE_FILE & EXEC_DEL_FILE --> FEEDBACK_TOOL["Format ToolMessage result"]
+            FEEDBACK_TOOL --> EMIT_TOOL_DONE["Emit SSE event: 'tool_step'<br/>data: { step: 'completed', result }"]
+            EMIT_TOOL_DONE --> INVOKE_LLM
+        end
+    end
+
+    subgraph MgmtSvcRef["Management Service (:8003)"]
+        EXEC_GET_TREE & EXEC_GET_FILE & EXEC_CREATE_DIR & EXEC_CREATE_FILE & EXEC_UPDATE_FILE & EXEC_DEL_FILE --> MGMT_HTTP["Direct HTTP with x-user-id Header"]
+    end
+
+    STREAM_TEXT --> CONSUME_SSE
+    EMIT_TOOL_STEP --> CONSUME_SSE
+    EMIT_TOOL_DONE --> CONSUME_SSE
+```
+
+---
+
+### 6. Interactive Terminal Microservice (`backend/services/terminal`)
 Responsible for live command execution, pseudo-terminal (PTY) emulation, and real-time bidirectional project synchronization between OS disk and MongoDB.
 - **Port**: `8005`
 - **Core Technologies**: `socket.io`, `node-pty`, `axios`, `express`, `mongoose`.
@@ -361,7 +737,7 @@ flowchart TD
     end
 
     %% Flow connections
-    TERM_UI -->|Keystrokes with Enter \r| SOCK_HANDLER
+    TERM_UI -->|Keystrokes with Enter| SOCK_HANDLER
     SOCK_HANDLER -->|Write to stdin| PTY_PROC
     PTY_PROC -->|Executes npm init / touch| DISK_FILES
     SOCK_HANDLER -->|Arms timer on Enter| DEBOUNCE
@@ -493,6 +869,72 @@ sequenceDiagram
 
 ---
 
+### 7. Monetization & Payment Microservice (`backend/services/payment`)
+Responsible for platform monetization, subscription tiers, Razorpay payment processing, and cryptographic verification.
+- **Port**: `8006`
+- **Core Technologies**: `razorpay`, `crypto`, `express`, `mongoose`.
+- **Key Features**:
+  - **Authoritative Plan Catalog**: Exposes `GET /api/payment/plans` returning pricing matrices, billing intervals, token allowances, and enterprise feature lists.
+  - **Order Generation**: Creates orders via official `razorpay.orders.create` with unique timestamped receipts and paise amount calculations (e.g., ₹799 ➔ `79900`).
+  - **Cryptographic HMAC-SHA256 Verification**: Verifies payment legitimacy by computing `sha256(order_id + "|" + payment_id)` with `RAZORPAY_KEY_SECRET` and comparing using `crypto.timingSafeEqual` to eliminate timing attack vulnerabilities.
+  - **Subscription Lifecycle Management**: Updates user records upon successful payment, provisioning 1,000,000 AI tokens, unlimited project slots, and 30-day/365-day billing period calculations.
+  - **Asynchronous Webhook Processing**: Listens for Razorpay webhook notifications (`order.paid`, `payment.captured`, `payment.failed`) with raw signature validation for automated recovery.
+
+#### 💳 Razorpay Order Generation, Signature Verification & Subscription Flow
+```mermaid
+flowchart TD
+    subgraph UserInteraction["Developer Pricing & Checkout Flow"]
+        VIEW_PRICING["View Pricing Plans (/payment)<br/>Starter vs Pro Monthly vs Pro Yearly"]
+        CLICK_UPGRADE["Click 'Upgrade to Pro'"]
+        RAZORPAY_MODAL["Razorpay Checkout Modal Pop-up<br/>Cards, UPI, NetBanking, Wallets"]
+    end
+
+    subgraph PaymentService["Payment Microservice Engine (:8006)"]
+        GET_PLANS["GET /api/payment/plans"] --> RETURN_PLANS["Return Authoritative Pricing Catalog<br/>Pro Monthly: ₹799 | Pro Yearly: ₹7,999"]
+        RETURN_PLANS --> VIEW_PRICING
+
+        CLICK_UPGRADE --> CREATE_ORDER["POST /api/payment/create-order<br/>{ planId: 'PRO_MONTHLY' }"]
+        CREATE_ORDER --> RZP_API["razorpay.orders.create({<br/>amount: 79900, currency: 'INR', receipt<br/>})"]
+        RZP_API --> SAVE_ORDER_DB["Order.create({<br/>orderId, userId, planId, status: 'created'<br/>})"]
+        SAVE_ORDER_DB --> RETURN_ORDER_KEYS["Return { orderId, amount, currency, key: RZP_KEY_ID }"]
+        RETURN_ORDER_KEYS --> RAZORPAY_MODAL
+
+        RAZORPAY_MODAL -->|Payment Success on Client| CLIENT_VERIFY["POST /api/payment/verify<br/>{ razorpay_order_id, razorpay_payment_id, razorpay_signature }"]
+        
+        CLIENT_VERIFY --> CRYPTO_HMAC["crypto.createHmac('sha256', RZP_KEY_SECRET)<br/>.update(order_id + '|' + payment_id).digest('hex')"]
+        
+        CRYPTO_HMAC --> TIMING_SAFE{"crypto.timingSafeEqual(<br/>generatedSignature, receivedSignature<br/>)"}
+        
+        TIMING_SAFE -->|Mismatch| REJECT_PAYMENT["400 Invalid Payment Signature<br/>Mark Order: 'failed'"]
+        
+        TIMING_SAFE -->|Verified Match| UPDATE_ORDER["Order.findOneAndUpdate({ orderId }, {<br/>status: 'paid', paymentId, signature<br/>})"]
+        
+        UPDATE_ORDER --> ACTIVATE_SUB["Subscription.findOneAndUpdate({ userId }, {<br/>plan: 'PRO', status: 'active', tokens: 1000000,<br/>currentPeriodEnd: +30 days / +365 days<br/>}, { upsert: true })"]
+        
+        ACTIVATE_SUB --> SUCCESS_RES["200 OK: Subscription Activated Successfully"]
+
+        subgraph WebhookHandler["Webhook Fail-Safe (:8006/api/payment/webhook)"]
+            RZP_WEBHOOK["POST /api/payment/webhook<br/>Header: X-Razorpay-Signature"]
+            RZP_WEBHOOK --> VERIFY_WEBHOOK_SIG{"crypto.timingSafeEqual(webhookSig)"}
+            VERIFY_WEBHOOK_SIG -->|Captured or Paid Event| ASYNC_ACTIVATE["Idempotent Subscription Activation"]
+            VERIFY_WEBHOOK_SIG -->|Failed Event| MARK_FAILED["Mark Order Failed & Notify User"]
+        end
+    end
+
+    subgraph Databases["Database Layer"]
+        ORDER_COLL[("Orders Collection")]
+        SUB_COLL[("Subscriptions Collection")]
+    end
+
+    SAVE_ORDER_DB --> ORDER_COLL
+    UPDATE_ORDER --> ORDER_COLL
+    ACTIVATE_SUB --> SUB_COLL
+    ASYNC_ACTIVATE --> SUB_COLL
+    MARK_FAILED --> ORDER_COLL
+```
+
+---
+
 ## 💻 Frontend Workspace Experience
 
 Located at [`frontend/`](file:///c:/Users/263237/Desktop/MERN/AI-Editor/frontend), the web interface offers a high-performance, responsive desktop IDE experience.
@@ -597,22 +1039,22 @@ flowchart TD
     subgraph ExecutionDock["2. Integrated Terminal Dispatch"]
         D & E --> F["setIsTerminalOpen(true)"]
         F --> G{"Target Language Detector"}
-        G -->|Python .py| H["python 'path/test.py'"]
-        G -->|C .c| I["gcc 'path/main.c' -o output.exe; if ($?) { .\\output.exe }"]
-        G -->|C++ .cpp| J["g++ 'path/main.cpp' -o output.exe; if ($?) { .\\output.exe }"]
-        G -->|Node.js .js| K["node 'path/index.js'"]
-        G -->|TypeScript .ts| L["npx ts-node 'path/main.ts'"]
-        G -->|Java .java| M["javac 'path/Main.java'; if ($?) { java Main }"]
+        G -->|Python .py| H["python path/test.py"]
+        G -->|C .c| I["gcc path/main.c -o output.exe && ./output.exe"]
+        G -->|C++ .cpp| J["g++ path/main.cpp -o output.exe && ./output.exe"]
+        G -->|Node.js .js| K["node path/index.js"]
+        G -->|TypeScript .ts| L["npx ts-node path/main.ts"]
+        G -->|Java .java| M["javac path/Main.java && java Main"]
     end
 
     subgraph TerminalPTY["3. Native PTY Process Execution"]
         H & I & J & K & L & M --> N["node-pty (PowerShell / Bash)"]
         N --> O["Live Streaming stdout / stderr (xterm.js)"]
-        N --> P["Interactive stdin (input(), cin, scanf)"]
+        N --> P["Interactive stdin: input, cin, scanf"]
     end
 
     subgraph Shielding["4. Build Artifact Shielding"]
-        N -.->|Generates __pycache__, .exe, .o| Q[Disk Workspace]
+        N -.->|Generates build artifacts| Q[Disk Workspace]
         Q -->|Filtered by IGNORED_NAMES & IGNORED_EXTENSIONS| R[MongoDB Sync Engine]
         R -->|Clean File Tree| S[Explorer Sidebar Untouched]
     end
@@ -657,22 +1099,22 @@ sequenceDiagram
     participant UI as CodeEditor / TopBar
     participant Mgmt as Management Service (Port 8003)
     participant Term as Terminal Service (Port 8005)
-    participant Disk as %TEMP%/BHASHA-AI (Disk)
-    participant PTY as PowerShell / Bash PTY
+    participant Disk as Disk Cache (%TEMP%)
+    participant PTY as Native PTY (PowerShell / Bash)
     participant Xterm as Xterm.js Terminal Dock
 
-    Dev->>UI: Click '▶ Run [filename]' (e.g. test.c++, test.py, test.c)
-    UI->>Mgmt: PUT /updateFile/:id (Immediate flush to MongoDB)
-    UI->>Term: WS emit('file-saved', { relPath, content })
+    Dev->>UI: Click Run Action (e.g. test.py, main.cpp, main.c)
+    UI->>Mgmt: PUT /updateFile/:id (Flush to MongoDB)
+    UI->>Term: WS emit file-saved (relPath, content)
     Term->>Disk: fs.writeFile(fullPath, content)
-    UI->>Term: WS emit('terminal-write', cmd + '\r')
-    Note over Term,PTY: Invokes runtime or compiler:<br/>Python: python "test.py"<br/>C++: g++ "test.c++" -o output.exe; if ($?) { & .\output.exe }<br/>C: gcc "test.c" -o output.exe; if ($?) { & .\output.exe }<br/>Node: node "index.js"
+    UI->>Term: WS emit terminal-write with execution command
+    Note over Term,PTY: Invokes runtime or compiler<br/>Python: python test.py<br/>C/C++: g++ main.cpp -o output.exe<br/>Node: node index.js
     Term->>PTY: Write formatted command to shell stdin
-    PTY->>Disk: Read source file & compile
+    PTY->>Disk: Read source file and compile
     PTY->>Disk: Emit output.exe (Shielded from DB sync)
-    PTY-->>Term: Stream stdout / stderr (ANSI color chunks)
-    Term-->>Xterm: WS emit('terminalData', data)
-    Xterm-->>Dev: Live ANSI output display (Supports input() / cin / Ctrl+C)
+    PTY-->>Term: Stream stdout / stderr ANSI color chunks
+    Term-->>Xterm: WS emit terminalData stream
+    Xterm-->>Dev: Live ANSI output display with interactive stdin
 ```
 
 ---
@@ -938,22 +1380,29 @@ AI-Editor/
 │       │   ├── routes/           # Management Express routes
 │       │   ├── utils/            # buildTree recursive tree builder
 │       │   └── index.js
-│       └── AI/                   # AI Agent microservice (Port 8004)
-│           ├── controllers/
-│           │   └── ai.controllers.js # SSE stream handler & history builder
-│           ├── graph/
-│           │   ├── graph.js      # LangGraph state machine & system prompt
-│           │   └── tools.js      # LangChain filesystem tool suite
-│           ├── routes/           # AI Express routes
-│           ├── utils/
-│           │   ├── fetchFileApi.js # Inter-service HTTP management client
-│           │   └── llm.js        # Hardened OpenRouter LLM client
+│       ├── AI/                   # AI Agent microservice (Port 8004)
+│       │   ├── controllers/
+│       │   │   └── ai.controllers.js # SSE stream handler & history builder
+│       │   ├── graph/
+│       │   │   ├── graph.js      # LangGraph state machine & system prompt
+│       │   │   └── tools.js      # LangChain filesystem tool suite
+│       │   ├── routes/           # AI Express routes
+│       │   ├── utils/
+│       │   │   ├── fetchFileApi.js # Inter-service HTTP management client
+│       │   │   └── llm.js        # Hardened OpenRouter LLM client
+│       │   └── index.js
+│       ├── terminal/             # Interactive Terminal microservice (Port 8005)
+│       │   ├── config/
+│       │   │   └── db.js         # MongoDB connection lifecycle
+│       │   ├── index.js          # Socket.IO & node-pty session server
+│       │   └── package.json
+│       └── payment/              # Monetization & Razorpay service (Port 8006)
+│           ├── config/           # Razorpay SDK & MongoDB connection
+│           ├── constants/        # Subscription plans & pricing matrix
+│           ├── controllers/      # Orders, verification & webhook handlers
+│           ├── models/           # Order & Subscription schemas
+│           ├── routes/           # Payment Express routes
 │           └── index.js
-│       └── terminal/             # Interactive Terminal microservice (Port 8005)
-│           ├── config/
-│           │   └── db.js         # MongoDB connection lifecycle
-│           ├── index.js          # Socket.IO & node-pty session server
-│           └── package.json
 ├── frontend/                     # React 19 + Vite SPA (Port 5173)
 │   ├── src/
 │   │   ├── components/
@@ -965,6 +1414,7 @@ AI-Editor/
 │   │   │   │   └── TerminalPanel.jsx  # Live Socket.IO + Xterm.js PTY terminal
 │   │   │   ├── DeleteConfirmationModal.jsx
 │   │   │   ├── EmptyState.jsx
+│   │   │   ├── Footer.jsx             # Reusable responsive footer
 │   │   │   ├── NewProjectModal.jsx
 │   │   │   ├── ProjectCard.jsx
 │   │   │   ├── Sidebar.jsx
@@ -972,11 +1422,14 @@ AI-Editor/
 │   │   ├── features/
 │   │   │   ├── ai.js             # SSE fetch reader for AI Agent
 │   │   │   ├── management.js     # Management CRUD & tree API client
+│   │   │   ├── payment.js        # Razorpay checkout & subscription client
 │   │   │   └── project.js        # Project CRUD API client
 │   │   ├── pages/
 │   │   │   ├── Homepage.jsx      # Projects dashboard
 │   │   │   ├── Login.jsx
-│   │   │   ├── NotFound.jsx
+│   │   │   ├── NotFound.jsx      # Custom animated 404 page
+│   │   │   ├── Payment.jsx       # Pricing plans & subscription management
+│   │   │   ├── PrivacyPolicy.jsx # Comprehensive privacy & terms
 │   │   │   ├── Project.jsx       # Main IDE workspace (Code | Split | Preview)
 │   │   │   └── Register.jsx
 │   │   ├── utils/
