@@ -79,8 +79,8 @@ flowchart TD
     end
 
     subgraph Monetization["4. Billing & Subscription Tier (/payment)"]
-        DASHBOARD -.->|Click 'Upgrade'| PRICING_PAGE["Dedicated Pricing Page (/payment)"]
-        IDE_CORE -.->|Click 'Upgrade'| PRICING_MODAL["In-Workspace Pricing Modal"]
+        DASHBOARD -.->|Click Upgrade| PRICING_PAGE["Dedicated Pricing Page (/payment)"]
+        IDE_CORE -.->|Click Upgrade| PRICING_MODAL["In-Workspace Pricing Modal"]
         PRICING_PAGE --> SELECT_PLAN{"Choose Subscription Plan"}
         PRICING_MODAL --> SELECT_PLAN
 
@@ -164,7 +164,7 @@ flowchart TD
 
     %% Client Routing
     UI -->|HTTP REST / Axios| PROXY
-    XTERM <-->|WebSockets (Socket.IO)| TERM_SVC
+    XTERM <-->|WebSockets - Socket.IO| TERM_SVC
     PAYMENT_VIEW -->|Razorpay Checkout SDK| RAZORPAY
 
     %% Gateway Routing
@@ -189,7 +189,7 @@ flowchart TD
     TERM_SVC --> MONGO_DB
     TERM_SVC -->|GET /api/management/tree| MGMT_SVC
     TERM_SVC -->|POST createFile / createFolder / updateFile| MGMT_SVC
-    TERM_SVC <-->|Two-Way Disk Sync (syncDiskToDb / writeNode)| DISK_WS
+    TERM_SVC <-->|Two-Way Disk Sync| DISK_WS
     TERM_SVC <-->|pty.spawn stdio stream| SHELL
     AI_SVC -->|fetchFileApi HTTP Client| MGMT_SVC
     AI_SVC --> MONGO_DB
@@ -227,7 +227,7 @@ flowchart LR
 
     %% Flows
     EDITS -->|Auto-save PUT /updateFile| GW --> MGMT --> DB
-    EDITS -.->|Socket.IO 'file-saved'| TERM --> DISK
+    EDITS -.->|Socket.IO file-saved| TERM --> DISK
     TERMINAL_CMD -->|Keystrokes| TERM --> DISK
     DISK -.->|syncDiskToDb Background Crawl| TERM -->|Sync New Files| MGMT --> DB
     AI_PROMPT -->|SSE Stream /chat| GW --> AI --> LLM
@@ -322,7 +322,7 @@ flowchart TD
     PROXY_DISPATCH -->|/api/auth/*| AUTH_UP["Auth Service (:8001)"]
     PROXY_DISPATCH -->|/api/project/*| PROJ_UP["Project Service (:8002)"]
     PROXY_DISPATCH -->|/api/management/*| MGMT_UP["Management Service (:8003)"]
-    PROXY_DISPATCH -->|/api/ai/* (SSE Stream)| AI_UP["AI Agent Service (:8004)"]
+    PROXY_DISPATCH -->|/api/ai/* - SSE Stream| AI_UP["AI Agent Service (:8004)"]
     PROXY_DISPATCH -->|/api/terminal/*| TERM_UP["Terminal Service (:8005)"]
     PROXY_DISPATCH -->|/api/payment/*| PAY_UP["Payment Service (:8006)"]
 ```
@@ -737,7 +737,7 @@ flowchart TD
     end
 
     %% Flow connections
-    TERM_UI -->|Keystrokes with Enter \r| SOCK_HANDLER
+    TERM_UI -->|Keystrokes with Enter| SOCK_HANDLER
     SOCK_HANDLER -->|Write to stdin| PTY_PROC
     PTY_PROC -->|Executes npm init / touch| DISK_FILES
     SOCK_HANDLER -->|Arms timer on Enter| DEBOUNCE
@@ -916,8 +916,8 @@ flowchart TD
         subgraph WebhookHandler["Webhook Fail-Safe (:8006/api/payment/webhook)"]
             RZP_WEBHOOK["POST /api/payment/webhook<br/>Header: X-Razorpay-Signature"]
             RZP_WEBHOOK --> VERIFY_WEBHOOK_SIG{"crypto.timingSafeEqual(webhookSig)"}
-            VERIFY_WEBHOOK_SIG -->|Event: payment.captured / order.paid| ASYNC_ACTIVATE["Idempotent Subscription Activation"]
-            VERIFY_WEBHOOK_SIG -->|Event: payment.failed| MARK_FAILED["Mark Order Failed & Notify User"]
+            VERIFY_WEBHOOK_SIG -->|Captured or Paid Event| ASYNC_ACTIVATE["Idempotent Subscription Activation"]
+            VERIFY_WEBHOOK_SIG -->|Failed Event| MARK_FAILED["Mark Order Failed & Notify User"]
         end
     end
 
