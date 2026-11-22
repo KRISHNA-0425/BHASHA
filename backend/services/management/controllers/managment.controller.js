@@ -353,6 +353,50 @@ export const deleteFolder = async (req, res) => {
     }
 };
 
+export const clearWorkspace = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const userId = req.headers["x-user-id"];
+
+        if (!userId) {
+            return res.status(401).json({ message: 'user is not authorized' });
+        }
+
+        if (!projectId || !mongoose.Types.ObjectId.isValid(projectId)) {
+            return res.status(400).json({ message: 'invalid projectId' });
+        }
+
+        // Find the root folder for this project
+        const rootFolder = await File.findOne({
+            projectId,
+            owner: userId,
+            parentId: null
+        });
+
+        // Filter all non-root files and subfolders in this project
+        const filter = {
+            projectId,
+            owner: userId,
+            isDeleted: false
+        };
+        if (rootFolder) {
+            filter._id = { $ne: rootFolder._id };
+        } else {
+            filter.parentId = { $ne: null };
+        }
+
+        const result = await File.updateMany(filter, { $set: { isDeleted: true } });
+
+        return res.status(200).json({
+            message: 'workspace cleared successfully',
+            deletedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error("clearWorkspace error:", error);
+        return res.status(500).json({ message: 'internal server error in clearWorkspace' });
+    }
+};
+
 export const getFile = async (req, res) => {
     try {
         const userId = req.headers["x-user-id"];
@@ -410,5 +454,32 @@ export const getTree = async (req, res) => {
     } catch (error) {
         console.error("getTree error:", error);
         return res.status(500).json({ message: 'internal server error in getTree' });
+    }
+};
+
+export const getAllProjectFiles = async (req, res) => {
+    try {
+        const userId = req.headers["x-user-id"];
+        const { projectId } = req.params;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'user is not authorized' });
+        }
+
+        if (!projectId || !mongoose.Types.ObjectId.isValid(projectId)) {
+            return res.status(400).json({ message: 'invalid projectId' });
+        }
+
+        // Fetch all files and folders (including soft-deleted) for synchronization
+        const files = await File.find({
+            projectId,
+            owner: userId
+        }).select('_id name parentId type isDeleted content language extension').lean();
+
+        return res.status(200).json(files);
+
+    } catch (error) {
+        console.error("getAllProjectFiles error:", error);
+        return res.status(500).json({ message: 'internal server error in getAllProjectFiles' });
     }
 };

@@ -1,5 +1,5 @@
 import { tool } from '@langchain/core/tools';
-import { createFile, createFolder, deleteFile, getFile, getTree, updateFile } from '../utils/fetchFileApi.js';
+import { createFile, createFolder, deleteFile, deleteFolder, getFile, getTree, updateFile } from '../utils/fetchFileApi.js';
 import { z } from 'zod';
 
 const compactTree = (items = []) => {
@@ -20,18 +20,31 @@ export const fileTools = ({ projectId, userId }) => {
     const getTreeTools = tool(
         async () => {
             try {
-                console.log('get_tree tool called');
+                if (!projectId) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: "Missing projectId.",
+                        instruction: "Ensure the workspace has a valid projectId before querying the file tree."
+                    });
+                }
+
+                console.log(`[Tool] get_tree called for project: ${projectId}`);
                 const result = await getTree({ projectId, userId });
                 const tree = compactTree(result);
+
                 return JSON.stringify({
                     success: true,
+                    operation: "get_tree",
                     tree
                 });
             } catch (error) {
-                console.error('get_tree tool error:', error?.response?.data || error.message);
+                console.error("[Tool Error] get_tree:", error?.response?.data || error.message);
                 return JSON.stringify({
                     success: false,
-                    error: error?.response?.data?.message || error.message || 'Failed to fetch project tree'
+                    operation: "tool_error",
+                    error: error?.response?.data?.message || error.message || "Failed to fetch project tree",
+                    instruction: "Check if the management service is running or if the project has been initialized."
                 });
             }
         },
@@ -57,27 +70,40 @@ export const fileTools = ({ projectId, userId }) => {
     const getFileTools = tool(
         async ({ fileId }) => {
             try {
-                console.log(`get_file tool called for fileId: ${fileId}`);
-                const result = await getFile({ fileId, userId });
+                if (!fileId || typeof fileId !== "string" || !fileId.trim()) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: "Missing or invalid fileId parameter.",
+                        instruction: "Provide a valid string fileId obtained from get_tree."
+                    });
+                }
+
+                console.log(`[Tool] get_file called for fileId: ${fileId}`);
+                const result = await getFile({ fileId: fileId.trim(), userId });
 
                 if (!result) {
                     return JSON.stringify({
                         success: false,
-                        error: `File with id "${fileId}" was not found.`
+                        operation: "tool_error",
+                        error: `File with id "${fileId}" was not found.`,
+                        instruction: "Call get_tree to verify that the file exists and retrieve its current _id."
                     });
                 }
 
                 if (result.type !== 'file') {
-                    console.log('get_file blocked: target is a folder');
+                    console.warn(`[Tool Warning] get_file blocked: target "${fileId}" is a folder.`);
                     return JSON.stringify({
                         success: false,
-                        error: `The provided id "${fileId}" belongs to a folder, not a file.`,
-                        instruction: "Do not call get_file for folders. Use the folder _id as parentId when creating files or subfolders."
+                        operation: "tool_error",
+                        error: `The provided id "${fileId}" belongs to a folder ("${result.name}"), not a file.`,
+                        instruction: "Do not call get_file on folders. Folders do not have content. Use folder IDs as parentId when creating files or subfolders."
                     });
                 }
 
                 return JSON.stringify({
                     success: true,
+                    operation: "get_file",
                     file: {
                         _id: result._id,
                         name: result.name,
@@ -90,10 +116,17 @@ export const fileTools = ({ projectId, userId }) => {
                     }
                 });
             } catch (error) {
-                console.error('get_file tool error:', error?.response?.data || error.message);
+                console.error("[Tool Error] get_file:", error?.response?.data || error.message);
+                const status = error?.response?.status;
+                const errMsg = error?.response?.data?.message || error.message;
+
                 return JSON.stringify({
                     success: false,
-                    error: error?.response?.data?.message || error.message || 'Failed to fetch file'
+                    operation: "tool_error",
+                    error: errMsg,
+                    instruction: status === 404
+                        ? "File not found. Check get_tree to find existing file IDs."
+                        : "An error occurred while reading the file. Verify your fileId."
                 });
             }
         },
@@ -122,11 +155,47 @@ export const fileTools = ({ projectId, userId }) => {
     const createFolderTool = tool(
         async ({ name, parentId }) => {
             try {
-                console.log(`create_folder tool called for name: "${name}" under parentId: ${parentId}`);
-                const folder = await createFolder({ name, parentId, projectId, userId });
+                if (!name || typeof name !== "string" || !name.trim()) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: "Missing or invalid folder name.",
+                        instruction: "Provide a non-empty name string for the new folder (e.g. 'components', 'utils')."
+                    });
+                }
+
+                const cleanName = name.trim();
+
+                // Path separator guard
+                if (cleanName.includes("/") || cleanName.includes("\\")) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: `Folder name "${cleanName}" contains path separators ('/' or '\\').`,
+                        instruction: "Do not pass nested paths like 'src/components'. Create each folder one level at a time using the appropriate parentId."
+                    });
+                }
+
+                if (!parentId || typeof parentId !== "string" || !parentId.trim()) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: "Missing parentId.",
+                        instruction: "parentId is required. Call get_tree to find the parent folder _id (or root folder _id where parentId=null)."
+                    });
+                }
+
+                console.log(`[Tool] create_folder called for: "${cleanName}" under parentId: ${parentId}`);
+                const folder = await createFolder({
+                    name: cleanName,
+                    parentId: parentId.trim(),
+                    projectId,
+                    userId
+                });
 
                 return JSON.stringify({
                     success: true,
+                    operation: "create_folder",
                     folder: {
                         _id: folder._id,
                         name: folder.name,
@@ -136,10 +205,23 @@ export const fileTools = ({ projectId, userId }) => {
                     }
                 });
             } catch (error) {
-                console.error('create_folder tool error:', error?.response?.data || error.message);
+                console.error("[Tool Error] create_folder:", error?.response?.data || error.message);
+                const errMsg = error?.response?.data?.message || error.message;
+
+                if (errMsg.toLowerCase().includes("already exists")) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: `A folder named "${name}" already exists under parentId "${parentId}".`,
+                        instruction: "Call get_tree to find the existing folder's _id instead of creating a duplicate."
+                    });
+                }
+
                 return JSON.stringify({
                     success: false,
-                    error: error?.response?.data?.message || error.message || 'Failed to create folder'
+                    operation: "tool_error",
+                    error: errMsg,
+                    instruction: "Failed to create folder. Verify that parentId is an existing folder _id."
                 });
             }
         },
@@ -149,14 +231,13 @@ export const fileTools = ({ projectId, userId }) => {
             Create a new folder.
 
             RULES:
-
             1. Create parent folders first.
             2. Use exact parentId from get_tree.
             3. Never create duplicate folders.
-            4. A folder directly inside another folder must use that
-            folder's ID as parentId.
-            5. After creation continue with the remaining files.
-            6. Do not call get_tree again just to verify the folder.
+            4. A folder directly inside another folder must use that folder's ID as parentId.
+            5. Never put slashes in the folder name. Create folders one-by-one.
+            6. After creation continue with the remaining files.
+            7. Do not call get_tree again just to verify the folder.
             `,
             schema: z.object({
                 name: z.string().describe("The name of the new folder to create (e.g. 'controllers', 'components')."),
@@ -169,34 +250,89 @@ export const fileTools = ({ projectId, userId }) => {
     const createFileTool = tool(
         async ({ name, parentId, content = '', language }) => {
             try {
-                console.log(`create_file tool called for file: "${name}" under parentId: ${parentId}`);
+                if (!name || typeof name !== "string" || !name.trim()) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: "Missing or invalid file name.",
+                        instruction: "Provide a valid file name including extension (e.g. 'App.jsx', 'index.js')."
+                    });
+                }
+
+                const cleanName = name.trim();
+
+                // Path separator guard
+                if (cleanName.includes("/") || cleanName.includes("\\")) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: `Filename "${cleanName}" contains path separators ('/' or '\\').`,
+                        instruction: "Do not pass paths like 'src/App.jsx'. First create or locate the 'src' folder, obtain its _id, pass it as parentId, and pass name as 'App.jsx'."
+                    });
+                }
+
+                // Extension recommendation check
+                if (!cleanName.includes(".")) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: `Filename "${cleanName}" is missing an extension.`,
+                        instruction: "Always provide file extensions (e.g. '.js', '.jsx', '.css', '.html', '.json', '.md')."
+                    });
+                }
+
+                if (!parentId || typeof parentId !== "string" || !parentId.trim()) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: "Missing parentId.",
+                        instruction: "parentId is required to create a file. Call get_tree to find the target folder _id."
+                    });
+                }
+
+                console.log(`[Tool] create_file called for: "${cleanName}" under parentId: ${parentId}`);
                 const file = await createFile({
-                    name,
-                    parentId,
+                    name: cleanName,
+                    parentId: parentId.trim(),
                     projectId,
-                    content,
+                    content: typeof content === "string" ? content : String(content || ""),
                     language: language || 'plainText',
                     userId
                 });
 
                 return JSON.stringify({
                     success: true,
+                    operation: "create_file",
                     file: {
                         _id: file._id,
                         name: file.name,
                         type: file.type,
                         language: file.language,
                         extension: file.extension,
+                        content: file.content ?? '',
                         size: file.size,
                         parentId: file.parentId,
                         projectId: file.projectId
                     }
                 });
             } catch (error) {
-                console.error('create_file tool error:', error?.response?.data || error.message);
+                console.error("[Tool Error] create_file:", error?.response?.data || error.message);
+                const errMsg = error?.response?.data?.message || error.message;
+
+                if (errMsg.toLowerCase().includes("already exists")) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: `File "${name}" already exists under parentId "${parentId}".`,
+                        instruction: "If you want to edit an existing file, use update_file with its _id instead of calling create_file."
+                    });
+                }
+
                 return JSON.stringify({
                     success: false,
-                    error: error?.response?.data?.message || error.message || 'Failed to create file'
+                    operation: "tool_error",
+                    error: errMsg,
+                    instruction: "Failed to create file. Ensure parentId belongs to a valid folder."
                 });
             }
         },
@@ -206,18 +342,14 @@ export const fileTools = ({ projectId, userId }) => {
             Create a NEW FILE.
 
             RULES:
-
             1. Use get_tree first when project structure is unknown.
             2. Use exact folder ID as parentId.
             3. Never create duplicate files.
-            4. Send complete file content.
+            4. Send complete file content in 'content'.
             5. Create folders before files inside them.
             6. Never use terminal commands to create files.
-            7. Do not call get_file immediately after creating a file.
-            8. Continue creating all required files.
-            9. Do not stop after creating only one file.
-
-            For a React/Vite project, create ALL required files.
+            7. Do not put slashes in the filename; specify the parent folder via parentId.
+            8. Continue creating all required files without stopping after just one.
             `,
             schema: z.object({
                 name: z.string().describe("The file name including its extension, e.g. 'index.js', 'App.jsx', 'package.json'."),
@@ -227,37 +359,61 @@ export const fileTools = ({ projectId, userId }) => {
             })
         }
     );
- 
+
     // Tool 5: Update file
     const updateFileTool = tool(
         async ({ fileId, content, name, language }) => {
             try {
-                console.log(`update_file tool called for fileId: ${fileId}`);
+                if (!fileId || typeof fileId !== "string" || !fileId.trim()) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: "Missing fileId parameter.",
+                        instruction: "Provide the exact _id of the file to update."
+                    });
+                }
+
+                if (content === undefined && name === undefined && language === undefined) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: "No update parameters provided.",
+                        instruction: "Provide at least 'content', 'name', or 'language' to update the file."
+                    });
+                }
+
+                console.log(`[Tool] update_file called for fileId: ${fileId}`);
                 const updatedFile = await updateFile({
-                    fileId,
+                    fileId: fileId.trim(),
                     content,
-                    name,
+                    name: name?.trim(),
                     language,
                     userId
                 });
 
                 return JSON.stringify({
                     success: true,
+                    operation: "update_file",
                     file: {
                         _id: updatedFile._id,
                         name: updatedFile.name,
                         type: updatedFile.type,
                         language: updatedFile.language,
                         extension: updatedFile.extension,
+                        content: updatedFile.content ?? '',
                         size: updatedFile.size,
                         parentId: updatedFile.parentId
                     }
                 });
             } catch (error) {
-                console.error('update_file tool error:', error?.response?.data || error.message);
+                console.error("[Tool Error] update_file:", error?.response?.data || error.message);
+                const errMsg = error?.response?.data?.message || error.message;
+
                 return JSON.stringify({
                     success: false,
-                    error: error?.response?.data?.message || error.message || 'Failed to update file'
+                    operation: "tool_error",
+                    error: errMsg,
+                    instruction: "Failed to update file. Ensure the fileId exists and belongs to a file, and provide the complete file content."
                 });
             }
         },
@@ -267,14 +423,11 @@ export const fileTools = ({ projectId, userId }) => {
             Update an EXISTING FILE.
 
             RULES:
-
-            1. Call get_file before updating.
+            1. Call get_file before updating to read current content.
             2. fileId must be an actual file ID.
             3. NEVER use a folder ID.
-            4. Send the complete updated file content.
+            4. Send the COMPLETE updated file content (do not send partial snippets or placeholders).
             5. Do not update files that do not exist.
-            6. After successful update continue with remaining work.
-            7. Do not call get_file again unless another modification is needed.
             `,
             schema: z.object({
                 fileId: z.string().describe("The exact _id of the file to update."),
@@ -289,19 +442,33 @@ export const fileTools = ({ projectId, userId }) => {
     const deleteFileTool = tool(
         async ({ fileId }) => {
             try {
-                console.log(`delete_file tool called for fileId: ${fileId}`);
-                await deleteFile({ fileId, userId });
+                if (!fileId || typeof fileId !== "string" || !fileId.trim()) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: "Missing fileId parameter.",
+                        instruction: "Provide the exact _id of the file to delete."
+                    });
+                }
+
+                console.log(`[Tool] delete_file called for fileId: ${fileId}`);
+                await deleteFile({ fileId: fileId.trim(), userId });
 
                 return JSON.stringify({
                     success: true,
+                    operation: "delete_file",
                     message: `File with id "${fileId}" deleted successfully`,
                     fileId
                 });
             } catch (error) {
-                console.error('delete_file tool error:', error?.response?.data || error.message);
+                console.error("[Tool Error] delete_file:", error?.response?.data || error.message);
+                const errMsg = error?.response?.data?.message || error.message;
+
                 return JSON.stringify({
                     success: false,
-                    error: error?.response?.data?.message || error.message || 'Failed to delete file'
+                    operation: "tool_error",
+                    error: errMsg,
+                    instruction: "Failed to delete file. Verify that fileId belongs to an active file."
                 });
             }
         },
@@ -311,15 +478,10 @@ export const fileTools = ({ projectId, userId }) => {
             Delete an EXISTING FILE from the project.
 
             STRICT RULES:
-
             1. fileId must belong to an actual file.
-            2. NEVER pass a folder ID.
+            2. NEVER pass a folder ID to delete_file.
             3. Use the exact file ID from get_tree.
-            4. Before deleting, make sure the target is actually a file.
-            5. Do not delete a file unless the user's request requires it.
-            6. Never use terminal commands to delete files.
-            7. After successful deletion, continue with the remaining work.
-            8. Do not call get_file after deletion.
+            4. Do not delete a file unless the user's request explicitly requires it.
             `,
             schema: z.object({
                 fileId: z.string().describe("The exact _id of the file to delete.")
@@ -327,6 +489,65 @@ export const fileTools = ({ projectId, userId }) => {
         }
     );
 
+    // Tool 7: Delete folder
+    const deleteFolderTool = tool(
+        async ({ folderId }) => {
+            try {
+                if (!folderId || typeof folderId !== "string" || !folderId.trim()) {
+                    return JSON.stringify({
+                        success: false,
+                        operation: "tool_error",
+                        error: "Missing folderId parameter.",
+                        instruction: "Provide the exact _id of the folder to delete."
+                    });
+                }
+
+                console.log(`[Tool] delete_folder called for folderId: ${folderId}`);
+                const result = await deleteFolder({ folderId: folderId.trim(), userId });
+
+                return JSON.stringify({
+                    success: true,
+                    operation: "delete_folder",
+                    message: `Folder and all recursive contents deleted successfully`,
+                    folderId,
+                    deletedCount: result?.deletedCount
+                });
+            } catch (error) {
+                console.error("[Tool Error] delete_folder:", error?.response?.data || error.message);
+                const errMsg = error?.response?.data?.message || error.message;
+
+                return JSON.stringify({
+                    success: false,
+                    operation: "tool_error",
+                    error: errMsg,
+                    instruction: "Cannot delete folder. Root project folder cannot be deleted. Verify the folderId."
+                });
+            }
+        },
+        {
+            name: 'delete_folder',
+            description: `
+            Recursively delete a directory/folder and all files inside it.
+
+            STRICT RULES:
+            1. folderId must belong to a folder (type="folder").
+            2. Never pass the root project workspace folder ID (root folder cannot be deleted).
+            3. Deleting a folder recursively deletes all files and nested folders within it.
+            `,
+            schema: z.object({
+                folderId: z.string().describe("The exact _id of the folder to recursively delete.")
+            })
+        }
+    );
+
     // Return all initialized tools as an array for LangChain / LangGraph
-    return [getTreeTools, getFileTools, createFolderTool, createFileTool, updateFileTool, deleteFileTool];
+    return [
+        getTreeTools,
+        getFileTools,
+        createFolderTool,
+        createFileTool,
+        updateFileTool,
+        deleteFileTool,
+        deleteFolderTool
+    ];
 };

@@ -1,7 +1,8 @@
-import { HumanMessage } from "@langchain/core/messages"
+import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages"
 import { fileTools } from "./tools.js"
 import llm from '../utils/llm.js'
-import { StateGraph } from '@langchain/langgraph'
+import { MessagesAnnotation, StateGraph } from '@langchain/langgraph'
+import { ToolNode } from '@langchain/langgraph/prebuilt'
 
 const system_prompt = `
 You are an expert coding agent inside a Cursor-like IDE.
@@ -278,6 +279,33 @@ and simple vanilla JavaScript.
 Do not create unnecessary folders.
 
 ==================================================
+NODE.JS / EXPRESS BACKEND
+==================================================
+
+For Node.js or Express backend projects use:
+
+project-root/
+├── package.json
+├── .env.example
+├── server.js (or index.js)
+└── routes/ (or controllers/ if multi-endpoint)
+
+Rules for Node.js projects:
+- package.json must live in project-root with "type": "module" (or valid CommonJS) and declare all used dependencies (e.g. express, dotenv, cors).
+- Write complete working server routes, middleware, and error handling.
+- NEVER create fake HTML/React preview files inside a pure Node.js backend project.
+
+==================================================
+EXISTING CONFLICTS / STACK SWITCHING
+==================================================
+
+If get_tree shows files already exist at project-root (e.g., index.html, package.json, script.js, style.css):
+- Use update_file with that existing file's exact _id to replace its complete content instead of calling create_file (which will fail on duplicates).
+- NEVER put index.html, package.json, or vite.config.js inside src/ just because root already has an index.html — use update_file on the root index.html!
+- If old files from a previous template conflict (e.g., old root script.js or style.css when building a React/Node project), delete them using delete_file or clean them up.
+- Never declare duplicate variables (const/let/function) inside the same file.
+
+==================================================
 PREVIEW SUPPORT
 ==================================================
 
@@ -471,29 +499,78 @@ Return only:
 "Project completed."
 `
 
-const maxMessage = 12 // setting top limit
+const maxMessage = 30 // safe ceiling preserving multi-file tool context
 
 const getRecentMessages = (messages = []) => {
-    if (messages.length <= maxMessage) {
-        return messages
-    }
-    // checking if it is a human message?
-    const firstUserMessage = messages.find((message) => HumanMessage.isInstance(message))
+  if (messages.length <= maxMessage) {
+    return messages
+  }
 
-    const recents = messages.slice(-maxMessage)
+  const firstUserMessage = messages.find((message) => HumanMessage.isInstance(message))
 
-    if (firstUserMessage && !recents.includes(firstUserMessage)) {
-        return [firstUserMessage, ...recent]
-    }
+  let startIdx = Math.max(0, messages.length - maxMessage)
+  // Never start a trimmed slice on a ToolMessage without its preceding AIMessage(tool_calls)
+  while (startIdx < messages.length && ToolMessage.isInstance(messages[startIdx])) {
+    startIdx += 1
+  }
 
-    return recents
+  const recents = messages.slice(startIdx)
 
+  if (firstUserMessage && !recents.includes(firstUserMessage)) {
+    return [firstUserMessage, ...recents]
+  }
+
+  return recents
 }
 
 export const graph = ({ projectId, userId }) => {
-    const tools = fileTools({ projectId, userId })
+  const tools = fileTools({ projectId, userId })
 
-    const model = llm.bindTools(tools);
+  const model = llm.bindTools(tools);
 
-    return new StateGraph()
+  const agent = async (state) => {
+    const allMessages = state.messages || []
+    const recentMessages = getRecentMessages(allMessages)
+    const messages = [
+      new SystemMessage(system_prompt),
+      ...recentMessages
+    ]
+
+    const response = await model.invoke(messages)
+    console.log(response)
+
+    return {
+      messages:[
+        response
+      ]
+    }
+  }
+
+  const toolNode = new ToolNode(tools)
+
+  const shouldContinue = (state) => {
+    const lastMessage = state.messages?.at(-1);
+    // this condition checks if any tool is required by the ai 
+    // if yes then send to the tools node
+    // else simple end
+    if (
+      lastMessage &&
+      AIMessage.isInstance(lastMessage) &&
+      Array.isArray(lastMessage.tool_calls) &&
+      lastMessage.tool_calls.length > 0
+    ) {
+      return "tools";
+    }
+    return "__end__";
+  };
+
+  return new StateGraph(MessagesAnnotation)
+    // first node is from where 
+    // second is to where
+    .addNode("agent", agent)
+    .addNode("tools", toolNode)
+    .addEdge("__start__", "agent")
+    .addConditionalEdges("agent", shouldContinue)
+    .addEdge("tools", "agent")
+    .compile()
 }

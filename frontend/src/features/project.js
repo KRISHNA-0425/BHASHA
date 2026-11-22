@@ -1,6 +1,6 @@
 import api from "../utils/axios";
 
-export const createProject = async (name, description) => {
+export const createProject = async (name, description, liked = false) => {
     const payload = typeof name === "object" && name !== null ? name : { name, description, liked };
     const { data } = await api.post("/api/project/createProject", payload);
     return data;

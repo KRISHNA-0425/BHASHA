@@ -1,32 +1,142 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
+import { io } from 'socket.io-client'
 import '@xterm/xterm/css/xterm.css'
 import {
   VscClearAll,
   VscClose,
   VscChevronUp,
   VscChevronDown,
-  VscTerminal,
+  VscRefresh,
   VscSplitHorizontal
 } from 'react-icons/vsc'
 
-const TerminalPanel = ({ isOpen, onClose, isMaximized, onToggleMaximize }) => {
+const TERMINAL_SERVICE_URL = import.meta.env.VITE_TERMINAL_URL || 'http://localhost:8005'
+
+const TerminalPanel = forwardRef(({
+  isOpen,
+  onClose,
+  isMaximized,
+  onToggleMaximize,
+  projectId,
+  userId,
+  onRefreshTree
+}, ref) => {
   const terminalRef = useRef(null)
   const xtermInstance = useRef(null)
   const fitAddonRef = useRef(null)
+  const socketRef = useRef(null)
+  const pendingCommandRef = useRef(null)
   const [activeTab, setActiveTab] = useState('TERMINAL')
+  const [connectionStatus, setConnectionStatus] = useState('disconnected') // 'connecting' | 'connected' | 'disconnected' | 'error'
+
+  useImperativeHandle(ref, () => ({
+    executeCommand: (cmd) => {
+      if (!cmd) return
+      const formattedCmd = cmd.endsWith('\r') || cmd.endsWith('\n') ? cmd : `${cmd}\r`
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit('terminal-write', formattedCmd)
+      } else {
+        pendingCommandRef.current = formattedCmd
+      }
+    },
+    saveFileToDisk: (relPath, content) => {
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit('file-saved', { relPath, content })
+      }
+    },
+    clearWorkspaceDisk: () => {
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit('clear-workspace')
+      }
+    },
+    focus: () => {
+      xtermInstance.current?.focus()
+    }
+  }), [])
+
+  // Vertical resizability states
+  const [panelHeight, setPanelHeight] = useState(256)
+  const [isDragging, setIsDragging] = useState(false)
+  const isDraggingRef = useRef(false)
+  const panelHeightRef = useRef(256)
 
   useEffect(() => {
-    if (!isOpen || !terminalRef.current) return
+    panelHeightRef.current = panelHeight
+  }, [panelHeight])
 
-    // Prevent duplicate initialization
-    if (!xtermInstance.current) {
-      const term = new Terminal({
+  const handleMouseDown = useCallback((e) => {
+    e.preventDefault()
+    setIsDragging(true)
+    isDraggingRef.current = true
+
+    const startY = e.clientY
+    const startHeight = panelHeightRef.current
+
+    if (isMaximized && onToggleMaximize) {
+      onToggleMaximize()
+    }
+
+    const handleMouseMove = (moveEvent) => {
+      if (!isDraggingRef.current) return
+      const deltaY = startY - moveEvent.clientY
+      const minHeight = 90
+      const maxHeight = Math.floor(window.innerHeight * 0.85)
+      const newHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + deltaY))
+      setPanelHeight(newHeight)
+      panelHeightRef.current = newHeight
+      fitAddonRef.current?.fit()
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+      isDraggingRef.current = false
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+
+      setTimeout(() => {
+        try {
+          fitAddonRef.current?.fit()
+          if (socketRef.current?.connected && xtermInstance.current) {
+            socketRef.current.emit(
+              'terminal-resize',
+              xtermInstance.current.cols,
+              xtermInstance.current.rows
+            )
+          }
+        } catch (e) {}
+      }, 50)
+    }
+
+    document.body.style.cursor = 'row-resize'
+    document.body.style.userSelect = 'none'
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+  }, [isMaximized, onToggleMaximize])
+
+  const connectTerminal = useCallback(() => {
+    if (!projectId || !userId || !terminalRef.current) return
+
+    // Clean up previous socket if any
+    if (socketRef.current) {
+      socketRef.current.disconnect()
+      socketRef.current = null
+    }
+
+    // Initialize xterm if not already created
+    let term = xtermInstance.current
+    let fitAddon = fitAddonRef.current
+
+    if (!term) {
+      term = new Terminal({
         cursorBlink: true,
         fontSize: 12,
         fontFamily: "'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace",
         lineHeight: 1.3,
+        convertEol: true,
         theme: {
           background: '#07090e',
           foreground: '#cbd5e1',
@@ -38,7 +148,7 @@ const TerminalPanel = ({ isOpen, onClose, isMaximized, onToggleMaximize }) => {
           yellow: '#facc15',
           blue: '#94a3b8',
           magenta: '#c084fc',
-          cyan: '#e2e8f0',
+          cyan: '#38bdf8',
           white: '#f8fafc',
           brightBlack: '#64748b',
           brightRed: '#ef4444',
@@ -46,100 +156,219 @@ const TerminalPanel = ({ isOpen, onClose, isMaximized, onToggleMaximize }) => {
           brightYellow: '#eab308',
           brightBlue: '#cbd5e1',
           brightMagenta: '#a855f7',
-          brightCyan: '#ffffff',
+          brightCyan: '#06b6d4',
           brightWhite: '#ffffff'
         }
       })
 
-      const fitAddon = new FitAddon()
+      fitAddon = new FitAddon()
       term.loadAddon(fitAddon)
       term.open(terminalRef.current)
       fitAddon.fit()
 
       xtermInstance.current = term
       fitAddonRef.current = fitAddon
-
-      // Initial interactive greeting
-      term.writeln('\x1b[1;37m┌────────────────────────────────────────────────────────┐\x1b[0m')
-      term.writeln('\x1b[1;37m│\x1b[0m  \x1b[1;32m● AI-IDE Integrated Virtual Terminal\x1b[0m                 \x1b[1;37m│\x1b[0m')
-      term.writeln('\x1b[1;37m│\x1b[0m  Type commands like \x1b[1;33mnpm run dev\x1b[0m, \x1b[1;33mls\x1b[0m, or \x1b[1;33mhelp\x1b[0m.         \x1b[1;37m│\x1b[0m')
-      term.writeln('\x1b[1;37m└────────────────────────────────────────────────────────┘\x1b[0m')
-      term.write('\r\n\x1b[1;32mdev@ai-ide\x1b[0m:\x1b[1;37m~/workspace\x1b[0m$ ')
-
-      let currentLine = ''
-
-      term.onKey(({ key, domEvent }) => {
-        const ev = domEvent
-        if (ev.keyCode === 13) {
-          // Enter key
-          term.write('\r\n')
-          const cmd = currentLine.trim()
-          if (cmd === 'clear') {
-            term.clear()
-          } else if (cmd === 'help') {
-            term.writeln('Available UI commands: ls, clear, npm run dev, git status, help')
-          } else if (cmd === 'ls') {
-            term.writeln('\x1b[1;34msrc/\x1b[0m  \x1b[1;34mpublic/\x1b[0m  package.json  README.md  vite.config.js')
-          } else if (cmd === 'npm run dev' || cmd === 'npm start') {
-            term.writeln('\x1b[1;32m> vite dev server running at:\x1b[0m')
-            term.writeln('  \x1b[1;36m➜\x1b[0m  Local:   \x1b[4;36mhttp://localhost:5173/\x1b[0m')
-          } else if (cmd === 'git status') {
-            term.writeln('On branch main')
-            term.writeln('Your branch is up to date with origin/main.')
-          } else if (cmd.length > 0) {
-            term.writeln(`bash: ${cmd}: command not found`)
-          }
-          currentLine = ''
-          term.write('\x1b[1;32mdev@ai-ide\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ')
-        } else if (ev.keyCode === 8) {
-          // Backspace
-          if (currentLine.length > 0) {
-            currentLine = currentLine.slice(0, -1)
-            term.write('\b \b')
-          }
-        } else if (!ev.altKey && !ev.ctrlKey && !ev.metaKey) {
-          currentLine += key
-          term.write(key)
-        }
-      })
+    } else {
+      term.clear()
     }
+
+    setConnectionStatus('connecting')
+    term.writeln('\x1b[90mConnecting to integrated terminal backend...\x1b[0m')
+
+    const socket = io(TERMINAL_SERVICE_URL, {
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
+      auth: {
+        projectId,
+        userId
+      },
+      reconnectionAttempts: 5,
+      timeout: 10000
+    })
+
+    socketRef.current = socket
+
+    socket.on('connect', () => {
+      setConnectionStatus('connecting')
+      term.writeln('\x1b[32m● Connected to terminal socket. Spawning shell environment...\x1b[0m\r\n')
+
+      const cols = term.cols || 80
+      const rows = term.rows || 30
+
+      // Request terminal session initialization with current project
+      socket.emit('terminalData', {
+        projectId,
+        userId,
+        cols,
+        rows
+      })
+    })
+
+    socket.on('terminal-error', (err) => {
+      setConnectionStatus('error')
+      term.writeln(`\r\n\x1b[31m[Security / Authorization Error: ${err?.error || 'Access denied'}]\x1b[0m\r\n`)
+    })
+
+    socket.on('terminal-ready', ({ cols, rows }) => {
+      setConnectionStatus('connected')
+      if (pendingCommandRef.current) {
+        const cmdToRun = pendingCommandRef.current
+        pendingCommandRef.current = null
+        setTimeout(() => {
+          if (socketRef.current?.connected) {
+            socketRef.current.emit('terminal-write', cmdToRun)
+          }
+        }, 300)
+      }
+    })
+
+    // Listen for file sync updates emitted when files are created/updated in the terminal
+    socket.on('disk-synced', () => {
+      if (onRefreshTree) {
+        onRefreshTree(false)
+      }
+    })
+
+    // Forward raw PTY output from backend into Xterm
+    socket.on('terminalData', (data) => {
+      term.write(data)
+    })
+
+    socket.on('connect_error', (err) => {
+      setConnectionStatus('error')
+      term.writeln(`\r\n\x1b[31m[Connection Error: ${err.message || 'Cannot reach terminal service'}]\x1b[0m`)
+      term.writeln('\x1b[90mEnsure backend terminal service is running on port 8005.\x1b[0m\r\n')
+    })
+
+    socket.on('disconnect', (reason) => {
+      setConnectionStatus('disconnected')
+      term.writeln(`\r\n\x1b[90m[Terminal session disconnected: ${reason}]\x1b[0m\r\n`)
+    })
+
+    // Send every user input keystroke directly to backend ptyProcess
+    const onDataDisposable = term.onData((data) => {
+      if (socket.connected) {
+        socket.emit('terminal-write', data)
+      }
+    })
+
+    return () => {
+      onDataDisposable.dispose()
+    }
+  }, [projectId, userId])
+
+  useEffect(() => {
+    if (!isOpen) {
+      if (socketRef.current) {
+        socketRef.current.disconnect()
+        socketRef.current = null
+      }
+      setConnectionStatus('disconnected')
+      return
+    }
+
+    const cleanupDisposable = connectTerminal()
 
     const handleResize = () => {
       try {
         fitAddonRef.current?.fit()
+        if (socketRef.current?.connected && xtermInstance.current) {
+          socketRef.current.emit(
+            'terminal-resize',
+            xtermInstance.current.cols,
+            xtermInstance.current.rows
+          )
+        }
       } catch (err) {
-        // ignore layout resize error
+        // ignore layout resize errors
       }
     }
 
     window.addEventListener('resize', handleResize)
-    const timeout = setTimeout(handleResize, 100)
+    const timeout = setTimeout(handleResize, 150)
 
     return () => {
       window.removeEventListener('resize', handleResize)
       clearTimeout(timeout)
+      if (cleanupDisposable) cleanupDisposable()
+      if (socketRef.current) {
+        socketRef.current.disconnect()
+        socketRef.current = null
+      }
     }
-  }, [isOpen])
+  }, [isOpen, connectTerminal])
+
+  // ResizeObserver to automatically fit xterm whenever the container resizes
+  useEffect(() => {
+    if (!terminalRef.current) return
+    const ro = new ResizeObserver(() => {
+      try {
+        fitAddonRef.current?.fit()
+        if (socketRef.current?.connected && xtermInstance.current) {
+          socketRef.current.emit(
+            'terminal-resize',
+            xtermInstance.current.cols,
+            xtermInstance.current.rows
+          )
+        }
+      } catch (err) {}
+    })
+    ro.observe(terminalRef.current)
+    return () => ro.disconnect()
+  }, [])
+
+  // Recalculate dimensions on maximize toggle
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      try {
+        fitAddonRef.current?.fit()
+        if (socketRef.current?.connected && xtermInstance.current) {
+          socketRef.current.emit(
+            'terminal-resize',
+            xtermInstance.current.cols,
+            xtermInstance.current.rows
+          )
+        }
+      } catch (err) {}
+    }, 220)
+    return () => clearTimeout(timeout)
+  }, [isMaximized])
 
   const handleClear = () => {
     if (xtermInstance.current) {
       xtermInstance.current.clear()
-      xtermInstance.current.write('\x1b[1;32mdev@ai-ide\x1b[0m:\x1b[1;34m~/workspace\x1b[0m$ ')
     }
+  }
+
+  const handleReconnect = () => {
+    connectTerminal()
   }
 
   if (!isOpen) return null
 
   return (
     <div
-      className={`w-full bg-[#07090e] border-t border-white/[0.08] flex flex-col transition-all duration-200 z-10 font-sans ${
-        isMaximized ? 'h-[75vh]' : 'h-60'
+      style={{
+        height: isMaximized ? '75vh' : `${panelHeight}px`
+      }}
+      className={`w-full bg-[#07090e] border-t border-white/[0.08] flex flex-col z-10 font-sans relative ${
+        isDragging ? 'select-none transition-none' : 'transition-[height] duration-150'
       }`}
     >
+      {/* Top Drag Resize Handle (VS Code style) */}
+      <div
+        onMouseDown={handleMouseDown}
+        onDoubleClick={onToggleMaximize}
+        className="h-2 w-full bg-transparent hover:bg-blue-500/40 active:bg-blue-500/60 cursor-row-resize absolute top-0 left-0 z-30 transition-colors group flex items-center justify-center"
+        title="Drag up or down to resize terminal (Double click to toggle maximize)"
+      >
+        <div className="w-8 h-0.5 rounded-full bg-white/20 group-hover:bg-blue-400 group-hover:w-16 transition-all duration-150" />
+      </div>
+
       {/* Terminal Top Bar */}
       <div className="h-8 bg-[#090c13] border-b border-white/[0.06] flex items-center justify-between px-3 text-xs select-none">
-        {/* Left Tabs */}
-        <div className="flex items-center gap-1 font-mono text-[11px]">
+        {/* Left Tabs & Status Indicator */}
+        <div className="flex items-center gap-2 font-mono text-[11px]">
           {['TERMINAL', 'OUTPUT', 'PROBLEMS (0)', 'DEBUG CONSOLE'].map((tab) => (
             <button
               key={tab}
@@ -153,10 +382,31 @@ const TerminalPanel = ({ isOpen, onClose, isMaximized, onToggleMaximize }) => {
               {tab}
             </button>
           ))}
+
+          {/* Connection status badge */}
+          <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded text-[10px] bg-white/[0.04] border border-white/[0.06]">
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                connectionStatus === 'connected'
+                  ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)] animate-pulse'
+                  : connectionStatus === 'connecting'
+                  ? 'bg-amber-400 animate-ping'
+                  : 'bg-rose-500'
+              }`}
+            />
+            <span className="text-slate-300 font-sans capitalize">{connectionStatus}</span>
+          </div>
         </div>
 
         {/* Right Actions */}
         <div className="flex items-center gap-1 text-slate-400">
+          <button
+            onClick={handleReconnect}
+            title="Reconnect Terminal"
+            className="p-1 hover:text-slate-100 hover:bg-white/[0.06] rounded transition-colors cursor-pointer"
+          >
+            <VscRefresh className="text-xs" />
+          </button>
           <button
             onClick={handleClear}
             title="Clear Terminal"
@@ -166,7 +416,7 @@ const TerminalPanel = ({ isOpen, onClose, isMaximized, onToggleMaximize }) => {
           </button>
           <button
             title="Split Terminal"
-            className="p-1 hover:text-slate-100 hover:bg-white/[0.06] rounded transition-colors cursor-pointer"
+            className="p-1 hover:text-slate-100 hover:bg-white/[0.06] rounded transition-colors cursor-pointer opacity-50 cursor-not-allowed"
           >
             <VscSplitHorizontal className="text-xs" />
           </button>
@@ -203,7 +453,8 @@ const TerminalPanel = ({ isOpen, onClose, isMaximized, onToggleMaximize }) => {
       </div>
     </div>
   )
-}
+})
+
+TerminalPanel.displayName = 'TerminalPanel'
 
 export default TerminalPanel
-

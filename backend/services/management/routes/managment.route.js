@@ -6,8 +6,10 @@ import {
     updateFile,
     deleteFile,
     deleteFolder,
+    clearWorkspace,
     getFile,
-    getTree
+    getTree,
+    getAllProjectFiles
 } from '../controllers/managment.controller.js';
 
 const managmentRouter = express.Router();
@@ -18,6 +20,7 @@ managmentRouter.post('/createRootFolder', createRootFolder);
 // Folder routes
 managmentRouter.post('/createFolder', createFolder);
 managmentRouter.delete('/deleteFolder/:id', deleteFolder);
+managmentRouter.delete('/clearWorkspace/:projectId', clearWorkspace);
 
 // File routes
 managmentRouter.post('/createFile', createFile);
@@ -26,8 +29,9 @@ managmentRouter.patch('/updateFile/:id', updateFile);
 managmentRouter.delete('/deleteFile/:id', deleteFile);
 managmentRouter.get('/file/:id', getFile);
 
-// Tree route
+// Tree & Files routes
 managmentRouter.get('/tree/:projectId', getTree);
+managmentRouter.get('/all-files/:projectId', getAllProjectFiles);
 
 export default managmentRouter;
 

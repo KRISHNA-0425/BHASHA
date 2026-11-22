@@ -16,6 +16,8 @@ const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const authService = process.env.AUTH_SERVICE || 'http://localhost:8001';
 const projectService = process.env.PROJECT_SERVICE || 'http://localhost:8002';
 const managementService = process.env.MANAGEMENT_SERVICE || 'http://localhost:8003';
+const aiService = process.env.AI_SERVICE || 'http://localhost:8004';
+const terminalService = process.env.TERMINAL_SERVICE || 'http://localhost:8005';
 const paymentService = process.env.PAYMENT_SERVICE || 'http://localhost:8006';
 const app = express();
 
@@ -56,6 +58,23 @@ app.use('/api/management', isAuth, proxy(managementService, {
     parseReqBody: false
 }));
 
+// Proxy AI requests with preserved path
+app.use('/api/ai', isAuth, proxy(aiService, {
+    proxyReqPathResolver: (req) => {
+        return `/api/ai${req.url}`;
+    },
+    proxyReqOptDecorator,
+    parseReqBody: false
+}));
+
+// Proxy terminal requests with preserved path
+app.use('/api/terminal', isAuth, proxy(terminalService, {
+    proxyReqPathResolver: (req) => {
+        return `/api/terminal${req.url}`;
+    },
+    proxyReqOptDecorator,
+    parseReqBody: false
+}));
 // Proxy payment webhook directly without isAuth (Razorpay server calls webhook with signature header)
 app.use('/api/payment/webhook', proxy(paymentService, {
     proxyReqPathResolver: () => {

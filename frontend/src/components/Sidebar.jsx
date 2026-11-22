@@ -68,7 +68,7 @@ const Sidebar = ({
                                 : 'bg-slate-50 border border-slate-200'
                         }`}>
                             <img 
-                                src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo.png"} 
+                                src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"} 
                                 alt="BHASHA" 
                                 className="h-4 sm:h-5 object-contain" 
                                 onError={(e) => {

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import Editor from '@monaco-editor/react'
-import { VscClose, VscChevronRight, VscCheck, VscCode } from 'react-icons/vsc'
+import { VscClose, VscChevronRight, VscCheck, VscCode, VscSync, VscError, VscPlay } from 'react-icons/vsc'
 import { getFileIcon } from './FileExplorer.jsx'
 
 const CodeEditor = ({
@@ -8,7 +8,10 @@ const CodeEditor = ({
   activeFile,
   onSelectTab,
   onCloseTab,
-  onCodeChange
+  onCodeChange,
+  onRunFile,
+  saveStatus = 'saved', // 'saved' | 'saving' | 'unsaved' | 'error'
+  projectName = 'workspace'
 }) => {
   const editorRef = useRef(null)
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 })
@@ -51,25 +54,71 @@ const CodeEditor = ({
     monaco.editor.setTheme('ai-dark-theme')
   }
 
-  // Determine Monaco language mode from file extension
-  const getLanguage = (fileName) => {
+  const isRunnable = (fileName) => {
+    if (!fileName) return false
+    const ext = fileName.split('.').pop().toLowerCase()
+    return ['py', 'pyw', 'pyi', 'c', 'cpp', 'c++', 'cc', 'cxx', 'cp', 'js', 'mjs', 'cjs', 'ts', 'java', 'go', 'rs', 'sh', 'bash'].includes(ext)
+  }
+
+  // Determine Monaco language mode from file extension or file.language
+  const getLanguage = (fileName, language) => {
+    if (language && language !== 'plainText') {
+      const lowerLang = language.toLowerCase()
+      if (['javascript', 'typescript', 'css', 'html', 'json', 'python', 'markdown', 'c', 'cpp', 'java', 'rust', 'go', 'shell', 'sql'].includes(lowerLang)) {
+        return lowerLang
+      }
+      if (lowerLang === 'c++') return 'cpp'
+    }
+
     const ext = fileName?.split('.').pop()?.toLowerCase()
     switch (ext) {
+      case 'c':
+      case 'h':
+        return 'c'
+      case 'cpp':
+      case 'c++':
+      case 'cc':
+      case 'cxx':
+      case 'cp':
+      case 'hpp':
+      case 'h++':
+      case 'hh':
+      case 'hxx':
+        return 'cpp'
+      case 'py':
+      case 'pyw':
+      case 'pyi':
+        return 'python'
+      case 'java':
+        return 'java'
+      case 'rs':
+        return 'rust'
+      case 'go':
+        return 'go'
       case 'jsx':
       case 'js':
       case 'mjs':
+      case 'cjs':
         return 'javascript'
       case 'ts':
       case 'tsx':
         return 'typescript'
       case 'css':
+      case 'scss':
         return 'css'
       case 'html':
+      case 'htm':
         return 'html'
       case 'json':
         return 'json'
       case 'md':
+      case 'markdown':
         return 'markdown'
+      case 'sql':
+        return 'sql'
+      case 'sh':
+      case 'bash':
+        return 'shell'
       default:
         return 'plaintext'
     }
@@ -82,20 +131,23 @@ const CodeEditor = ({
           <VscCode className="text-3xl" />
         </div>
         <h3 className="text-slate-300 font-medium text-base mb-1">No File Open</h3>
-        <p className="text-xs text-slate-500">Select a file from the explorer on the left to start editing</p>
+        <p className="text-xs text-slate-500">Select a file from the explorer on the left or create a new one</p>
       </div>
     )
   }
 
+  const activeId = activeFile._id || activeFile.id
+
   return (
     <div className="h-full w-full flex flex-col bg-[#07090e] overflow-hidden select-none">
-      {/* Open File Tabs */}
+      {/* 1. Open File Tabs */}
       <div className="flex items-center bg-[#0a0d14] border-b border-white/[0.06] overflow-x-auto no-scrollbar">
         {openTabs.map((tab) => {
-          const isActive = tab.id === activeFile?.id
+          const tabId = tab._id || tab.id
+          const isActive = tabId === activeId
           return (
             <div
-              key={tab.id}
+              key={tabId}
               onClick={() => onSelectTab(tab)}
               className={`group flex items-center gap-2 px-3.5 py-2 border-r border-white/[0.06] text-xs font-mono cursor-pointer transition-colors shrink-0 relative ${
                 isActive
@@ -105,13 +157,15 @@ const CodeEditor = ({
             >
               <span className="shrink-0">{getFileIcon(tab.name)}</span>
               <span className="truncate max-w-[140px]">{tab.name}</span>
+              
+              {/* Tab close button */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
                   onCloseTab(tab)
                 }}
-                className="opacity-0 group-hover:opacity-100 hover:bg-white/[0.1] rounded p-0.5 text-slate-400 hover:text-slate-100 transition-opacity ml-1"
+                className="opacity-0 group-hover:opacity-100 hover:bg-white/[0.1] rounded p-0.5 text-slate-400 hover:text-slate-100 transition-opacity ml-1 cursor-pointer"
               >
                 <VscClose className="text-xs" />
               </button>
@@ -120,27 +174,61 @@ const CodeEditor = ({
         })}
       </div>
 
-      {/* Breadcrumb Path Bar */}
+      {/* 2. Breadcrumb Path Bar + Live Save Status */}
       <div className="px-4 py-1.5 bg-[#080b11] border-b border-white/[0.04] flex items-center justify-between text-xs text-slate-400 font-mono">
         <div className="flex items-center gap-1.5 truncate text-[11px]">
-          <span>src</span>
+          <span className="text-slate-500">{projectName}</span>
           <VscChevronRight className="text-[10px] text-slate-600" />
-          <span className="text-slate-300">{activeFile.name}</span>
+          <span className="text-slate-300 font-medium">{activeFile.name}</span>
         </div>
-        <div className="flex items-center gap-3 text-[11px] text-slate-500">
-          <div className="flex items-center gap-1 text-emerald-400/90">
-            <VscCheck className="text-xs" />
-            <span>Saved</span>
-          </div>
+
+        {/* Live Save State Indicator & Run Action */}
+        <div className="flex items-center gap-3 text-[11px]">
+          {onRunFile && isRunnable(activeFile.name) && (
+            <button
+              type="button"
+              onClick={() => onRunFile(activeFile)}
+              title={`Run ${activeFile.name} in Integrated Terminal`}
+              className="flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 text-[11px] font-mono font-medium transition-all cursor-pointer shadow-xs active:scale-95"
+            >
+              <VscPlay className="text-xs" />
+              <span>Run</span>
+            </button>
+          )}
+
+          {saveStatus === 'saving' && (
+            <div className="flex items-center gap-1.5 text-amber-400">
+              <VscSync className="text-xs animate-spin" />
+              <span>Saving...</span>
+            </div>
+          )}
+          {saveStatus === 'unsaved' && (
+            <div className="flex items-center gap-1.5 text-amber-300/80">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span>Unsaved changes (Ctrl+S)</span>
+            </div>
+          )}
+          {saveStatus === 'saved' && (
+            <div className="flex items-center gap-1 text-emerald-400/90">
+              <VscCheck className="text-xs" />
+              <span>Saved</span>
+            </div>
+          )}
+          {saveStatus === 'error' && (
+            <div className="flex items-center gap-1 text-rose-400">
+              <VscError className="text-xs" />
+              <span>Save error</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Monaco Code Editor Canvas */}
+      {/* 3. Monaco Code Editor Canvas */}
       <div className="flex-1 w-full relative">
         <Editor
           height="100%"
           width="100%"
-          language={getLanguage(activeFile.name)}
+          language={getLanguage(activeFile.name, activeFile.language)}
           value={activeFile.content || ''}
           theme="vs-dark"
           onChange={onCodeChange}
@@ -163,10 +251,12 @@ const CodeEditor = ({
         />
       </div>
 
-      {/* Editor Status Bar */}
+      {/* 4. Editor Status Bar */}
       <div className="h-6 bg-[#080b11] border-t border-white/[0.06] px-3 flex items-center justify-between text-[11px] text-slate-400 font-mono select-none">
         <div className="flex items-center gap-4">
-          <span className="text-slate-200">{getLanguage(activeFile.name).toUpperCase()}</span>
+          <span className="text-slate-200">
+            {getLanguage(activeFile.name, activeFile.language).toUpperCase()}
+          </span>
           <span>UTF-8</span>
           <span>Spaces: 2</span>
         </div>
@@ -174,7 +264,7 @@ const CodeEditor = ({
           <span>
             Ln {cursorPos.line}, Col {cursorPos.col}
           </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span className={`w-1.5 h-1.5 rounded-full ${saveStatus === 'saving' ? 'bg-amber-400 animate-ping' : saveStatus === 'unsaved' ? 'bg-amber-400' : 'bg-emerald-400'}`}></span>
         </div>
       </div>
     </div>
@@ -182,4 +272,3 @@ const CodeEditor = ({
 }
 
 export default CodeEditor
-
