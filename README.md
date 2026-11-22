@@ -738,7 +738,7 @@ The AI Agent in [`backend/services/AI/graph/tools.js`](file:///c:/Users/263237/D
 | Protocol | Method | Endpoint | Auth | Description | Payload / Headers |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `HTTP` | `GET` | `/api/payment/plans` | Public | Returns server-authoritative catalog of plans, pricing, and perks | None |
-| `HTTP` | `POST` | `/api/payment/create-order` | `isAuth` | Generates a Razorpay order with calculated price in paise | `{ planId: "PRO_MONTHLY" \| "PRO_YEARLY" \| "AI_BOOST_100K" }` |
+| `HTTP` | `POST` | `/api/payment/create-order` | `isAuth` | Generates a Razorpay order with calculated price in paise | `{ planId: "PRO_MONTHLY" \| "PRO_YEARLY" }` |
 | `HTTP` | `POST` | `/api/payment/verify` | `isAuth` | Cryptographically verifies HMAC SHA-256 payment signature & activates subscription | `{ razorpay_order_id, razorpay_payment_id, razorpay_signature }` |
 | `HTTP` | `GET` | `/api/payment/subscription` | `isAuth` | Retrieves active user subscription status and token entitlement | None (Header: `x-user-id`) |
 | `HTTP` | `GET` | `/api/payment/history` | `isAuth` | Returns chronological transaction and payment history | None (Header: `x-user-id`) |

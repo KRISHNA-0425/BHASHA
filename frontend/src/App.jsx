@@ -54,7 +54,7 @@ const App = () => {
       <Route path="/login" element={userData ? <Navigate to="/home" replace /> : <Login />} />
       <Route path="/register" element={userData ? <Navigate to="/home" replace /> : <Register />} />
       <Route path="/home" element={userData ? <Homepage /> : <Navigate to="/login" replace />} />
-      <Route path="/payment" element={userData ? <Payment /> : <Navigate to="/login" replace />} />
+      <Route path="/payment" element={<Payment />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path='/project/:id' element={userData ? <Project /> : <Navigate to='/login' replace />} />

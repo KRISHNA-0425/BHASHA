@@ -75,7 +75,6 @@ app.use('/api/terminal', isAuth, proxy(terminalService, {
     proxyReqOptDecorator,
     parseReqBody: false
 }));
-
 // Proxy payment webhook directly without isAuth (Razorpay server calls webhook with signature header)
 app.use('/api/payment/webhook', proxy(paymentService, {
     proxyReqPathResolver: () => {
