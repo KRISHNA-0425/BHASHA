@@ -54,6 +54,33 @@ export const chat = async (req, res) => {
             return res.status(401).json({ message: "unauthorized: x-user-id header is missing" });
         }
 
+        // Verify Pro entitlement or active Token balance
+        let hasAccess = false;
+        try {
+            const paymentServiceUrl = process.env.PAYMENT_SERVICE_URL || 'http://localhost:8006';
+            const subRes = await fetch(`${paymentServiceUrl}/api/payment/subscription`, {
+                headers: { 'x-user-id': userId },
+                signal: AbortSignal.timeout(3000)
+            });
+            if (subRes.ok) {
+                const subData = await subRes.json();
+                const sub = subData?.subscription;
+                const isPro = sub?.status?.toUpperCase() === 'ACTIVE' &&
+                    (sub?.planId === 'PRO_MONTHLY' || sub?.planId === 'PRO_YEARLY');
+                const hasTokens = (sub?.extraTokens || 0) > 0;
+                hasAccess = isPro || hasTokens;
+            }
+        } catch (subErr) {
+            console.error("AI service subscription verification error:", subErr.message);
+        }
+
+        if (!hasAccess) {
+            return res.status(403).json({
+                message: "Autonomous LangGraph AI Copilot is exclusive to Pro Developer Pass holders or accounts with active Token balance. Upgrade to Pro to unlock real-time code scaffolding.",
+                code: "PRO_REQUIRED"
+            });
+        }
+
         // Initialize Server-Sent Events (SSE) headers before streaming
         res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
         res.setHeader("Cache-Control", "no-cache, no-transform");
