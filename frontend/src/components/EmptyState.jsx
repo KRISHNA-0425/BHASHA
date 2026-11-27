@@ -11,12 +11,12 @@ const EmptyState = ({ type = "all", searchQuery = "", onOpenNewProject, theme = 
         <div className={`w-full border border-dashed rounded-2xl p-6 sm:p-12 text-center flex flex-col items-center justify-center my-4 sm:my-6 font-sans transition-colors ${
             isDark
                 ? 'bg-[#10131c]/60 border-white/[0.08]'
-                : 'bg-white/60 border-slate-200 shadow-xs'
+                : 'bg-[#ebe5d8]/60 border-[#d8d0bf] shadow-xs'
         }`}>
             <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center mb-4 text-2xl shadow-inner ${
                 isDark
                     ? 'bg-white/[0.04] border-white/[0.08] text-slate-300'
-                    : 'bg-slate-100 border-slate-200 text-slate-700'
+                    : 'bg-[#ede7dc] border-[#d8d0bf] text-[#201d1a]'
             }`}>
                 {isStarred ? <FiStar className="text-amber-500" /> : <FiFolder className={isDark ? "text-cyan-400" : "text-slate-800"} />}
             </div>

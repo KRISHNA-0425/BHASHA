@@ -100,7 +100,7 @@ const Sidebar = ({
                         <div className={`px-3 py-1.5 rounded-lg flex items-center justify-center shadow-inner ${
                             isDark 
                                 ? 'bg-[#12151f] border border-white/[0.1]' 
-                                : 'bg-slate-50 border border-slate-200'
+                                : 'bg-[#fbf9f4] border border-[#d8d0bf]'
                         }`}>
                             <img 
                                 src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"} 
@@ -383,7 +383,7 @@ const Sidebar = ({
             <aside className={`hidden lg:flex w-68 flex-col justify-between h-screen sticky top-0 shrink-0 select-none z-20 font-sans transition-colors duration-200 ${
                 isDark 
                     ? 'bg-[#0a0c12] border-r border-white/[0.06]' 
-                    : 'bg-white border-r border-slate-200'
+                    : 'bg-[#ebe5d8] border-r border-[#d8d0bf]'
             }`}>
                 {sidebarContent}
             </aside>
@@ -407,7 +407,7 @@ const Sidebar = ({
             } ${
                 isDark 
                     ? 'bg-[#0a0c12] border-r border-white/[0.1] text-slate-100' 
-                    : 'bg-white border-r border-slate-200 text-slate-900'
+                    : 'bg-[#ebe5d8] border-r border-[#d8d0bf] text-[#201d1a]'
             }`}>
                 {sidebarContent}
             </div>

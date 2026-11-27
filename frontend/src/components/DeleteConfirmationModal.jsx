@@ -48,7 +48,7 @@ const DeleteConfirmationModal = ({
                     className={`relative w-full max-w-md max-h-[92vh] overflow-y-auto rounded-2xl p-5 sm:p-6 z-10 border shadow-2xl transition-colors ${
                         isDark
                             ? 'bg-[#10131b] border-white/[0.1] text-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)]'
-                            : 'bg-white border-slate-200 text-slate-900 shadow-2xl'
+                            : 'bg-[#ebe5d8] border-[#d8d0bf] text-[#201d1a] shadow-2xl'
                     }`}
                 >
                     {/* Close Button */}
@@ -58,7 +58,7 @@ const DeleteConfirmationModal = ({
                         className={`absolute top-5 right-5 p-1.5 rounded-lg transition-colors cursor-pointer ${
                             isDark
                                 ? 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
-                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                                : 'text-[#5e584f] hover:text-[#201d1a] hover:bg-[#ede7dc]'
                         }`}
                         aria-label="Close modal"
                     >

@@ -68,18 +68,18 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onOpenPricing, the
                     className={`relative w-full max-w-lg max-h-[92vh] overflow-y-auto backdrop-blur-2xl rounded-2xl p-5 sm:p-7 z-10 border shadow-2xl transition-colors ${
                         isDark
                             ? 'bg-[#10131b]/95 border-white/[0.1] text-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)]'
-                            : 'bg-white border-slate-200 text-slate-900 shadow-2xl'
+                            : 'bg-[#ebe5d8] border-[#d8d0bf] text-[#201d1a] shadow-2xl'
                     }`}
                 >
                     {/* Header */}
                     <div className={`flex items-center justify-between pb-4 border-b ${
-                        isDark ? 'border-white/[0.08]' : 'border-slate-100'
+                        isDark ? 'border-white/[0.08]' : 'border-[#d8d0bf]'
                     }`}>
                         <div className="flex items-center gap-3">
                             <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${
                                 isDark
                                     ? 'bg-cyan-500/10 border-cyan-500/25 text-cyan-400'
-                                    : 'bg-slate-100 border-slate-200 text-slate-800'
+                                    : 'bg-[#ede7dc] border-[#d8d0bf] text-[#201d1a]'
                             }`}>
                                 <FiPlus className="text-lg" />
                             </div>
@@ -149,7 +149,7 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onOpenPricing, the
                                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-[15px] outline-none transition-all font-mono border ${
                                     isDark
                                         ? 'bg-[#090b10] border-slate-800 focus:border-cyan-500/70 focus:ring-1 focus:ring-cyan-500/25 text-slate-100 placeholder:text-slate-500'
-                                        : 'bg-slate-50 border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900/15 text-slate-900 placeholder:text-slate-400'
+                                        : 'bg-[#fbf9f4] border-[#d8d0bf] focus:border-slate-900 focus:ring-1 focus:ring-slate-900/15 text-[#201d1a] placeholder:text-[#8a8174]'
                                 }`}
                             />
                         </div>
@@ -168,7 +168,7 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onOpenPricing, the
                                 className={`w-full rounded-xl px-4 py-3 text-sm sm:text-[15px] outline-none transition-all resize-none leading-relaxed font-sans border ${
                                     isDark
                                         ? 'bg-[#090b10] border-slate-800 focus:border-cyan-500/70 focus:ring-1 focus:ring-cyan-500/25 text-slate-100 placeholder:text-slate-500'
-                                        : 'bg-slate-50 border-slate-200 focus:border-slate-900 focus:ring-1 focus:ring-slate-900/15 text-slate-900 placeholder:text-slate-400'
+                                        : 'bg-[#fbf9f4] border-[#d8d0bf] focus:border-slate-900 focus:ring-1 focus:ring-slate-900/15 text-[#201d1a] placeholder:text-[#8a8174]'
                                 }`}
                             />
                         </div>

@@ -203,7 +203,7 @@ const Homepage = () => {
         <div className={`min-h-screen w-full flex flex-col font-sans transition-colors duration-200 overflow-x-hidden ${
             isDark 
                 ? 'bg-[#07090e] text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200' 
-                : 'bg-[#f8fafc] text-slate-900 selection:bg-indigo-100 selection:text-indigo-900'
+                : 'bg-[#f5f2eb] text-[#201d1a] selection:bg-amber-100 selection:text-amber-900'
         }`}>
             {/* Upper Workspace: Sidebar on left + Projects workspace on right */}
             <div className="flex-1 flex w-full relative">
@@ -282,7 +282,7 @@ const Homepage = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                                     {[1, 2, 3].map((i) => (
                                         <div key={i} className={`h-48 rounded-2xl border ${
-                                            isDark ? 'bg-[#10131c] border-white/[0.06]' : 'bg-white border-slate-200 shadow-xs'
+                                            isDark ? 'bg-[#10131c] border-white/[0.06]' : 'bg-[#ebe5d8] border-[#d8d0bf] shadow-xs'
                                         }`} />
                                     ))}
                                 </div>
@@ -379,7 +379,7 @@ const Homepage = () => {
                                         <div className={`p-7 text-center text-xs sm:text-sm border rounded-2xl font-mono ${
                                             isDark 
                                                 ? 'text-slate-400 border-white/[0.06] bg-[#10131c]/40' 
-                                                : 'text-slate-500 border-slate-200 bg-white/60'
+                                                : 'text-[#5e584f] border-[#d8d0bf] bg-[#ebe5d8]/60'
                                         }`}>
                                             All current projects are marked as Starred.
                                         </div>
