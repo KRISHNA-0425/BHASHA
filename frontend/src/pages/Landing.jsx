@@ -645,14 +645,14 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
           {/* Left Brand with Official Logo from public folder */}
-          <div className="flex items-center gap-6">
-            <a href="/" className="flex items-center gap-3 group">
+          <div className="flex items-center gap-3 sm:gap-6">
+            <a href="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
               <img
                 src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
                 alt="BHASHA"
-                className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
+                className="h-6 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
               />
-              <span className="font-mono text-[10px] px-1.5 py-0.5 bg-[#101319] border border-[#00f5c4] text-[#00f5c4]">
+              <span className="font-mono text-[9px] sm:text-[10px] px-1.5 py-0.5 bg-[#101319] border border-[#00f5c4] text-[#00f5c4] hidden sm:inline-block">
                 AI-IDE
               </span>
             </a>
@@ -669,7 +669,7 @@ const Landing = () => {
           </div>
 
           {/* Right Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* GitHub Link */}
             <a 
               className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 ${isDark ? 'bg-[#101319] border-[#232734] text-slate-300' : 'bg-slate-100 border-slate-300 text-slate-700'} border hover:border-[#00f5c4] text-[12px] font-mono hover:text-[#00f5c4] transition-colors`}
@@ -693,10 +693,11 @@ const Landing = () => {
             {/* Launch CTA Button */}
             <button
               onClick={() => navigate(userData ? '/home' : '/login')}
-              className="px-3 sm:px-4 py-1.5 bg-[#00f5c4] hover:bg-[#00f5c4]/90 text-[#080a0f] font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+              className="px-2.5 sm:px-4 py-1.5 bg-[#00f5c4] hover:bg-[#00f5c4]/90 text-[#080a0f] font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1 sm:gap-1.5 transition-colors shrink-0"
             >
-              <span>{userData ? 'WORKSPACE' : 'LAUNCH IDE'}</span>
-              <ArrowRightIcon className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">{userData ? 'WORKSPACE' : 'LAUNCH IDE'}</span>
+              <span className="xs:hidden">{userData ? 'APP' : 'IDE'}</span>
+              <ArrowRightIcon className="w-3.5 h-3.5 shrink-0" />
             </button>
 
             {/* Mobile Hamburger Toggle */}
@@ -740,56 +741,62 @@ const Landing = () => {
         </div>
 
         {/* Small Technical Top Banner */}
-        <div className={`relative z-10 inline-flex items-center gap-2.5 px-3 py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-white border-slate-300 shadow-sm'} border mb-6 text-[11px] font-mono`}>
-          <span className="w-1.5 h-1.5 bg-[#00f5c4] anim-pulse-dot"></span>
-          <span className="text-slate-400">AI CLOUD IDE:</span>
-          <span className="text-[#00f5c4] font-semibold">ACTIVE</span>
-          <span className="text-slate-600">|</span>
-          <span className="text-slate-400">LATENCY:</span>
-          <span className="text-slate-300 font-semibold">{telemetry.heroLatency}</span>
-          <span className="text-slate-600">|</span>
-          <span className="text-slate-400">BOOT TIME:</span>
-          <span className="text-slate-300">&lt; 2s INSTANT</span>
+        <div className={`relative z-10 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 px-3 py-1.5 sm:py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-white border-slate-300 shadow-sm'} border mb-6 text-[10px] sm:text-[11px] font-mono max-w-full text-center`}>
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-[#00f5c4] anim-pulse-dot"></span>
+            <span className="text-slate-400">AI CLOUD IDE:</span>
+            <span className="text-[#00f5c4] font-semibold">ACTIVE</span>
+          </div>
+          <span className="text-slate-600 hidden xs:inline">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-400">LATENCY:</span>
+            <span className="text-slate-300 font-semibold">{telemetry.heroLatency}</span>
+          </div>
+          <span className="text-slate-600 hidden xs:inline">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-400">BOOT TIME:</span>
+            <span className="text-slate-300">&lt; 2s INSTANT</span>
+          </div>
         </div>
 
         {/* Centerpiece: Precision Engineered BHASHA Brand Geometry Frame */}
         <div className="relative z-10 w-full max-w-3xl mb-8">
-          <div className={`relative p-5 sm:p-7 ${isDark ? 'bg-[#080a0f]/90 border-[#232734]' : 'bg-white/90 border-slate-300 shadow-lg'} border corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br backdrop-blur-md`}>
+          <div className={`relative p-3.5 sm:p-7 ${isDark ? 'bg-[#080a0f]/90 border-[#232734]' : 'bg-white/90 border-slate-300 shadow-lg'} border corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br backdrop-blur-md`}>
             
             {/* Datum Header inside Frame */}
-            <div className="flex items-center justify-between text-[9px] font-mono text-slate-500 mb-4 border-b border-[#232734] pb-2">
-              <span className="flex items-center gap-1.5">
+            <div className="flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-slate-500 mb-3 sm:mb-4 border-b border-[#232734] pb-2">
+              <span className="flex items-center gap-1 sm:gap-1.5 truncate">
                 <span className="text-[#00f5c4]">⎡</span>
-                <span>AUTONOMOUS CLOUD WORKSPACE</span>
+                <span>AUTONOMOUS <span className="hidden xs:inline">CLOUD </span>WORKSPACE</span>
               </span>
-              <span className="hidden sm:inline text-slate-500">NEXT-GEN DEVELOPER RUNTIME</span>
-              <span className="flex items-center gap-1.5">
+              <span className="hidden md:inline text-slate-500">NEXT-GEN DEVELOPER RUNTIME</span>
+              <span className="flex items-center gap-1 sm:gap-1.5 truncate">
                 <span>AI COPILOT READY</span>
                 <span className="text-[#00f5c4]">⎤</span>
               </span>
             </div>
 
             {/* Iconic BHASHA Brand Logo from public folder */}
-            <div className="flex flex-col items-center justify-center py-4 px-2 relative gap-3">
+            <div className="flex flex-col items-center justify-center py-3 sm:py-4 px-2 relative gap-3">
               <img
                 src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
                 alt="BHASHA"
-                className="h-12 sm:h-18 md:h-20 w-auto max-w-[85%] object-contain select-none transition-all drop-shadow-[0_0_24px_rgba(0,245,196,0.3)]"
+                className="h-10 sm:h-18 md:h-20 w-auto max-w-[85%] object-contain select-none transition-all drop-shadow-[0_0_24px_rgba(0,245,196,0.3)]"
               />
               <div className="ruler-tick-h w-full opacity-60"></div>
             </div>
 
             {/* Datum Footer inside Frame */}
-            <div className="flex items-center justify-between text-[9px] font-mono text-slate-500 mt-4 border-t border-[#232734] pt-2">
-              <span className="text-[#00f5c4]">⎣ LANGGRAPH AGENT ENGINE</span>
-              <span className="text-slate-400 hidden sm:inline">MULTI-FILE CODE SYNTHESIS</span>
-              <span className="text-[#00f5c4]">INTEGRATED CLOUD SHELL ⎦</span>
+            <div className="flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-slate-500 mt-3 sm:mt-4 border-t border-[#232734] pt-2">
+              <span className="text-[#00f5c4] truncate">⎣ LANGGRAPH AGENT<span className="hidden xs:inline"> ENGINE</span></span>
+              <span className="text-slate-400 hidden md:inline">MULTI-FILE CODE SYNTHESIS</span>
+              <span className="text-[#00f5c4] truncate"><span className="hidden xs:inline">INTEGRATED </span>CLOUD SHELL ⎦</span>
             </div>
           </div>
         </div>
 
         {/* User-Oriented Architectural Headline */}
-        <h1 className="relative z-10 font-display font-bold text-3xl sm:text-5xl lg:text-6xl tracking-tight text-white max-w-4xl leading-[1.15] mb-5">
+        <h1 className="relative z-10 font-display font-bold text-2xl sm:text-5xl lg:text-6xl tracking-tight text-white max-w-4xl leading-[1.2] sm:leading-[1.15] mb-5 px-2">
           The AI-First Cloud IDE That <br className="hidden sm:inline"/>
           <span className="text-[#00f5c4]">Builds Software With You</span>
         </h1>
