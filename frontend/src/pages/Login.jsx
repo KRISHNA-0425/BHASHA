@@ -160,29 +160,17 @@ const Login = () => {
           {/* Left Brand & Status Markers */}
           <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
             <Link to="/" className="flex items-center gap-2 group">
-              <span className="w-2.5 h-2.5 bg-[#00f5c4] inline-block"></span>
               <img
                 src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
                 alt="BHASHA"
-                className="h-5 sm:h-6 w-auto object-contain transition-transform group-hover:scale-105"
+                className="h-5 sm:h-6 w-auto object-contain "
               />
               <span className="font-mono text-[9px] px-1.5 py-0.5 bg-[#101319] border border-[#00f5c4] text-[#00f5c4]">
                 AI-IDE
               </span>
             </Link>
 
-            <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-slate-400">
-              <span className="px-2 py-0.5 bg-[#101319] border border-[#232734] flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 bg-[#00f5c4] anim-pulse-dot"></span>
-                <span className="text-[#00f5c4]">INGRESS ACTIVE</span>
-              </span>
-              <span className="px-2 py-0.5 bg-[#101319] border border-[#232734] text-slate-400">
-                ED25519 AUTH PROTOCOL
-              </span>
-              <span className="px-2 py-0.5 bg-[#101319] border border-[#232734] text-slate-400">
-                KERNEL V0.32-STABLE
-              </span>
-            </div>
+            
           </div>
 
           {/* Right Header Navigation Pills */}
@@ -190,12 +178,6 @@ const Login = () => {
             <span className="px-2.5 py-1 bg-[#101319] border border-[#00f5c4] text-[#00f5c4] font-semibold text-[11px] hidden sm:inline-block">
               AUTH_GATE
             </span>
-            <Link to="/#platform" className="px-2.5 py-1 bg-[#101319] border border-[#232734] text-slate-400 hover:text-white hover:border-slate-500 text-[11px] hidden lg:inline-block transition-colors">
-              CLUSTER_NODES
-            </Link>
-            <Link to="/#features" className="px-2.5 py-1 bg-[#101319] border border-[#232734] text-slate-400 hover:text-white hover:border-slate-500 text-[11px] hidden lg:inline-block transition-colors">
-              KEY_REGISTRY
-            </Link>
             
             {/* Theme Toggle */}
             <button
@@ -214,30 +196,11 @@ const Login = () => {
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-10 flex flex-col items-center justify-center relative z-10">
         
         {/* Architectural Datum Overlay (Coordinates & Protocol) */}
-        <div className="w-full max-w-xl flex items-center justify-between text-[10px] font-mono text-slate-500 mb-3 px-1 hidden md:flex">
-          <div>
-            <span className="text-slate-400">[GATEWAY-COORD: 40.7128° N, 74.0060° W]</span><br/>
-            <span>SYS_STATUS: READY // QUANTUM_RESISTANT_INIT</span>
-          </div>
-          <div className="text-right">
-            <span className="text-[#00f5c4]">AUTH_PROTOCOL: ED25519_OAUTH</span><br/>
-            <span>INGRESS: SECURE // CIPHER: AES-256-GCM</span>
-          </div>
-        </div>
-
+        
         {/* Central Authentication Card Enclosure */}
         <div className={`w-full max-w-xl ${isDark ? 'bg-[#0a0d14] border-[#232734]' : 'bg-white border-slate-300 shadow-xl'} border p-4 sm:p-8 corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br relative transition-all`}>
           
-          {/* Card Top Metadata Bar */}
-          <div className="flex items-center justify-between text-[10px] font-mono pb-3 mb-5 sm:mb-6 border-b border-[#232734] gap-2">
-            <span className="text-[#00f5c4] flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-[#00f5c4]"></span>
-              <span>SYS.GATEWAY.ID_01</span>
-            </span>
-            <span className="text-[#00f5c4] font-bold tracking-wider text-[9px] sm:text-[10px] shrink-0">
-              [SCAN: ACTIVE] :: SECURE
-            </span>
-          </div>
+          
 
           {/* Center Brand Wordmark */}
           <div className="flex flex-col items-center text-center mb-6">
@@ -249,9 +212,7 @@ const Login = () => {
             <div className="text-[#00f5c4] font-mono text-[10px] sm:text-xs font-semibold uppercase tracking-widest mt-1">
               IDENTITY AUTHENTICATION // SESSION GATEWAY
             </div>
-            <p className="text-slate-400 font-sans text-xs mt-1.5 max-w-md">
-              Authenticate runtime execution permissions for isolated workspace pods.
-            </p>
+          
           </div>
 
           {/* Feedback Messages */}
@@ -283,9 +244,7 @@ const Login = () => {
                 <span className="hidden sm:inline"> Workspace</span>
               </span>
             </div>
-            <span className="text-[9px] sm:text-[10px] text-[#00f5c4] px-1.5 py-0.5 bg-[#080a0f] border border-[#00f5c4]/30 shrink-0">
-              JWT VERIFIED
-            </span>
+            
           </button>
 
           {/* Divider */}
@@ -362,9 +321,7 @@ const Login = () => {
                 />
                 <span className="text-[11px] text-slate-300">Enforce Zero-Knowledge Session (ZKP Guard)</span>
               </label>
-              <Link to="/privacy" className="text-[11px] text-slate-400 hover:text-[#00f5c4] transition-colors">
-                Lost Key / Recovery?
-              </Link>
+              
             </div>
 
             {/* Submit Action Button */}
@@ -391,7 +348,7 @@ const Login = () => {
         </div>
 
         {/* Node Security Envelope Status below Card */}
-        <div className="w-full max-w-xl mt-4 p-3 bg-[#080a0f] border border-[#232734] text-[10px] font-mono text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+        <div className={`w-full max-w-xl mt-4 p-3 ${isDark ? 'bg-[#080a0f] border-[#232734]' : 'bg-slate-100 border-slate-300'} border text-[10px] font-mono text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left`}>
           <div>
             <span>SEC_ENCLAVE: HARDWARE_TPM_2.0 :: </span>
             <span className="text-[#00f5c4]">STATUS: SEALED</span>
@@ -407,19 +364,98 @@ const Login = () => {
 
       </main>
 
-      {/* Bottom Persistent Telemetry Footer */}
-      <footer className={`w-full ${isDark ? 'bg-[#050608] border-[#232734]' : 'bg-slate-100 border-slate-200'} border-t px-3 sm:px-6 py-3 font-mono text-[9px] sm:text-[10px] text-slate-500 z-10`}>
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
-          <div className="flex items-center gap-2 flex-wrap justify-center">
-            <span>BHASHA RUNTIME ENVIRONMENT</span>
-            <span className="text-slate-700">//</span>
-            <span>ZERO-TRUST SEC_LAYER LEVEL 4</span>
-            <span className="text-slate-700">//</span>
-            <span className="text-[#00f5c4]">FIPS-140-3 COMPLIANT</span>
+      {/* Comprehensive Landing-Style Footer */}
+      <footer className={`w-full ${isDark ? 'bg-[#050608] border-[#232734]' : 'bg-slate-100 border-slate-300'} border-t mt-12`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 mb-10">
+            
+            {/* Brand Column */}
+            <div className="sm:col-span-2 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <img
+                  src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
+                  alt="BHASHA"
+                  className="h-7 w-auto object-contain"
+                />
+                <span className="font-mono text-[9px] px-1.5 py-0.5 bg-[#101319] border border-[#00f5c4] text-[#00f5c4]">
+                  AI-IDE
+                </span>
+              </div>
+              <p className={`font-sans text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} max-w-sm leading-relaxed`}>
+                The AI-first cloud development environment. Engineered for autonomous cognitive flow, multi-file code synthesis, and instant live app previews.
+              </p>
+              
+              <div className="flex items-center gap-3 pt-2">
+                <div className={`flex items-center gap-2 px-2.5 py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-white border-slate-300'}`}>
+                  <span className="w-2 h-2 bg-[#00f5c4] anim-pulse-dot"></span>
+                  <span className={`font-mono text-[10px] ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>All Systems Operational (99.99%)</span>
+                </div>
+                <span className="font-mono text-[10px] text-slate-500">v2.0-STABLE</span>
+              </div>
+            </div>
+
+            {/* Links Column 1: Product */}
+            <div>
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
+                PRODUCT
+              </div>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <li><Link to="/#features" className="hover:text-[#00f5c4] transition-colors">AI Pair Programmer</Link></li>
+                <li><Link to="/#simulator" className="hover:text-[#00f5c4] transition-colors">Cloud Workspaces</Link></li>
+                <li><Link to="/#features" className="hover:text-[#00f5c4] transition-colors">Live App Preview</Link></li>
+                <li><Link to="/#terminal" className="hover:text-[#00f5c4] transition-colors">Cloud Terminal</Link></li>
+                <li><Link to="/payment" className="hover:text-[#00f5c4] transition-colors">Pricing & Plans</Link></li>
+              </ul>
+            </div>
+
+            {/* Links Column 2: Platform */}
+            <div>
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
+                PLATFORM
+              </div>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">Global Edge Ingress</Link></li>
+                <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">Virtual Filesystem</Link></li>
+                <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">LangGraph AI Engine</Link></li>
+                <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">Sandboxed Containers</Link></li>
+                <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">Security Hardening</Link></li>
+              </ul>
+            </div>
+
+            {/* Links Column 3: Resources */}
+            <div>
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
+                RESOURCES
+              </div>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <li><Link to="/privacy" className="hover:text-[#00f5c4] transition-colors">Privacy Policy</Link></li>
+                <li><a href="https://github.com/KRISHNA-0425/BHASHA" target="_blank" rel="noreferrer" className="hover:text-[#00f5c4] transition-colors">GitHub Repository</a></li>
+                <li><Link to="/#features" className="hover:text-[#00f5c4] transition-colors">Feature Highlights</Link></li>
+                <li><Link to="/privacy" className="hover:text-[#00f5c4] transition-colors">Terms of Service</Link></li>
+                <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">System Status</Link></li>
+              </ul>
+            </div>
           </div>
-          <div className="text-center sm:text-right">
-            <span>LATENCY: 4ms [US-EAST-VA] | © 2026 BHASHA COMPUTING ARCHITECTURE</span>
+
+          {/* Bottom Persistent Telemetry & Legal */}
+          <div className="pt-6 border-t border-[#232734] flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[10px] sm:text-[11px] text-slate-500">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center text-center md:text-left">
+              <span>© 2026</span>
+              <img
+                src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
+                alt="BHASHA"
+                className="h-3.5 w-auto object-contain inline-block align-middle mx-1"
+              />
+              <span>Labs, Inc. The AI-first Cloud IDE engineered for autonomous developer flow.</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link to="/privacy" className="hover:text-slate-300 transition-colors">Terms</Link>
+              <Link to="/privacy" className="hover:text-slate-300 transition-colors">Privacy</Link>
+              <a href="https://github.com/KRISHNA-0425/BHASHA" target="_blank" rel="noreferrer" className="hover:text-slate-300 transition-colors">Security</a>
+            </div>
           </div>
+
         </div>
       </footer>
 
