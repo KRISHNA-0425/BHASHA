@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signInWithPopup } from 'firebase/auth'
 import { auth, googleAuthProvider } from '../config/firebase.js'
@@ -6,360 +6,513 @@ import { googleLogin, registerUser } from '../features/login.js'
 import { useDispatch } from 'react-redux'
 import { setUserData } from '../redux/userSlice.js'
 
+// --- Crisp Lightweight Inline Icons ---
+const GoogleIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24">
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+  </svg>
+)
+
+const ArrowRightIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"></line>
+    <polyline points="12 5 19 12 12 19"></polyline>
+  </svg>
+)
+
+const SunIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="5"></circle>
+    <line x1="12" y1="1" x2="12" y2="3"></line>
+    <line x1="12" y1="21" x2="12" y2="23"></line>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+    <line x1="1" y1="12" x2="3" y2="12"></line>
+    <line x1="21" y1="12" x2="23" y2="12"></line>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+  </svg>
+)
+
+const MoonIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+  </svg>
+)
+
+const UserIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+    <circle cx="12" cy="7" r="4"></circle>
+  </svg>
+)
+
+const AtSignIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="4"></circle>
+    <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"></path>
+  </svg>
+)
+
+const KeyIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="7.5" cy="15.5" r="5.5"></circle>
+    <path d="m21 2-9.6 9.6"></path>
+    <path d="m15.5 7.5 3 3L22 7l-3-3"></path>
+  </svg>
+)
+
 const Register = () => {
-    const navigate = useNavigate();
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [agreeTerms, setAgreeTerms] = useState(true);
-    const [isLoading, setIsLoading] = useState(false);
-    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
 
-    const dispatch = useDispatch();
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [agreeTerms, setAgreeTerms] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
 
-    const handleGoogleAuth = async () => {
-        setIsGoogleLoading(true);
-        setError(null);
-        try {
-            const data = await signInWithPopup(auth, googleAuthProvider);
-            const token = await data.user.getIdToken();
-            const res = await googleLogin(token);
-            setSuccess("Neural identity provisioned via Google Enclave!");
-            setTimeout(() => {
-                navigate('/home');
-            }, 600);
+  // Local theme management
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('theme') || 'dark'
+    } catch {
+      return 'dark'
+    }
+  })
 
-            dispatch(setUserData(res))
+  const isDark = theme === 'dark'
 
-        } catch (err) {
-            console.error("Google registration failed:", err);
-            setError(err.response?.data?.message || err.message || "Failed to register with Google");
-        } finally {
-            setIsGoogleLoading(false);
-        }
-    };
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark'
+      try {
+        localStorage.setItem('theme', next)
+      } catch (err) {
+        console.error("Failed to save theme in localStorage:", err)
+      }
+      return next
+    })
+  }
 
-    const handleFormSubmit = async (e) => {
-        e.preventDefault();
-        setError(null);
-        setSuccess(null);
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [isDark])
 
-        if (!name.trim()) {
-            setError("Identity alias / name is required.");
-            return;
-        }
+  const handleGoogleAuth = async () => {
+    setIsGoogleLoading(true)
+    setError(null)
+    try {
+      const data = await signInWithPopup(auth, googleAuthProvider)
+      const token = await data.user.getIdToken()
+      const res = await googleLogin(token)
+      setSuccess("Identity provisioned via Google Federated Enclave!")
+      setTimeout(() => {
+        navigate('/home')
+      }, 600)
+      dispatch(setUserData(res))
+    } catch (err) {
+      console.error("Google registration failed:", err)
+      setError(err.response?.data?.message || err.message || "Failed to register with Google")
+    } finally {
+      setIsGoogleLoading(false)
+    }
+  }
 
-        if (!email.trim()) {
-            setError("Email address is required.");
-            return;
-        }
+  const handleFormSubmit = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setSuccess(null)
 
-        if (!password) {
-            setError("Password is required");
-            return;
-        }
+    if (!name.trim()) {
+      setError("Developer username / alias is required.")
+      return
+    }
 
-        if (password.length < 8) {
-            setError("Password must be at least 8 characters long.");
-            return;
-        }
+    if (!email.trim()) {
+      setError("Email address is required.")
+      return
+    }
 
-        if (!agreeTerms) {
-            setError("Please accept the Terms & Conditions.");
-            return;
-        }
+    if (!password) {
+      setError("Password is required.")
+      return
+    }
 
-        setIsLoading(true);
-        try {
-            const data = await registerUser(name.trim(), email.trim(), password);
-            setSuccess("Identity initialized! Initializing workspace...");
-            setTimeout(() => {
-                navigate('/home');
-            }, 600);
+    if (password.length < 8) {
+      setError("Secret master password must be at least 8 characters long.")
+      return
+    }
 
-            dispatch(setUserData(data));
+    if (!agreeTerms) {
+      setError("Please accept the Terms & Conditions and quota protection.")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const data = await registerUser(name.trim(), email.trim(), password)
+      setSuccess("Identity initialized! Provisioning workspace container...")
+      setTimeout(() => {
+        navigate('/home')
+      }, 600)
+      dispatch(setUserData(data))
+    } catch (err) {
+      console.error("Registration error:", err)
+      if (err.response?.status === 409) {
+        setError("An account with this email address already exists. Please sign in instead.")
+      } else {
+        setError(err.response?.data?.message || err.message || "Registration failed. Please check your credentials.")
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className={`min-h-screen w-full ${isDark ? 'bg-[#080a0f] text-slate-100' : 'bg-slate-50 text-slate-900'} font-sans antialiased selection:bg-[#00f5c4] selection:text-[#080a0f] flex flex-col justify-between overflow-x-hidden transition-colors duration-200 circuit-grid relative`}>
+      
+      {/* Top Navbar */}
+      <header className={`w-full ${isDark ? 'bg-[#080a0f]/90 border-[#232734]' : 'bg-white/90 border-slate-200'} border-b backdrop-blur-md px-4 sm:px-6 py-2.5 z-20`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          
+          {/* Left Brand & Status Markers */}
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+            <Link to="/" className="flex items-center gap-2 group">
+              {/* <span className="w-2.5 h-2.5 bg-[#00f5c4] inline-block"></span> */}
+              <img
+                src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
+                alt="BHASHA"
+                className="h-5 sm:h-6 w-auto "
+              />
+              <span className="font-mono text-[9px] px-1.5 py-0.5 bg-[#101319] border border-[#00f5c4] text-[#00f5c4]">
+                AI-IDE
+              </span>
+            </Link>
+
+          </div>
+
+          {/* Right Header Navigation Pills */}
+          <div className="flex items-center gap-2 sm:gap-3 text-xs font-mono">
+            <span className="px-2.5 py-1 bg-[#101319] border border-[#00f5c4] text-[#00f5c4] font-semibold text-[11px] hidden sm:inline-block">
+              AUTH_GATE
+            </span>
             
-        } catch (err) {
-            console.error("Registration error:", err);
-            if (err.response?.status === 409) {
-                setError("An account with this email already exists. Please sign in instead.");
-            } else {
-                setError(err.response?.data?.message || err.message || "Registration failed. Please check your details.");
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
+            
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+              className={`p-1.5 ${isDark ? 'bg-[#101319] border-[#232734] text-slate-300 hover:text-[#00f5c4]' : 'bg-slate-100 border-slate-300 text-slate-700 hover:text-emerald-600'} border flex items-center justify-center transition-colors`}
+            >
+              {isDark ? <SunIcon className="w-3.5 h-3.5" /> : <MoonIcon className="w-3.5 h-3.5" />}
+            </button>
+          </div>
 
-    return (
-        <div className="relative min-h-screen w-full bg-[#07090e] text-slate-100 flex flex-col justify-between items-center selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden px-4 sm:px-6 py-5">
-
-            {/* Ambient Cyber Lighting / Radial Glow */}
-            <div
-                className="pointer-events-none fixed inset-0 z-0"
-                style={{
-                    background: 'radial-gradient(ellipse 65% 55% at 50% 45%, rgba(22, 40, 72, 0.45) 0%, rgba(12, 18, 30, 0.3) 40%, rgba(7, 9, 14, 0.98) 75%)'
-                }}
-            />
-
-            {/* Subtle background tech grid */}
-            <div
-                className="pointer-events-none fixed inset-0 z-0 opacity-[0.03]"
-                style={{
-                    backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
-                    backgroundSize: '48px 48px'
-                }}
-            />
-
-            {/* Top Bar Branding */}
-            <header className="relative z-10 w-full max-w-6xl flex items-center justify-between py-1 mb-2">
-                <Link to="/login" className="flex items-center gap-3 group cursor-pointer">
-                    <img
-                        src="/bhasha-logo-white.png"
-                        alt="BHASHA"
-                        className="h-4 sm:h-5 object-contain opacity-90 group-hover:opacity-100 transition-opacity"
-                    />
-                    <div className="h-3 w-px bg-slate-800 hidden sm:block"></div>
-                    <span className="text-[10px] font-mono tracking-widest text-slate-500 uppercase hidden sm:inline-block">
-                        AI—IDE
-                    </span>
-                </Link>
-
-            </header>
-
-            {/* Main Center Area */}
-            <main className="relative z-10 w-full flex flex-col items-center justify-center my-auto py-2">
-
-                {/* Central Card */}
-                <div className="w-full max-w-[440px] sm:max-w-[460px] min-h-[500px] h-auto bg-[#10131b]/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl p-5 sm:p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_35px_-8px_rgba(30,64,120,0.22)] transition-all flex flex-col justify-between">
-
-                    <div>
-                        {/* Header Title with Logo Badge */}
-                        <div className="flex items-center justify-center gap-3 mb-6">
-                            <h1 className="text-2xl sm:text-[25px] font-semibold text-white tracking-tight">
-                                Create identity in
-                            </h1>
-                            <div className="bg-black/95 border border-white/20 rounded-lg px-3 py-1.5 flex items-center shadow-inner">
-                                <img
-                                    src="/bhasha-logo-white.png"
-                                    alt="BHASHA"
-                                    className="h-4 sm:h-5 object-contain"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Feedback Messages */}
-                        {error && (
-                            <div className="mb-4 p-3 rounded-xl bg-red-950/40 border border-red-500/30 text-red-200 text-sm flex items-start gap-2.5 animate-fadeIn">
-                                <svg className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                                </svg>
-                                <span className="flex-1">
-                                    {error}{' '}
-                                    {error.includes("already exists") && (
-                                        <Link to="/login" className="underline font-semibold text-[#38bdf8] hover:text-[#7dd3fc] ml-1">
-                                            Sign in here
-                                        </Link>
-                                    )}
-                                </span>
-                            </div>
-                        )}
-
-                        {success && (
-                            <div className="mb-4 p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-200 text-sm flex items-start gap-2.5 animate-fadeIn">
-                                <svg className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                </svg>
-                                <span className="flex-1">{success}</span>
-                            </div>
-                        )}
-
-                        {/* Google Register Button */}
-                        <button
-                            type="button"
-                            onClick={handleGoogleAuth}
-                            disabled={isGoogleLoading || isLoading}
-                            className="w-full bg-[#151922] hover:bg-[#1a202c] active:bg-[#12161f] text-slate-100 border border-slate-700/60 hover:border-slate-600 rounded-xl py-3 px-5 flex items-center justify-center gap-3 font-medium text-base sm:text-[17px] transition-all duration-200 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed group"
-                        >
-                            {isGoogleLoading ? (
-                                <svg className="animate-spin h-5 w-5 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            ) : (
-                                <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
-                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                                </svg>
-                            )}
-                            <span>Continue with Google</span>
-                        </button>
-
-                        {/* Divider */}
-                        <div className="flex items-center my-4">
-                            <div className="flex-1 border-t border-slate-800"></div>
-                            <span className="px-3 text-xs sm:text-[13px] font-semibold tracking-wider text-slate-400 uppercase select-none">
-                                OR REGISTER WITH EMAIL
-                            </span>
-                            <div className="flex-1 border-t border-slate-800"></div>
-                        </div>
-
-                        {/* Form */}
-                        <form onSubmit={handleFormSubmit} className="space-y-4">
-
-                            {/* Name / Alias Input */}
-                            <div>
-                                <label className="block text-sm sm:text-[15px] font-medium text-slate-200 mb-1.5 text-left">
-                                    User Name
-                                </label>
-                                <div className="relative flex items-center bg-[#090b10] border border-slate-800 rounded-xl px-4 py-3 focus-within:border-cyan-500/70 focus-within:ring-1 focus-within:ring-cyan-500/25 transition-all">
-                                    <input
-                                        type="text"
-                                        required
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        placeholder="Alex Mercer"
-                                        className="w-full bg-transparent text-base sm:text-[16px] text-slate-100 placeholder:text-slate-500 focus:outline-none"
-                                    />
-                                    <span className="text-slate-500 text-sm font-mono select-none px-0.5">ID</span>
-                                </div>
-                            </div>
-
-                            {/* Aura Identity Address Input */}
-                            <div>
-                                <label className="block text-sm sm:text-[15px] font-medium text-slate-200 mb-1.5 text-left">
-                                    Email Address
-                                </label>
-                                <div className="relative flex items-center bg-[#090b10] border border-slate-800 rounded-xl px-4 py-3 focus-within:border-cyan-500/70 focus-within:ring-1 focus-within:ring-cyan-500/25 transition-all">
-                                    <input
-                                        type="email"
-                                        required
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="you@domain.com"
-                                        className="w-full bg-transparent text-base sm:text-[16px] text-slate-100 placeholder:text-slate-500 focus:outline-none font-sans"
-                                    />
-                                    <span className="text-slate-500 text-base sm:text-lg font-light select-none px-0.5">@</span>
-                                </div>
-                            </div>
-
-                            {/* Passphrase / Master Key Input */}
-                            <div>
-                                <div className="flex items-center justify-between mb-1.5">
-                                    <label className="text-sm sm:text-[15px] font-medium text-slate-200">
-                                        Password
-                                    </label>
-                                    <span className="text-xs text-slate-400 font-mono">Min 8 chars</span>
-                                </div>
-                                <div className="relative flex items-center bg-[#090b10] border border-slate-800 rounded-xl px-4 py-3 focus-within:border-cyan-500/70 focus-within:ring-1 focus-within:ring-cyan-500/25 transition-all">
-                                    <input
-                                        type={showPassword ? "text" : "password"}
-                                        required
-                                        minLength={8}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="••••••••••••"
-                                        className="w-full bg-transparent text-base sm:text-[16px] text-slate-100 placeholder:text-slate-500 focus:outline-none tracking-widest font-mono"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="text-slate-500 hover:text-slate-300 transition-colors p-1 cursor-pointer focus:outline-none"
-                                        aria-label={showPassword ? "Hide passphrase" : "Show passphrase"}
-                                    >
-                                        {showPassword ? (
-                                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                                <line x1="1" y1="1" x2="23" y2="23"></line>
-                                            </svg>
-                                        ) : (
-                                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                                <circle cx="12" cy="12" r="3"></circle>
-                                            </svg>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Agreement Checkbox */}
-                            <div className="flex items-center justify-between pt-1 pb-1">
-                                <label className="flex items-center gap-2.5 cursor-pointer select-none group">
-                                    <input
-                                        type="checkbox"
-                                        checked={agreeTerms}
-                                        onChange={(e) => setAgreeTerms(e.target.checked)}
-                                        className="hidden"
-                                    />
-                                    <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center transition-all duration-150 ${agreeTerms
-                                            ? 'bg-[#5b64e0] border-[#6b73eb] text-white shadow-[0_0_8px_rgba(91,100,224,0.5)]'
-                                            : 'border-slate-700 bg-[#090b10] group-hover:border-slate-600'
-                                        }`}>
-                                        {agreeTerms && (
-                                            <svg className="w-3 h-3 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                <polyline points="20 6 9 17 4 12"></polyline>
-                                            </svg>
-                                        )}
-                                    </div>
-                                    <span className="text-sm sm:text-[14px] text-slate-300 group-hover:text-slate-200 transition-colors">
-                                        I agree with the
-                                        <span>
-                                            <a className='ml-1 text-[#38bdf8] hover:text-[#7dd3fc] font-medium' href="#terms" onClick={(e) => e.preventDefault()}>Terms & Conditions</a>
-                                        </span>
-                                    </span>
-                                </label>
-                                <span className="text-xs font-mono tracking-widest text-slate-400 select-none">
-                                    SEC: ZKP
-                                </span>
-                            </div>
-
-                            {/* Action Submit Button */}
-                            <button
-                                type="submit"
-                                disabled={isLoading || isGoogleLoading}
-                                className="w-full bg-[#f1f3f7] hover:bg-white active:bg-slate-200 text-[#0a0d14] font-semibold text-base sm:text-lg py-3 px-5 rounded-xl flex items-center justify-center gap-2.5 shadow-lg shadow-black/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group active:scale-[0.99] mt-2"
-                            >
-                                {isLoading ? (
-                                    <svg className="animate-spin h-5 w-5 text-[#0a0d14]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                ) : (
-                                    <>
-                                        <span>Initialize Identity</span>
-                                        <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                                            <polyline points="12 5 19 12 12 19"></polyline>
-                                        </svg>
-                                    </>
-                                )}
-                            </button>
-                        </form>
-                    </div>
-
-                    {/* Link to Login */}
-                    <div className="pt-4 pb-1 text-center text-sm sm:text-base text-slate-400">
-                        Already have an AI browser identity?{' '}
-                        <Link
-                            to="/login"
-                            className="text-[#38bdf8] hover:text-[#7dd3fc] font-semibold transition-colors hover:underline cursor-pointer ml-1"
-                        >
-                            Sign in
-                        </Link>
-                    </div>
-
-                </div>
-            </main>
         </div>
-    )
+      </header>
+
+      {/* Main Center Enclosure */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-10 flex flex-col items-center justify-center relative z-10">
+        
+        {/* Central Provisioning Card Enclosure */}
+        <div className={`w-full max-w-xl ${isDark ? 'bg-[#0a0d14] border-[#232734]' : 'bg-white border-slate-300 shadow-xl'} border p-4 sm:p-8 corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br relative transition-all`}>
+          
+          
+
+          {/* Center Brand Wordmark */}
+          <div className="flex flex-col items-center text-center mb-6">
+            <img
+              src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
+              alt="BHASHA"
+              className="h-8 sm:h-9 w-auto object-contain select-none mb-2 drop-shadow-[0_0_20px_rgba(0,245,196,0.25)]"
+            />
+            <div className="text-[#00f5c4] font-mono text-[10px] sm:text-xs font-semibold uppercase tracking-widest mt-1">
+              INITIALIZE CLOUD IDENTITY // PROVISION TENANT
+            </div>
+            
+          </div>
+
+          {/* Feedback Messages */}
+          {error && (
+            <div className="mb-5 p-3 bg-red-950/40 border border-red-500/50 text-red-200 text-xs font-mono flex items-start gap-2.5 animate-fadeIn">
+              <span className="text-red-400 font-bold">[ERR]</span>
+              <span className="flex-1">{error}</span>
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-5 p-3 bg-emerald-950/40 border border-[#00f5c4]/50 text-[#00f5c4] text-xs font-mono flex items-start gap-2.5 animate-fadeIn">
+              <span className="font-bold">[OK]</span>
+              <span className="flex-1">{success}</span>
+            </div>
+          )}
+
+          {/* Google Federated Authentication Button */}
+          <button
+            type="button"
+            onClick={handleGoogleAuth}
+            disabled={isGoogleLoading || isLoading}
+            className={`w-full py-2.5 px-4 ${isDark ? 'bg-[#101319] hover:bg-[#161922] border-[#232734]' : 'bg-slate-100 hover:bg-slate-200 border-slate-300'} border hover:border-[#00f5c4] transition-all flex items-center justify-between font-mono text-xs text-white mb-5 group cursor-pointer disabled:opacity-60`}
+          >
+            <div className="flex items-center gap-2.5">
+              <GoogleIcon className="w-4 h-4" />
+              <span className="font-medium text-slate-200 group-hover:text-white">
+                {isGoogleLoading ? 'Provisioning Google Identity...' : 'Continue with Federated Google'}
+              </span>
+            </div>
+            <span className="text-[10px] text-[#00f5c4] px-1.5 py-0.5 bg-[#080a0f] border border-[#00f5c4]/30">
+              1-CLICK ONBOARDING
+            </span>
+          </button>
+
+          {/* Divider */}
+          <div className="relative flex items-center justify-center my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[#232734]"></div>
+            </div>
+            <div className={`relative px-3 ${isDark ? 'bg-[#0a0d14]' : 'bg-white'} text-[10px] font-mono text-slate-500 uppercase tracking-wider`}>
+              OR REGISTER WITH DEVELOPER CREDENTIALS
+            </div>
+          </div>
+
+          {/* Registration Form */}
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            
+            {/* Field 1: Developer Username */}
+            <div>
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1.5">
+                <label htmlFor="register-name">DEVELOPER USERNAME</label>
+                <span className="text-[10px] text-slate-500">[ID: UNIQUE]</span>
+              </div>
+              <div className="relative flex items-center">
+                <input
+                  id="register-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Alex Mercer"
+                  required
+                  className={`w-full px-3.5 py-2.5 ${isDark ? 'bg-[#050608] border-[#232734] text-white' : 'bg-slate-50 border-slate-300 text-slate-900'} border font-mono text-xs focus:border-[#00f5c4] outline-none transition-colors pr-10`}
+                />
+                <span className="absolute right-3 text-slate-500 pointer-events-none">
+                  <UserIcon className="w-4 h-4" />
+                </span>
+              </div>
+            </div>
+
+            {/* Field 2: Email */}
+            <div>
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1.5">
+                <label htmlFor="register-email">EMAIL ADDRESS</label>
+                <span className="text-[10px] text-slate-500">[VERIFY: REQUIRED]</span>
+              </div>
+              <div className="relative flex items-center">
+                <input
+                  id="register-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="developer@domain.com"
+                  required
+                  className={`w-full px-3.5 py-2.5 ${isDark ? 'bg-[#050608] border-[#232734] text-white' : 'bg-slate-50 border-slate-300 text-slate-900'} border font-mono text-xs focus:border-[#00f5c4] outline-none transition-colors pr-10`}
+                />
+                <span className="absolute right-3 text-slate-500 pointer-events-none">
+                  <AtSignIcon className="w-4 h-4" />
+                </span>
+              </div>
+            </div>
+
+            {/* Field 3: Password */}
+            <div>
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1.5">
+                <label htmlFor="register-password">SECRET MASTER PASSWORD</label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-[10px] text-[#00f5c4] hover:underline"
+                >
+                  {showPassword ? '[HIDE SECRET]' : '[SHOW SECRET]'}
+                </button>
+              </div>
+              <div className="relative flex items-center">
+                <input
+                  id="register-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••••••"
+                  required
+                  minLength={8}
+                  className={`w-full px-3.5 py-2.5 ${isDark ? 'bg-[#050608] border-[#232734] text-white' : 'bg-slate-50 border-slate-300 text-slate-900'} border font-mono text-xs focus:border-[#00f5c4] outline-none transition-colors pr-10`}
+                />
+                <span className="absolute right-3 text-slate-500 pointer-events-none">
+                  <KeyIcon className="w-4 h-4" />
+                </span>
+              </div>
+            </div>
+
+            {/* Agreement Checkbox */}
+            <div className="flex items-center justify-between text-xs font-mono pt-1 text-slate-400">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={agreeTerms}
+                  onChange={(e) => setAgreeTerms(e.target.checked)}
+                  className="accent-[#00f5c4] w-3.5 h-3.5 rounded"
+                />
+                <span className="text-[11px] text-slate-300">
+                  I agree to the <Link to="/privacy" className="text-[#00f5c4] hover:underline">Terms & Conditions</Link> and workspace quota protection.
+                </span>
+              </label>
+            </div>
+
+            {/* Submit Action Button */}
+            <button
+              type="submit"
+              disabled={isLoading || isGoogleLoading}
+              className="w-full mt-2 py-3 bg-[#00f5c4] hover:bg-[#00f5c4]/90 text-[#080a0f] font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-[0_0_16px_rgba(0,245,196,0.3)] disabled:opacity-60 cursor-pointer"
+            >
+              <span>{isLoading ? 'INITIALIZING WORKSPACE...' : 'INITIALIZE IDENTITY & SCATTER WORKSPACE'}</span>
+              <ArrowRightIcon className="w-4 h-4" />
+            </button>
+
+          </form>
+
+          {/* Footer Login Link */}
+          <div className="flex items-center justify-between text-xs font-mono pt-6 mt-6 border-t border-[#232734] text-slate-400">
+            <span>Already have an AI browser identity?</span>
+            <Link to="/login" className="text-[#00f5c4] hover:underline flex items-center gap-1 font-semibold">
+              <span>Sign In to Session</span>
+              <span>→</span>
+            </Link>
+          </div>
+
+        </div>
+
+        {/* Provision Status Enclave below Card */}
+        <div className={`w-full max-w-xl mt-4 p-3 ${isDark ? 'bg-[#080a0f] border-[#232734]' : 'bg-slate-100 border-slate-300'} border text-[10px] font-mono text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left`}>
+          <div className="flex items-center gap-2 justify-center sm:justify-start">
+            <span>ROOT DIRECTORY AUTO-SCAFFOLD:</span>
+            <span className="text-[#00f5c4]">READY</span>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-end">
+            <span>LANGGRAPH AGENT: <span className="text-[#00f5c4]">READY</span></span>
+            <span className="text-slate-600">|</span>
+            <span>VIRTUAL FILESYSTEM: <span className="text-slate-300">STANDBY</span></span>
+          </div>
+        </div>
+
+      </main>
+
+      {/* Comprehensive Landing-Style Footer */}
+      <footer className={`w-full ${isDark ? 'bg-[#050608] border-[#232734]' : 'bg-slate-100 border-slate-300'} border-t mt-12`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 mb-10">
+            
+            {/* Brand Column */}
+            <div className="sm:col-span-2 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <img
+                  src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
+                  alt="BHASHA"
+                  className="h-7 w-auto object-contain"
+                />
+                <span className="font-mono text-[9px] px-1.5 py-0.5 bg-[#101319] border border-[#00f5c4] text-[#00f5c4]">
+                  AI-IDE
+                </span>
+              </div>
+              <p className={`font-sans text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} max-w-sm leading-relaxed`}>
+                The AI-first cloud development environment. Engineered for autonomous cognitive flow, multi-file code synthesis, and instant live app previews.
+              </p>
+              
+              <div className="flex items-center gap-3 pt-2">
+                <div className={`flex items-center gap-2 px-2.5 py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-white border-slate-300'}`}>
+                  <span className="w-2 h-2 bg-[#00f5c4] anim-pulse-dot"></span>
+                  <span className={`font-mono text-[10px] ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>All Systems Operational (99.99%)</span>
+                </div>
+                <span className="font-mono text-[10px] text-slate-500">v2.0-STABLE</span>
+              </div>
+            </div>
+
+            {/* Links Column 1: Product */}
+            <div>
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
+                PRODUCT
+              </div>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <li><Link to="/#features" className="hover:text-[#00f5c4] transition-colors">AI Pair Programmer</Link></li>
+                <li><Link to="/#simulator" className="hover:text-[#00f5c4] transition-colors">Cloud Workspaces</Link></li>
+                <li><Link to="/#features" className="hover:text-[#00f5c4] transition-colors">Live App Preview</Link></li>
+                <li><Link to="/#terminal" className="hover:text-[#00f5c4] transition-colors">Cloud Terminal</Link></li>
+                <li><Link to="/payment" className="hover:text-[#00f5c4] transition-colors">Pricing & Plans</Link></li>
+              </ul>
+            </div>
+
+            {/* Links Column 2: Platform */}
+            <div>
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
+                PLATFORM
+              </div>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">Global Edge Ingress</Link></li>
+                <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">Virtual Filesystem</Link></li>
+                <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">LangGraph AI Engine</Link></li>
+                <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">Sandboxed Containers</Link></li>
+                <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">Security Hardening</Link></li>
+              </ul>
+            </div>
+
+            {/* Links Column 3: Resources */}
+            <div>
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
+                RESOURCES
+              </div>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <li><Link to="/privacy" className="hover:text-[#00f5c4] transition-colors">Privacy Policy</Link></li>
+                <li><a href="https://github.com/KRISHNA-0425/BHASHA" target="_blank" rel="noreferrer" className="hover:text-[#00f5c4] transition-colors">GitHub Repository</a></li>
+                <li><Link to="/#features" className="hover:text-[#00f5c4] transition-colors">Feature Highlights</Link></li>
+                <li><Link to="/privacy" className="hover:text-[#00f5c4] transition-colors">Terms of Service</Link></li>
+                <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">System Status</Link></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Persistent Telemetry & Legal */}
+          <div className="pt-6 border-t border-[#232734] flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[10px] sm:text-[11px] text-slate-500">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center text-center md:text-left">
+              <span>© 2026</span>
+              <img
+                src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
+                alt="BHASHA"
+                className="h-3.5 w-auto object-contain inline-block align-middle mx-1"
+              />
+              <span>Labs, Inc. The AI-first Cloud IDE engineered for autonomous developer flow.</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link to="/privacy" className="hover:text-slate-300 transition-colors">Terms</Link>
+              <Link to="/privacy" className="hover:text-slate-300 transition-colors">Privacy</Link>
+              <a href="https://github.com/KRISHNA-0425/BHASHA" target="_blank" rel="noreferrer" className="hover:text-slate-300 transition-colors">Security</a>
+            </div>
+          </div>
+
+        </div>
+      </footer>
+
+    </div>
+  )
 }
 
 export default Register

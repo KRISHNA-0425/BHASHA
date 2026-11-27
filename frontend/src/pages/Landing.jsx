@@ -645,14 +645,14 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
           {/* Left Brand with Official Logo from public folder */}
-          <div className="flex items-center gap-6">
-            <a href="/" className="flex items-center gap-3 group">
+          <div className="flex items-center gap-3 sm:gap-6">
+            <a href="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
               <img
                 src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
                 alt="BHASHA"
-                className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
+                className="h-6 sm:h-8 w-auto object-contain "
               />
-              <span className="font-mono text-[10px] px-1.5 py-0.5 bg-[#101319] border border-[#00f5c4] text-[#00f5c4]">
+              <span className="font-mono text-[9px] sm:text-[10px] px-1.5 py-0.5 bg-[#101319] border border-[#00f5c4] text-[#00f5c4] hidden sm:inline-block">
                 AI-IDE
               </span>
             </a>
@@ -669,7 +669,7 @@ const Landing = () => {
           </div>
 
           {/* Right Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* GitHub Link */}
             <a 
               className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 ${isDark ? 'bg-[#101319] border-[#232734] text-slate-300' : 'bg-slate-100 border-slate-300 text-slate-700'} border hover:border-[#00f5c4] text-[12px] font-mono hover:text-[#00f5c4] transition-colors`}
@@ -693,10 +693,11 @@ const Landing = () => {
             {/* Launch CTA Button */}
             <button
               onClick={() => navigate(userData ? '/home' : '/login')}
-              className="px-3 sm:px-4 py-1.5 bg-[#00f5c4] hover:bg-[#00f5c4]/90 text-[#080a0f] font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+              className="px-2.5 sm:px-4 py-1.5 bg-[#00f5c4] hover:bg-[#00f5c4]/90 text-[#080a0f] font-mono text-[11px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1 sm:gap-1.5 transition-colors shrink-0"
             >
-              <span>{userData ? 'WORKSPACE' : 'LAUNCH IDE'}</span>
-              <ArrowRightIcon className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">{userData ? 'WORKSPACE' : 'LAUNCH IDE'}</span>
+              <span className="xs:hidden">{userData ? 'APP' : 'IDE'}</span>
+              <ArrowRightIcon className="w-3.5 h-3.5 shrink-0" />
             </button>
 
             {/* Mobile Hamburger Toggle */}
@@ -740,56 +741,67 @@ const Landing = () => {
         </div>
 
         {/* Small Technical Top Banner */}
-        <div className={`relative z-10 inline-flex items-center gap-2.5 px-3 py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-white border-slate-300 shadow-sm'} border mb-6 text-[11px] font-mono`}>
-          <span className="w-1.5 h-1.5 bg-[#00f5c4] anim-pulse-dot"></span>
-          <span className="text-slate-400">AI CLOUD IDE:</span>
-          <span className="text-[#00f5c4] font-semibold">ACTIVE</span>
-          <span className="text-slate-600">|</span>
-          <span className="text-slate-400">LATENCY:</span>
-          <span className="text-slate-300 font-semibold">{telemetry.heroLatency}</span>
-          <span className="text-slate-600">|</span>
-          <span className="text-slate-400">BOOT TIME:</span>
-          <span className="text-slate-300">&lt; 2s INSTANT</span>
+        <div className={`relative z-10 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 px-3 py-1.5 sm:py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-white border-slate-300 shadow-sm'} border mb-6 text-[10px] sm:text-[11px] font-mono max-w-full text-center`}>
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-[#00f5c4] anim-pulse-dot"></span>
+            <span className="text-slate-400">AI CLOUD IDE:</span>
+            <span className="text-[#00f5c4] font-semibold">ACTIVE</span>
+          </div>
+          <span className="text-slate-600 hidden xs:inline">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-400">LATENCY:</span>
+            <span className="text-slate-300 font-semibold">{telemetry.heroLatency}</span>
+          </div>
+          <span className="text-slate-600 hidden xs:inline">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-400">BOOT TIME:</span>
+            <span className="text-slate-300">&lt; 2s INSTANT</span>
+          </div>
         </div>
 
         {/* Centerpiece: Precision Engineered BHASHA Brand Geometry Frame */}
         <div className="relative z-10 w-full max-w-3xl mb-8">
-          <div className={`relative p-5 sm:p-7 ${isDark ? 'bg-[#080a0f]/90 border-[#232734]' : 'bg-white/90 border-slate-300 shadow-lg'} border corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br backdrop-blur-md`}>
+          <div className={`relative p-3.5 sm:p-7 ${isDark ? 'bg-[#080a0f]/90 border-[#232734]' : 'bg-white/90 border-slate-300 shadow-lg'} border corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br backdrop-blur-md`}>
             
+            {/* Animated Scanline Sweep across Datum Frame */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[inherit]">
+              <div className="anim-scanline" />
+            </div>
+
             {/* Datum Header inside Frame */}
-            <div className="flex items-center justify-between text-[9px] font-mono text-slate-500 mb-4 border-b border-[#232734] pb-2">
-              <span className="flex items-center gap-1.5">
+            <div className="flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-slate-500 mb-3 sm:mb-4 border-b border-[#232734] pb-2">
+              <span className="flex items-center gap-1 sm:gap-1.5 truncate">
                 <span className="text-[#00f5c4]">⎡</span>
-                <span>AUTONOMOUS CLOUD WORKSPACE</span>
+                <span>AUTONOMOUS <span className="hidden xs:inline">CLOUD </span>WORKSPACE</span>
               </span>
-              <span className="hidden sm:inline text-slate-500">NEXT-GEN DEVELOPER RUNTIME</span>
-              <span className="flex items-center gap-1.5">
+              <span className="hidden md:inline text-slate-500">NEXT-GEN DEVELOPER RUNTIME</span>
+              <span className="flex items-center gap-1 sm:gap-1.5 truncate">
                 <span>AI COPILOT READY</span>
                 <span className="text-[#00f5c4]">⎤</span>
               </span>
             </div>
 
             {/* Iconic BHASHA Brand Logo from public folder */}
-            <div className="flex flex-col items-center justify-center py-4 px-2 relative gap-3">
+            <div className="flex flex-col items-center justify-center py-3 sm:py-4 px-2 relative gap-3">
               <img
                 src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
                 alt="BHASHA"
-                className="h-12 sm:h-18 md:h-20 w-auto max-w-[85%] object-contain select-none transition-all drop-shadow-[0_0_24px_rgba(0,245,196,0.3)]"
+                className="h-10 sm:h-18 md:h-20 w-auto max-w-[85%] object-contain select-none transition-all drop-shadow-[0_0_24px_rgba(0,245,196,0.3)]"
               />
               <div className="ruler-tick-h w-full opacity-60"></div>
             </div>
 
             {/* Datum Footer inside Frame */}
-            <div className="flex items-center justify-between text-[9px] font-mono text-slate-500 mt-4 border-t border-[#232734] pt-2">
-              <span className="text-[#00f5c4]">⎣ LANGGRAPH AGENT ENGINE</span>
-              <span className="text-slate-400 hidden sm:inline">MULTI-FILE CODE SYNTHESIS</span>
-              <span className="text-[#00f5c4]">INTEGRATED CLOUD SHELL ⎦</span>
+            <div className="flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-slate-500 mt-3 sm:mt-4 border-t border-[#232734] pt-2">
+              <span className="text-[#00f5c4] truncate">⎣ LANGGRAPH AGENT<span className="hidden xs:inline"> ENGINE</span></span>
+              <span className="text-slate-400 hidden md:inline">MULTI-FILE CODE SYNTHESIS</span>
+              <span className="text-[#00f5c4] truncate"><span className="hidden xs:inline">INTEGRATED </span>CLOUD SHELL ⎦</span>
             </div>
           </div>
         </div>
 
         {/* User-Oriented Architectural Headline */}
-        <h1 className="relative z-10 font-display font-bold text-3xl sm:text-5xl lg:text-6xl tracking-tight text-white max-w-4xl leading-[1.15] mb-5">
+        <h1 className="relative z-10 font-display font-bold text-2xl sm:text-5xl lg:text-6xl tracking-tight text-white max-w-4xl leading-[1.2] sm:leading-[1.15] mb-5 px-2">
           The AI-First Cloud IDE That <br className="hidden sm:inline"/>
           <span className="text-[#00f5c4]">Builds Software With You</span>
         </h1>
@@ -862,20 +874,20 @@ const Landing = () => {
         </div>
 
         {/* 4-Grid Cards Container (2x2 on desktop, 1 col on mobile) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
           {/* Grid 1: Autonomous AI Pair Programmer */}
-          <div className="p-6 sm:p-8 bg-[#101319] border border-[#232734] hover:border-[#00f5c4] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tl corner-ch-br">
+          <div className="p-4 sm:p-6 lg:p-8 bg-[#101319] border border-[#232734] hover:border-[#00f5c4] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tl corner-ch-br">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-[#161922] border border-[#00f5c4]/40 text-[#00f5c4] flex items-center justify-center">
+              <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                <div className="w-10 h-10 bg-[#161922] border border-[#00f5c4]/40 text-[#00f5c4] flex items-center justify-center shrink-0">
                   <SparklesIcon className="w-5 h-5 text-[#00f5c4]" />
                 </div>
-                <span className="font-mono text-xs font-bold text-[#00f5c4] px-2 py-0.5 bg-[#080a0f] border border-[#00f5c4]/30">
+                <span className="font-mono text-[10px] sm:text-xs font-bold text-[#00f5c4] px-2 py-0.5 bg-[#080a0f] border border-[#00f5c4]/30">
                   PILLAR 01 // MULTI-FILE AI
                 </span>
               </div>
-              <h3 className="font-display font-bold text-xl text-white mb-2 group-hover:text-[#00f5c4] transition-colors">
+              <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 group-hover:text-[#00f5c4] transition-colors">
                 Autonomous Multi-File Code Synthesis
               </h3>
               <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
@@ -885,12 +897,12 @@ const Landing = () => {
             
             <div className="space-y-2 pt-4 border-t border-[#232734] font-mono text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <span className="text-[#00f5c4]">✔</span>
-                <span>Real-time multi-file diffing & dependency updates</span>
+                <span className="text-[#00f5c4] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Real-time multi-file diffing & dependency updates</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[#00f5c4]">✔</span>
-                <span>Automated AST syntax and regression checks</span>
+                <span className="text-[#00f5c4] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Automated AST syntax and regression checks</span>
               </div>
               <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
                 <span>Engine: LangGraph State Machine</span>
@@ -900,17 +912,17 @@ const Landing = () => {
           </div>
 
           {/* Grid 2: Instant Cloud Workspaces */}
-          <div className="p-6 sm:p-8 bg-[#101319] border border-[#232734] hover:border-[#00d2ff] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tr corner-ch-bl">
+          <div className="p-4 sm:p-6 lg:p-8 bg-[#101319] border border-[#232734] hover:border-[#00d2ff] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tr corner-ch-bl">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-[#161922] border border-[#00d2ff]/40 text-[#00d2ff] flex items-center justify-center">
+              <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                <div className="w-10 h-10 bg-[#161922] border border-[#00d2ff]/40 text-[#00d2ff] flex items-center justify-center shrink-0">
                   <RocketIcon className="w-5 h-5 text-[#00d2ff]" />
                 </div>
-                <span className="font-mono text-xs font-bold text-[#00d2ff] px-2 py-0.5 bg-[#080a0f] border border-[#00d2ff]/30">
+                <span className="font-mono text-[10px] sm:text-xs font-bold text-[#00d2ff] px-2 py-0.5 bg-[#080a0f] border border-[#00d2ff]/30">
                   PILLAR 02 // ZERO LOCAL SETUP
                 </span>
               </div>
-              <h3 className="font-display font-bold text-xl text-white mb-2 group-hover:text-[#00d2ff] transition-colors">
+              <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 group-hover:text-[#00d2ff] transition-colors">
                 Zero-Config Full-Stack Environments
               </h3>
               <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
@@ -920,12 +932,12 @@ const Landing = () => {
             
             <div className="space-y-2 pt-4 border-t border-[#232734] font-mono text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <span className="text-[#00d2ff]">✔</span>
-                <span>Sub-2s workspace cold start via WebAssembly</span>
+                <span className="text-[#00d2ff] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Sub-2s workspace cold start via WebAssembly</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[#00d2ff]">✔</span>
-                <span>Full Monaco IntelliSense & multi-cursor editing</span>
+                <span className="text-[#00d2ff] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Full Monaco IntelliSense & multi-cursor editing</span>
               </div>
               <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
                 <span>Persistence: Continuous Snapshotting</span>
@@ -935,17 +947,17 @@ const Landing = () => {
           </div>
 
           {/* Grid 3: Dual-Engine Live App Preview */}
-          <div className="p-6 sm:p-8 bg-[#101319] border border-[#232734] hover:border-[#a855f7] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tl corner-ch-br">
+          <div className="p-4 sm:p-6 lg:p-8 bg-[#101319] border border-[#232734] hover:border-[#a855f7] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tl corner-ch-br">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-[#161922] border border-[#a855f7]/40 text-[#a855f7] flex items-center justify-center">
+              <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                <div className="w-10 h-10 bg-[#161922] border border-[#a855f7]/40 text-[#a855f7] flex items-center justify-center shrink-0">
                   <MonitorIcon className="w-5 h-5 text-[#a855f7]" />
                 </div>
-                <span className="font-mono text-xs font-bold text-[#a855f7] px-2 py-0.5 bg-[#080a0f] border border-[#a855f7]/30">
+                <span className="font-mono text-[10px] sm:text-xs font-bold text-[#a855f7] px-2 py-0.5 bg-[#080a0f] border border-[#a855f7]/30">
                   PILLAR 03 // REAL-TIME HMR
                 </span>
               </div>
-              <h3 className="font-display font-bold text-xl text-white mb-2 group-hover:text-[#a855f7] transition-colors">
+              <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 group-hover:text-[#a855f7] transition-colors">
                 Dual-Engine Live In-Browser Preview
               </h3>
               <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
@@ -955,12 +967,12 @@ const Landing = () => {
             
             <div className="space-y-2 pt-4 border-t border-[#232734] font-mono text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <span className="text-[#a855f7]">✔</span>
-                <span>Client & server runtimes rendered side-by-side</span>
+                <span className="text-[#a855f7] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Client & server runtimes rendered side-by-side</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[#a855f7]">✔</span>
-                <span>Sub-50ms React 19 and Vite hot module reload</span>
+                <span className="text-[#a855f7] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Sub-50ms React 19 and Vite hot module reload</span>
               </div>
               <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
                 <span>Sync Latency: 18ms WebWorker Stream</span>
@@ -970,17 +982,17 @@ const Landing = () => {
           </div>
 
           {/* Grid 4: Integrated Cloud Terminal & Security */}
-          <div className="p-6 sm:p-8 bg-[#101319] border border-[#232734] hover:border-[#10b981] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tr corner-ch-bl">
+          <div className="p-4 sm:p-6 lg:p-8 bg-[#101319] border border-[#232734] hover:border-[#10b981] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tr corner-ch-bl">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-[#161922] border border-[#10b981]/40 text-[#10b981] flex items-center justify-center">
+              <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                <div className="w-10 h-10 bg-[#161922] border border-[#10b981]/40 text-[#10b981] flex items-center justify-center shrink-0">
                   <LockShieldIcon className="w-5 h-5 text-[#10b981]" />
                 </div>
-                <span className="font-mono text-xs font-bold text-[#10b981] px-2 py-0.5 bg-[#080a0f] border border-[#10b981]/30">
+                <span className="font-mono text-[10px] sm:text-xs font-bold text-[#10b981] px-2 py-0.5 bg-[#080a0f] border border-[#10b981]/30">
                   PILLAR 04 // CLOUD PTY SHELL
                 </span>
               </div>
-              <h3 className="font-display font-bold text-xl text-white mb-2 group-hover:text-[#10b981] transition-colors">
+              <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 group-hover:text-[#10b981] transition-colors">
                 Full Interactive Sandboxed Terminal
               </h3>
               <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
@@ -990,12 +1002,12 @@ const Landing = () => {
             
             <div className="space-y-2 pt-4 border-t border-[#232734] font-mono text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <span className="text-[#10b981]">✔</span>
-                <span>Full duplex xterm.js PTY shell with ANSI color</span>
+                <span className="text-[#10b981] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Full duplex xterm.js PTY shell with ANSI color</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[#10b981]">✔</span>
-                <span>Isolated container execution & secret redaction</span>
+                <span className="text-[#10b981] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Isolated container execution & secret redaction</span>
               </div>
               <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
                 <span>Security: Enterprise Sandboxed Container</span>
@@ -1063,25 +1075,25 @@ const Landing = () => {
         <div className="border border-[#232734] bg-[#0c0f16] corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br">
           
           {/* Top Window Title Bar */}
-          <div className="px-4 py-3 bg-[#101319] border-b border-[#232734] flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-[#101319] border-b border-[#232734] flex flex-wrap items-center justify-between gap-2 sm:gap-3 text-xs font-mono">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <span className="w-2.5 h-2.5 bg-[#ef4444] rounded-full"></span>
                 <span className="w-2.5 h-2.5 bg-[#eab308] rounded-full"></span>
                 <span className="w-2.5 h-2.5 bg-[#10b981] rounded-full"></span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                 <img
                   src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
                   alt="BHASHA"
-                  className="h-4 w-auto object-contain inline-block align-middle"
+                  className="h-4 w-auto object-contain inline-block align-middle shrink-0"
                 />
-                <span className="text-slate-400 hidden sm:inline">Workspace Dock //</span>
-                <span className="text-[#00f5c4] font-semibold">{scenarios[activeScenario]?.title}</span>
+                <span className="text-slate-400 hidden sm:inline shrink-0">Workspace Dock //</span>
+                <span className="text-[#00f5c4] font-semibold truncate text-[11px] sm:text-xs">{scenarios[activeScenario]?.title}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 text-[11px] text-slate-400">
+            <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] text-slate-400 shrink-0">
               <span className="hidden sm:inline">Tokens: {tokenCounter}</span>
               <span className="px-2 py-0.5 bg-[#161922] border border-[#232734] text-[#00f5c4]">
                 ENGINE ACTIVE
@@ -1144,17 +1156,17 @@ const Landing = () => {
             <div className={`lg:col-span-6 bg-[#050608] flex flex-col justify-between ${activeTabMobile === 'code' ? 'block' : 'hidden lg:flex'}`}>
               <div>
                 {/* Code Editor Header */}
-                <div className="px-4 py-2 bg-[#0c0f16] border-b border-[#232734] flex items-center justify-between font-mono text-xs text-slate-400">
-                  <div className="flex items-center gap-2">
-                    <CodeIcon className="w-3.5 h-3.5 text-[#00f5c4]" />
-                    <span className="text-white">src/components/Dashboard.tsx</span>
-                    <span className="text-[10px] text-[#00f5c4] px-1.5 py-0.2 bg-[#101319] border border-[#00f5c4]/30">LIVE AST DIFF</span>
+                <div className="px-3 sm:px-4 py-2 bg-[#0c0f16] border-b border-[#232734] flex items-center justify-between font-mono text-xs text-slate-400 gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CodeIcon className="w-3.5 h-3.5 text-[#00f5c4] shrink-0" />
+                    <span className="text-white truncate">src/components/Dashboard.tsx</span>
+                    <span className="text-[9px] sm:text-[10px] text-[#00f5c4] px-1.5 py-0.5 bg-[#101319] border border-[#00f5c4]/30 shrink-0">LIVE AST DIFF</span>
                   </div>
-                  <span className="text-[10px] text-slate-500">TypeScript 5.4</span>
+                  <span className="text-[10px] text-slate-500 shrink-0">TypeScript 5.4</span>
                 </div>
 
                 {/* Code Buffer Content */}
-                <div className="p-4 font-mono text-xs leading-relaxed overflow-x-auto text-slate-300 space-y-1">
+                <div className="p-3 sm:p-4 font-mono text-[11px] sm:text-xs leading-relaxed overflow-x-auto text-slate-300 space-y-1">
                   <p className="text-slate-500">// Autonomous LangGraph AST patch orchestration</p>
                   <p>
                     <span className="text-purple-400">import</span> &#123; <span className="text-[#00f5c4]">AgentPipeline</span> &#125; <span className="text-purple-400">from</span> <span className="text-amber-300">'@bhasha/agent-runtime'</span>;
@@ -1192,7 +1204,7 @@ const Landing = () => {
               </div>
 
               {/* Status Bar */}
-              <div className={`px-4 py-2 ${isDark ? 'bg-[#0d1017] border-[#232734]' : 'bg-slate-100 border-slate-200'} border-t flex items-center justify-between font-mono text-[11px] text-slate-400`}>
+              <div className={`px-3 sm:px-4 py-2 ${isDark ? 'bg-[#0d1017] border-[#232734]' : 'bg-slate-100 border-slate-200'} border-t flex items-center justify-between font-mono text-[10px] sm:text-[11px] text-slate-400 gap-2 flex-wrap`}>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-[#00f5c4] anim-pulse-dot"></span>
                   <span>AST State: Clean & Synced</span>
@@ -1286,13 +1298,13 @@ const Landing = () => {
         </div>
 
         {/* Live Event Bus Ribbon */}
-        <div className="mb-6 p-2.5 bg-[#101319] border border-[#232734] font-mono text-xs flex flex-wrap items-center justify-between gap-3 packet-rail">
-          <div className="flex items-center gap-2 relative z-10">
+        <div className="mb-6 p-2.5 bg-[#101319] border border-[#232734] font-mono text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 packet-rail text-center sm:text-left">
+          <div className="flex items-center gap-2 relative z-10 justify-center sm:justify-start">
             <span className="text-[#00f5c4] font-bold">•</span>
             <span className="text-slate-300">REAL-TIME TELEMETRY BUS:</span>
             <span className="text-[#00f5c4]">ZERO-LATENCY EVENT MESH</span>
           </div>
-          <div className="flex items-center gap-4 text-slate-400 relative z-10 text-[11px]">
+          <div className="flex items-center gap-4 text-slate-400 relative z-10 text-[10px] sm:text-[11px] justify-center sm:justify-end">
             <span>LATENCY: &lt;1.2 ms</span>
             <span>THROUGHPUT: 12.4K ops/s</span>
           </div>
@@ -1335,7 +1347,7 @@ const Landing = () => {
         </div>
 
         {/* Active Node Inspector Box */}
-        <div className="p-4 sm:p-5 bg-[#080a0f] border border-[#232734] corner-ch corner-ch-tl corner-ch-br">
+        <div className="p-3.5 sm:p-5 bg-[#080a0f] border border-[#232734] corner-ch corner-ch-tl corner-ch-br">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-4 border-b border-[#232734]">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-[#00f5c4] anim-pulse-dot"></span>
@@ -1353,7 +1365,7 @@ const Landing = () => {
               <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-2">
                 CAPABILITY SPECIFICATION:
               </div>
-              <pre className="p-3.5 bg-[#050608] border border-[#232734] text-[#00f5c4] font-mono text-xs leading-relaxed overflow-x-auto">
+              <pre className="p-3 sm:p-3.5 bg-[#050608] border border-[#232734] text-[#00f5c4] font-mono text-[11px] sm:text-xs leading-relaxed overflow-x-auto max-h-60 sm:max-h-none">
                 <code>{activeMesh.schema}</code>
               </pre>
             </div>
@@ -1421,7 +1433,7 @@ const Landing = () => {
             <button
               key={s.key}
               onClick={() => setMatrixScenario(s.key)}
-              className={`px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider border transition-all ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 font-mono text-[10px] sm:text-xs font-semibold uppercase tracking-wider border transition-all text-center ${
                 matrixScenario === s.key
                   ? 'bg-[#00f5c4] text-[#080a0f] border-[#00f5c4] shadow-[0_0_14px_rgba(0,245,196,0.3)]'
                   : 'bg-[#101319] text-slate-400 border-[#232734] hover:border-slate-500'
@@ -1433,10 +1445,10 @@ const Landing = () => {
         </div>
 
         {/* 2-Column Comparison Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
           
           {/* Card 1: Traditional Cloud IDE */}
-          <div className="p-6 bg-[#0c0f16] border border-[#ef4444]/30 flex flex-col justify-between relative">
+          <div className="p-4 sm:p-6 bg-[#0c0f16] border border-[#ef4444]/30 flex flex-col justify-between relative">
             <div>
               <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#232734]">
                 <div className="flex items-center gap-2">
@@ -1481,7 +1493,7 @@ const Landing = () => {
           </div>
 
           {/* Card 2: BHASHA Autonomous Flow */}
-          <div className="p-6 bg-[#0c1316] border border-[#00f5c4] flex flex-col justify-between relative shadow-[0_0_20px_rgba(0,245,196,0.1)]">
+          <div className="p-4 sm:p-6 bg-[#0c1316] border border-[#00f5c4] flex flex-col justify-between relative shadow-[0_0_20px_rgba(0,245,196,0.1)]">
             <div>
               <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#00f5c4]/30">
                 <div className="flex items-center gap-2">
@@ -1558,7 +1570,7 @@ const Landing = () => {
           </div>
 
           {/* Quick Action Pills */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {[
               'bhasha --status',
               'npm test',
@@ -1568,7 +1580,7 @@ const Landing = () => {
               <button
                 key={cmd}
                 onClick={() => runReplCommand(cmd)}
-                className="px-2.5 py-1 bg-[#101319] hover:bg-[#161922] border border-[#232734] hover:border-[#00f5c4] text-[#00f5c4] font-mono text-xs transition-colors"
+                className="px-2 sm:px-2.5 py-1 bg-[#101319] hover:bg-[#161922] border border-[#232734] hover:border-[#00f5c4] text-[#00f5c4] font-mono text-[11px] sm:text-xs transition-colors"
               >
                 {cmd}
               </button>
@@ -1580,7 +1592,7 @@ const Landing = () => {
         <div className="bg-[#050608] border border-[#232734] corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br">
           
           {/* Terminal Window Title Bar */}
-          <div className="px-4 py-2 bg-[#0c0f16] border-b border-[#232734] flex items-center justify-between font-mono text-xs text-slate-400">
+          <div className="px-3 sm:px-4 py-2 bg-[#0c0f16] border-b border-[#232734] flex items-center justify-between font-mono text-[10px] sm:text-xs text-slate-400 gap-2 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-[#00f5c4] anim-pulse-dot"></span>
               <span>session: cloud-terminal-secure (active)</span>
@@ -1591,7 +1603,7 @@ const Landing = () => {
           {/* Terminal Output Display */}
           <div
             ref={terminalEndRef}
-            className="p-4 sm:p-6 font-mono text-xs leading-relaxed max-h-80 overflow-y-auto space-y-2 text-slate-300"
+            className="p-3 sm:p-6 font-mono text-[11px] sm:text-xs leading-relaxed max-h-80 overflow-y-auto space-y-2 text-slate-300"
           >
             {replHistory.map((item, idx) => (
               <div key={idx}>
@@ -1602,25 +1614,25 @@ const Landing = () => {
                   <p className="text-[#00f5c4] font-bold mt-2">{item.text}</p>
                 )}
                 {item.type === 'out' && (
-                  <pre className="text-slate-300 whitespace-pre-wrap pl-2 font-mono">{item.text}</pre>
+                  <pre className="text-slate-300 whitespace-pre-wrap pl-2 font-mono text-[11px] sm:text-xs">{item.text}</pre>
                 )}
               </div>
             ))}
           </div>
 
           {/* Terminal Command Input Form */}
-          <form onSubmit={handleReplSubmit} className="p-3 bg-[#080a0f] border-t border-[#232734] flex items-center gap-3">
+          <form onSubmit={handleReplSubmit} className="p-2.5 sm:p-3 bg-[#080a0f] border-t border-[#232734] flex items-center gap-2 sm:gap-3">
             <span className="text-[#00f5c4] font-mono font-bold">$</span>
             <input
               type="text"
               value={replInput}
               onChange={(e) => setReplInput(e.target.value)}
-              placeholder="type a command (e.g. 'help', 'bhasha --status', 'npm test', 'git status') and press Enter..."
-              className="flex-1 bg-transparent border-none outline-none font-mono text-xs text-white placeholder:text-slate-600"
+              placeholder="type a command (e.g. 'help', 'bhasha --status', 'npm test')..."
+              className="flex-1 min-w-0 bg-transparent border-none outline-none font-mono text-[11px] sm:text-xs text-white placeholder:text-slate-600"
             />
             <button
               type="submit"
-              className="px-3 py-1 bg-[#161922] hover:bg-[#00f5c4] text-[#00f5c4] hover:text-[#080a0f] border border-[#00f5c4] font-mono text-xs font-bold transition-colors"
+              className="px-2.5 sm:px-3 py-1 bg-[#161922] hover:bg-[#00f5c4] text-[#00f5c4] hover:text-[#080a0f] border border-[#00f5c4] font-mono text-[10px] sm:text-xs font-bold transition-colors shrink-0"
             >
               EXECUTE
             </button>
@@ -1632,12 +1644,12 @@ const Landing = () => {
           SECTION 6: CALL TO ACTION (Instant Browser Launch)
           ========================================================================= */}
       <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="p-6 sm:p-10 bg-[#0c0f16] border border-[#232734] corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br circuit-grid">
+        <div className="p-5 sm:p-10 bg-[#0c0f16] border border-[#232734] corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br circuit-grid">
           <div className="max-w-2xl">
             <div className="text-[#00f5c4] font-mono text-xs font-semibold uppercase tracking-wider mb-2">
               [ INSTANT CLOUD LAUNCH ]
             </div>
-            <h2 className="font-display font-bold text-2xl sm:text-4xl text-white tracking-tight mb-3">
+            <h2 className="font-display font-bold text-xl sm:text-4xl text-white tracking-tight mb-3">
               Start building your next idea in under 2 seconds.
             </h2>
             <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
@@ -1651,11 +1663,11 @@ const Landing = () => {
                 value={ctaEmail}
                 onChange={(e) => setCtaEmail(e.target.value)}
                 placeholder="developer@bhasha.ai"
-                className="flex-1 px-3.5 py-2.5 bg-[#050608] border border-[#232734] text-white placeholder:text-slate-600 font-mono text-xs focus:border-[#00f5c4] outline-none"
+                className="flex-1 min-w-0 px-3.5 py-2.5 bg-[#050608] border border-[#232734] text-white placeholder:text-slate-600 font-mono text-xs focus:border-[#00f5c4] outline-none"
               />
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-[#00f5c4] hover:bg-[#00f5c4]/90 text-[#080a0f] font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
+                className="w-full sm:w-auto px-5 py-2.5 bg-[#00f5c4] hover:bg-[#00f5c4]/90 text-[#080a0f] font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors whitespace-nowrap shrink-0"
               >
                 <span>{userData ? 'GO TO WORKSPACE' : 'LAUNCH WORKSPACE'}</span>
                 <ArrowRightIcon className="w-3.5 h-3.5" />
@@ -1668,8 +1680,8 @@ const Landing = () => {
       {/* =========================================================================
           SECTION 7: PROFESSIONAL FOOTER (Zero Microservice Port Leaks)
           ========================================================================= */}
-      <footer className="w-full bg-[#050608] border-t border-[#232734]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <footer className={`w-full ${isDark ? 'bg-[#050608] border-[#232734]' : 'bg-slate-100 border-slate-300'} border-t`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 mb-10">
             
@@ -1685,14 +1697,14 @@ const Landing = () => {
                   AI-IDE
                 </span>
               </div>
-              <p className="font-sans text-xs text-slate-400 max-w-sm leading-relaxed">
+              <p className={`font-sans text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} max-w-sm leading-relaxed`}>
                 The AI-first cloud development environment. Engineered for autonomous cognitive flow, multi-file code synthesis, and instant live app previews.
               </p>
               
               <div className="flex items-center gap-3 pt-2">
-                <div className="flex items-center gap-2 px-2.5 py-1 bg-[#101319] border border-[#232734]">
+                <div className={`flex items-center gap-2 px-2.5 py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-white border-slate-300'}`}>
                   <span className="w-2 h-2 bg-[#00f5c4] anim-pulse-dot"></span>
-                  <span className="font-mono text-[10px] text-slate-300">All Systems Operational (99.99%)</span>
+                  <span className={`font-mono text-[10px] ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>All Systems Operational (99.99%)</span>
                 </div>
                 <span className="font-mono text-[10px] text-slate-500">v2.0-STABLE</span>
               </div>
@@ -1700,50 +1712,50 @@ const Landing = () => {
 
             {/* Links Column 1: Product */}
             <div>
-              <div className="font-mono text-xs font-bold text-white uppercase tracking-wider mb-3">
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
                 PRODUCT
               </div>
-              <ul className="space-y-2 text-xs font-mono text-slate-400">
-                <li><a href="#features" className="hover:text-white transition-colors">AI Pair Programmer</a></li>
-                <li><a href="#simulator" className="hover:text-white transition-colors">Cloud Workspaces</a></li>
-                <li><a href="#features" className="hover:text-white transition-colors">Live App Preview</a></li>
-                <li><a href="#terminal" className="hover:text-white transition-colors">Cloud Terminal</a></li>
-                <li><a href="/payment" className="hover:text-white transition-colors">Pricing & Plans</a></li>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <li><a href="#features" className="hover:text-[#00f5c4] transition-colors">AI Pair Programmer</a></li>
+                <li><a href="#simulator" className="hover:text-[#00f5c4] transition-colors">Cloud Workspaces</a></li>
+                <li><a href="#features" className="hover:text-[#00f5c4] transition-colors">Live App Preview</a></li>
+                <li><a href="#terminal" className="hover:text-[#00f5c4] transition-colors">Cloud Terminal</a></li>
+                <li><a href="/payment" className="hover:text-[#00f5c4] transition-colors">Pricing & Plans</a></li>
               </ul>
             </div>
 
             {/* Links Column 2: Platform */}
             <div>
-              <div className="font-mono text-xs font-bold text-white uppercase tracking-wider mb-3">
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
                 PLATFORM
               </div>
-              <ul className="space-y-2 text-xs font-mono text-slate-400">
-                <li><a href="#platform" className="hover:text-white transition-colors">Global Edge Ingress</a></li>
-                <li><a href="#platform" className="hover:text-white transition-colors">Virtual Filesystem</a></li>
-                <li><a href="#platform" className="hover:text-white transition-colors">LangGraph AI Engine</a></li>
-                <li><a href="#platform" className="hover:text-white transition-colors">Sandboxed Containers</a></li>
-                <li><a href="#platform" className="hover:text-white transition-colors">Security Hardening</a></li>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">Global Edge Ingress</a></li>
+                <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">Virtual Filesystem</a></li>
+                <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">LangGraph AI Engine</a></li>
+                <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">Sandboxed Containers</a></li>
+                <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">Security Hardening</a></li>
               </ul>
             </div>
 
             {/* Links Column 3: Resources */}
             <div>
-              <div className="font-mono text-xs font-bold text-white uppercase tracking-wider mb-3">
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
                 RESOURCES
               </div>
-              <ul className="space-y-2 text-xs font-mono text-slate-400">
-                <li><a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="https://github.com/KRISHNA-0425/BHASHA" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">GitHub Repository</a></li>
-                <li><a href="#features" className="hover:text-white transition-colors">Feature Highlights</a></li>
-                <li><a href="/privacy" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#platform" className="hover:text-white transition-colors">System Status</a></li>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <li><a href="/privacy" className="hover:text-[#00f5c4] transition-colors">Privacy Policy</a></li>
+                <li><a href="https://github.com/KRISHNA-0425/BHASHA" target="_blank" rel="noreferrer" className="hover:text-[#00f5c4] transition-colors">GitHub Repository</a></li>
+                <li><a href="#features" className="hover:text-[#00f5c4] transition-colors">Feature Highlights</a></li>
+                <li><a href="/privacy" className="hover:text-[#00f5c4] transition-colors">Terms of Service</a></li>
+                <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">System Status</a></li>
               </ul>
             </div>
           </div>
 
           {/* Bottom Copyright & Terms */}
-          <div className="pt-6 border-t border-[#232734] flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[11px] text-slate-500">
-            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+          <div className="pt-6 border-t border-[#232734] flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[10px] sm:text-[11px] text-slate-500">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center text-center md:text-left">
               <span>© 2026</span>
               <img
                 src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
