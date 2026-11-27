@@ -76,6 +76,8 @@ const Login = () => {
   // Local theme management
   const [theme, setTheme] = useState(() => {
     try {
+      const qTheme = new URLSearchParams(window.location.search).get('theme')
+      if (qTheme === 'light' || qTheme === 'dark') return qTheme
       return localStorage.getItem('theme') || 'dark'
     } catch {
       return 'dark'
@@ -151,10 +153,10 @@ const Login = () => {
   }
 
   return (
-    <div className={`min-h-screen w-full ${isDark ? 'bg-[#080a0f] text-slate-100' : 'bg-slate-50 text-slate-900'} font-sans antialiased selection:bg-[#00f5c4] selection:text-[#080a0f] flex flex-col justify-between overflow-x-hidden transition-colors duration-200 circuit-grid relative`}>
+    <div className={`min-h-screen w-full ${isDark ? 'bg-[#080a0f] text-slate-100 circuit-grid' : 'bg-[#f5f2eb] text-[#201d1a] circuit-grid-light'} font-sans antialiased selection:bg-[#00f5c4] selection:text-[#080a0f] flex flex-col justify-between overflow-x-hidden transition-colors duration-200 relative`}>
       
       {/* Top Navbar */}
-      <header className={`w-full ${isDark ? 'bg-[#080a0f]/90 border-[#232734]' : 'bg-white/90 border-slate-200'} border-b backdrop-blur-md px-4 sm:px-6 py-2.5 z-20`}>
+      <header className={`w-full ${isDark ? 'bg-[#080a0f]/90 border-[#232734]' : 'bg-[#ebe5d8]/90 border-[#d8d0bf]'} border-b backdrop-blur-md px-4 sm:px-6 py-2.5 z-20`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
           {/* Left Brand & Status Markers */}
@@ -183,7 +185,7 @@ const Login = () => {
             <button
               onClick={toggleTheme}
               title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-              className={`p-1.5 ${isDark ? 'bg-[#101319] border-[#232734] text-slate-300 hover:text-[#00f5c4]' : 'bg-slate-100 border-slate-300 text-slate-700 hover:text-emerald-600'} border flex items-center justify-center transition-colors`}
+              className={`p-1.5 ${isDark ? 'bg-[#101319] border-[#232734] text-slate-300 hover:text-[#00f5c4]' : 'bg-[#ede7dc] border-[#d8d0bf] text-[#3d3830] hover:text-emerald-700'} border flex items-center justify-center transition-colors`}
             >
               {isDark ? <SunIcon className="w-3.5 h-3.5" /> : <MoonIcon className="w-3.5 h-3.5" />}
             </button>
@@ -198,7 +200,7 @@ const Login = () => {
         {/* Architectural Datum Overlay (Coordinates & Protocol) */}
         
         {/* Central Authentication Card Enclosure */}
-        <div className={`w-full max-w-xl ${isDark ? 'bg-[#0a0d14] border-[#232734]' : 'bg-white border-slate-300 shadow-xl'} border p-4 sm:p-8 corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br relative transition-all`}>
+        <div className={`w-full max-w-xl ${isDark ? 'bg-[#0a0d14] border-[#232734]' : 'bg-[#ebe5d8] border-[#d8d0bf] shadow-xl'} border p-4 sm:p-8 corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br relative transition-all`}>
           
           
 
@@ -235,11 +237,11 @@ const Login = () => {
             type="button"
             onClick={handleGoogleAuth}
             disabled={isGoogleLoading || isLoading}
-            className={`w-full py-2.5 px-3 sm:px-4 ${isDark ? 'bg-[#101319] hover:bg-[#161922] border-[#232734]' : 'bg-slate-100 hover:bg-slate-200 border-slate-300'} border hover:border-[#00f5c4] transition-all flex items-center justify-between font-mono text-xs text-white mb-5 group cursor-pointer disabled:opacity-60 gap-2`}
+            className={`w-full py-2.5 px-3 sm:px-4 ${isDark ? 'bg-[#101319] hover:bg-[#161922] border-[#232734]' : 'bg-[#ede7dc] hover:bg-[#e2dbce] border-[#d8d0bf]'} border hover:border-[#00f5c4] transition-all flex items-center justify-between font-mono text-xs ${isDark ? 'text-white' : 'text-[#201d1a]'} mb-5 group cursor-pointer disabled:opacity-60 gap-2`}
           >
             <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
               <GoogleIcon className="w-4 h-4 shrink-0" />
-              <span className="font-medium text-slate-200 group-hover:text-white truncate">
+              <span className={`font-medium ${isDark ? 'text-slate-200 group-hover:text-white' : 'text-[#201d1a] group-hover:text-black'} truncate`}>
                 {isGoogleLoading ? 'Verifying Session...' : 'Continue with Google'}
                 <span className="hidden sm:inline"> Workspace</span>
               </span>
@@ -250,9 +252,9 @@ const Login = () => {
           {/* Divider */}
           <div className="relative flex items-center justify-center my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[#232734]"></div>
+              <div className={`w-full border-t ${isDark ? 'border-[#232734]' : 'border-[#d8d0bf]'}`}></div>
             </div>
-            <div className={`relative px-3 ${isDark ? 'bg-[#0a0d14]' : 'bg-white'} text-[10px] font-mono text-slate-500 uppercase tracking-wider`}>
+            <div className={`relative px-3 ${isDark ? 'bg-[#0a0d14]' : 'bg-[#ebe5d8]'} text-[10px] font-mono text-slate-500 uppercase tracking-wider`}>
               OR AUTHENTICATE WITH DEVELOPER CREDENTIALS
             </div>
           </div>
@@ -274,7 +276,7 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="developer@bhasha.ai"
                   required
-                  className={`w-full px-3.5 py-2.5 ${isDark ? 'bg-[#050608] border-[#232734] text-white' : 'bg-slate-50 border-slate-300 text-slate-900'} border font-mono text-xs focus:border-[#00f5c4] outline-none transition-colors pr-10`}
+                  className={`w-full px-3.5 py-2.5 ${isDark ? 'bg-[#050608] border-[#232734] text-white' : 'bg-[#fbf9f4] border-[#d8d0bf] text-[#201d1a]'} border font-mono text-xs focus:border-[#00f5c4] outline-none transition-colors pr-10`}
                 />
                 <span className="absolute right-3 text-slate-500 pointer-events-none">
                   <IdCardIcon className="w-4 h-4" />
@@ -302,7 +304,7 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••••••"
                   required
-                  className={`w-full px-3.5 py-2.5 ${isDark ? 'bg-[#050608] border-[#232734] text-white' : 'bg-slate-50 border-slate-300 text-slate-900'} border font-mono text-xs focus:border-[#00f5c4] outline-none transition-colors pr-10`}
+                  className={`w-full px-3.5 py-2.5 ${isDark ? 'bg-[#050608] border-[#232734] text-white' : 'bg-[#fbf9f4] border-[#d8d0bf] text-[#201d1a]'} border font-mono text-xs focus:border-[#00f5c4] outline-none transition-colors pr-10`}
                 />
                 <span className="absolute right-3 text-slate-500 pointer-events-none">
                   <KeyIcon className="w-4 h-4" />
@@ -319,7 +321,7 @@ const Login = () => {
                   onChange={(e) => setEnforceZkp(e.target.checked)}
                   className="accent-[#00f5c4] w-3.5 h-3.5 rounded"
                 />
-                <span className="text-[11px] text-slate-300">Enforce Zero-Knowledge Session (ZKP Guard)</span>
+                <span className={`text-[11px] ${isDark ? 'text-slate-300' : 'text-[#3d3830]'}`}>Enforce Zero-Knowledge Session (ZKP Guard)</span>
               </label>
               
             </div>
@@ -337,7 +339,7 @@ const Login = () => {
           </form>
 
           {/* Footer Register Link */}
-          <div className="flex items-center justify-between text-xs font-mono pt-6 mt-6 border-t border-[#232734] text-slate-400">
+          <div className={`flex items-center justify-between text-xs font-mono pt-6 mt-6 border-t ${isDark ? 'border-[#232734]' : 'border-[#d8d0bf]'} text-slate-400`}>
             <span>Need an AI browser identity?</span>
             <Link to="/register" className="text-[#00f5c4] hover:underline flex items-center gap-1 font-semibold">
               <span>Register New Identity</span>
@@ -348,7 +350,7 @@ const Login = () => {
         </div>
 
         {/* Node Security Envelope Status below Card */}
-        <div className={`w-full max-w-xl mt-4 p-3 ${isDark ? 'bg-[#080a0f] border-[#232734]' : 'bg-slate-100 border-slate-300'} border text-[10px] font-mono text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left`}>
+        <div className={`w-full max-w-xl mt-4 p-3 ${isDark ? 'bg-[#080a0f] border-[#232734]' : 'bg-[#ede7dc] border-[#d8d0bf]'} border text-[10px] font-mono text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left`}>
           <div>
             <span>SEC_ENCLAVE: HARDWARE_TPM_2.0 :: </span>
             <span className="text-[#00f5c4]">STATUS: SEALED</span>
@@ -365,7 +367,7 @@ const Login = () => {
       </main>
 
       {/* Comprehensive Landing-Style Footer */}
-      <footer className={`w-full ${isDark ? 'bg-[#050608] border-[#232734]' : 'bg-slate-100 border-slate-300'} border-t mt-12`}>
+      <footer className={`w-full ${isDark ? 'bg-[#050608] border-[#232734]' : 'bg-[#ede7dc] border-[#d8d0bf]'} border-t mt-12`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 mb-10">
@@ -382,14 +384,14 @@ const Login = () => {
                   AI-IDE
                 </span>
               </div>
-              <p className={`font-sans text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} max-w-sm leading-relaxed`}>
+              <p className={`font-sans text-xs ${isDark ? 'text-slate-400' : 'text-[#5e584f]'} max-w-sm leading-relaxed`}>
                 The AI-first cloud development environment. Engineered for autonomous cognitive flow, multi-file code synthesis, and instant live app previews.
               </p>
               
               <div className="flex items-center gap-3 pt-2">
-                <div className={`flex items-center gap-2 px-2.5 py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-white border-slate-300'}`}>
+                <div className={`flex items-center gap-2 px-2.5 py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-[#ebe5d8] border-[#d8d0bf]'}`}>
                   <span className="w-2 h-2 bg-[#00f5c4] anim-pulse-dot"></span>
-                  <span className={`font-mono text-[10px] ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>All Systems Operational (99.99%)</span>
+                  <span className={`font-mono text-[10px] ${isDark ? 'text-slate-300' : 'text-[#201d1a]'}`}>All Systems Operational (99.99%)</span>
                 </div>
                 <span className="font-mono text-[10px] text-slate-500">v2.0-STABLE</span>
               </div>
@@ -397,10 +399,10 @@ const Login = () => {
 
             {/* Links Column 1: Product */}
             <div>
-              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-[#201d1a]'} uppercase tracking-wider mb-3`}>
                 PRODUCT
               </div>
-              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-[#5e584f]'}`}>
                 <li><Link to="/#features" className="hover:text-[#00f5c4] transition-colors">AI Pair Programmer</Link></li>
                 <li><Link to="/#simulator" className="hover:text-[#00f5c4] transition-colors">Cloud Workspaces</Link></li>
                 <li><Link to="/#features" className="hover:text-[#00f5c4] transition-colors">Live App Preview</Link></li>
@@ -411,10 +413,10 @@ const Login = () => {
 
             {/* Links Column 2: Platform */}
             <div>
-              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-[#201d1a]'} uppercase tracking-wider mb-3`}>
                 PLATFORM
               </div>
-              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-[#5e584f]'}`}>
                 <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">Global Edge Ingress</Link></li>
                 <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">Virtual Filesystem</Link></li>
                 <li><Link to="/#platform" className="hover:text-[#00f5c4] transition-colors">LangGraph AI Engine</Link></li>
@@ -425,10 +427,10 @@ const Login = () => {
 
             {/* Links Column 3: Resources */}
             <div>
-              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-[#201d1a]'} uppercase tracking-wider mb-3`}>
                 RESOURCES
               </div>
-              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-[#5e584f]'}`}>
                 <li><Link to="/privacy" className="hover:text-[#00f5c4] transition-colors">Privacy Policy</Link></li>
                 <li><a href="https://github.com/KRISHNA-0425/BHASHA" target="_blank" rel="noreferrer" className="hover:text-[#00f5c4] transition-colors">GitHub Repository</a></li>
                 <li><Link to="/#features" className="hover:text-[#00f5c4] transition-colors">Feature Highlights</Link></li>
@@ -439,7 +441,7 @@ const Login = () => {
           </div>
 
           {/* Bottom Persistent Telemetry & Legal */}
-          <div className="pt-6 border-t border-[#232734] flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[10px] sm:text-[11px] text-slate-500">
+          <div className={`pt-6 border-t ${isDark ? 'border-[#232734]' : 'border-[#d8d0bf]'} flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[10px] sm:text-[11px] text-slate-500`}>
             <div className="flex items-center gap-1.5 flex-wrap justify-center text-center md:text-left">
               <span>© 2026</span>
               <img
