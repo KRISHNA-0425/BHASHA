@@ -124,6 +124,8 @@ const Landing = () => {
   // Local theme management
   const [theme, setTheme] = useState(() => {
     try {
+      const qTheme = new URLSearchParams(window.location.search).get('theme')
+      if (qTheme === 'light' || qTheme === 'dark') return qTheme
       return localStorage.getItem('theme') || 'dark'
     } catch {
       return 'dark'
@@ -636,12 +638,12 @@ const Landing = () => {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-[#080a0f] text-slate-100' : 'bg-slate-50 text-slate-900'} font-sans antialiased selection:bg-[#00f5c4] selection:text-[#080a0f] overflow-x-hidden transition-colors duration-200`}>
+    <div className={`min-h-screen ${isDark ? 'bg-[#080a0f] text-slate-100' : 'bg-[#f5f2eb] text-[#201d1a]'} font-sans antialiased selection:bg-[#00f5c4] selection:text-[#080a0f] overflow-x-hidden transition-colors duration-200`}>
       
       {/* =========================================================================
           HEADER / NAVBAR
           ========================================================================= */}
-      <header className={`fixed top-0 left-0 right-0 z-50 ${isDark ? 'bg-[#080a0f]/80 border-[#232734]' : 'bg-white/80 border-slate-200'} border-b backdrop-blur-md transition-colors`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 ${isDark ? 'bg-[#080a0f]/80 border-[#232734]' : 'bg-[#ebe5d8]/85 border-[#d8d0bf]'} border-b backdrop-blur-md transition-colors`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
           {/* Left Brand with Official Logo from public folder */}
@@ -672,7 +674,7 @@ const Landing = () => {
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* GitHub Link */}
             <a 
-              className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 ${isDark ? 'bg-[#101319] border-[#232734] text-slate-300' : 'bg-slate-100 border-slate-300 text-slate-700'} border hover:border-[#00f5c4] text-[12px] font-mono hover:text-[#00f5c4] transition-colors`}
+              className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 ${isDark ? 'bg-[#101319] border-[#232734] text-slate-300' : 'bg-[#ede7dc] border-[#d8d0bf] text-[#3d3830]'} border hover:border-[#00f5c4] text-[12px] font-mono hover:text-[#00f5c4] transition-colors`}
               href="https://github.com/KRISHNA-0425/BHASHA"
               target="_blank"
               rel="noreferrer"
@@ -685,7 +687,7 @@ const Landing = () => {
             <button
               onClick={toggleTheme}
               title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-              className={`p-1.5 ${isDark ? 'bg-[#101319] border-[#232734] text-slate-300 hover:text-[#00f5c4]' : 'bg-slate-100 border-slate-300 text-slate-700 hover:text-emerald-600'} border flex items-center justify-center transition-colors`}
+              className={`p-1.5 ${isDark ? 'bg-[#101319] border-[#232734] text-slate-300 hover:text-[#00f5c4]' : 'bg-[#ede7dc] border-[#d8d0bf] text-[#3d3830] hover:text-emerald-700'} border flex items-center justify-center transition-colors`}
             >
               {isDark ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
             </button>
@@ -712,7 +714,7 @@ const Landing = () => {
 
         {/* Mobile Dropdown Menu */}
         {isMobileMenuOpen && (
-          <div className={`lg:hidden px-4 pt-3 pb-5 ${isDark ? 'bg-[#0b0e14] border-[#232734]' : 'bg-slate-100 border-slate-300'} border-b flex flex-col gap-3 font-mono text-xs uppercase tracking-wider`}>
+          <div className={`lg:hidden px-4 pt-3 pb-5 ${isDark ? 'bg-[#0b0e14] border-[#232734]' : 'bg-[#ede7dc] border-[#d8d0bf] text-[#201d1a]'} border-b flex flex-col gap-3 font-mono text-xs uppercase tracking-wider`}>
             <a onClick={() => setIsMobileMenuOpen(false)} className="py-2 hover:text-[#00f5c4]" href="#features">Features</a>
             <a onClick={() => setIsMobileMenuOpen(false)} className="py-2 hover:text-[#00f5c4]" href="#simulator">Simulator</a>
             <a onClick={() => setIsMobileMenuOpen(false)} className="py-2 hover:text-[#00f5c4]" href="#platform">Platform</a>
@@ -741,7 +743,7 @@ const Landing = () => {
         </div>
 
         {/* Small Technical Top Banner */}
-        <div className={`relative z-10 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 px-3 py-1.5 sm:py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-white border-slate-300 shadow-sm'} border mb-6 text-[10px] sm:text-[11px] font-mono max-w-full text-center`}>
+        <div className={`relative z-10 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 px-3 py-1.5 sm:py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-[#ebe5d8] border-[#d8d0bf] shadow-sm'} border mb-6 text-[10px] sm:text-[11px] font-mono max-w-full text-center`}>
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-[#00f5c4] anim-pulse-dot"></span>
             <span className="text-slate-400">AI CLOUD IDE:</span>
@@ -750,18 +752,18 @@ const Landing = () => {
           <span className="text-slate-600 hidden xs:inline">|</span>
           <div className="flex items-center gap-1.5">
             <span className="text-slate-400">LATENCY:</span>
-            <span className="text-slate-300 font-semibold">{telemetry.heroLatency}</span>
+            <span className={isDark ? 'text-slate-300 font-semibold' : 'text-[#201d1a] font-semibold'}>{telemetry.heroLatency}</span>
           </div>
           <span className="text-slate-600 hidden xs:inline">|</span>
           <div className="flex items-center gap-1.5">
             <span className="text-slate-400">BOOT TIME:</span>
-            <span className="text-slate-300">&lt; 2s INSTANT</span>
+            <span className={isDark ? 'text-slate-300' : 'text-[#201d1a]'}>&lt; 2s INSTANT</span>
           </div>
         </div>
 
         {/* Centerpiece: Precision Engineered BHASHA Brand Geometry Frame */}
         <div className="relative z-10 w-full max-w-3xl mb-8">
-          <div className={`relative p-3.5 sm:p-7 ${isDark ? 'bg-[#080a0f]/90 border-[#232734]' : 'bg-white/90 border-slate-300 shadow-lg'} border corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br backdrop-blur-md`}>
+          <div className={`relative p-3.5 sm:p-7 ${isDark ? 'bg-[#080a0f]/90 border-[#232734]' : 'bg-[#ebe5d8]/95 border-[#d8d0bf] shadow-lg'} border corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br backdrop-blur-md`}>
             
             {/* Animated Scanline Sweep across Datum Frame */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[inherit]">
@@ -769,7 +771,7 @@ const Landing = () => {
             </div>
 
             {/* Datum Header inside Frame */}
-            <div className="flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-slate-500 mb-3 sm:mb-4 border-b border-[#232734] pb-2">
+            <div className={`flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-slate-500 mb-3 sm:mb-4 border-b ${isDark ? 'border-[#232734]' : 'border-[#d8d0bf]'} pb-2`}>
               <span className="flex items-center gap-1 sm:gap-1.5 truncate">
                 <span className="text-[#00f5c4]">⎡</span>
                 <span>AUTONOMOUS <span className="hidden xs:inline">CLOUD </span>WORKSPACE</span>
@@ -792,7 +794,7 @@ const Landing = () => {
             </div>
 
             {/* Datum Footer inside Frame */}
-            <div className="flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-slate-500 mt-3 sm:mt-4 border-t border-[#232734] pt-2">
+            <div className={`flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-slate-500 mt-3 sm:mt-4 border-t ${isDark ? 'border-[#232734]' : 'border-[#d8d0bf]'} pt-2`}>
               <span className="text-[#00f5c4] truncate">⎣ LANGGRAPH AGENT<span className="hidden xs:inline"> ENGINE</span></span>
               <span className="text-slate-400 hidden md:inline">MULTI-FILE CODE SYNTHESIS</span>
               <span className="text-[#00f5c4] truncate"><span className="hidden xs:inline">INTEGRATED </span>CLOUD SHELL ⎦</span>
@@ -801,7 +803,7 @@ const Landing = () => {
         </div>
 
         {/* User-Oriented Architectural Headline */}
-        <h1 className="relative z-10 font-display font-bold text-2xl sm:text-5xl lg:text-6xl tracking-tight text-white max-w-4xl leading-[1.2] sm:leading-[1.15] mb-5 px-2">
+        <h1 className={`relative z-10 font-display font-bold text-2xl sm:text-5xl lg:text-6xl tracking-tight ${isDark ? 'text-white' : 'text-[#201d1a]'} max-w-4xl leading-[1.2] sm:leading-[1.15] mb-5 px-2`}>
           The AI-First Cloud IDE That <br className="hidden sm:inline"/>
           <span className="text-[#00f5c4]">Builds Software With You</span>
         </h1>
@@ -822,7 +824,7 @@ const Landing = () => {
               className={`px-3.5 py-1.5 text-xs font-mono font-medium flex items-center gap-2 transition-all ${
                 activeScenario === p.key
                   ? 'bg-[#161922] border border-[#00f5c4] text-[#00f5c4] shadow-[0_0_12px_rgba(0,245,196,0.2)]'
-                  : `${isDark ? 'bg-[#101319] border-[#232734] text-slate-400 hover:border-slate-500' : 'bg-white border-slate-300 text-slate-700 hover:border-slate-400'} border`
+                  : `${isDark ? 'bg-[#101319] border-[#232734] text-slate-400 hover:border-slate-500' : 'bg-[#ede7dc] border-[#d8d0bf] text-[#3d3830] hover:border-[#c8bfae]'} border`
               }`}
             >
               <span>{p.label}</span>
@@ -860,14 +862,14 @@ const Landing = () => {
             <div className="text-[#00f5c4] font-mono text-xs font-semibold uppercase tracking-wider mb-2">
               [ 4-GRID CORE CAPABILITIES ]
             </div>
-            <h2 className="font-display font-bold text-2xl sm:text-4xl text-white tracking-tight">
+            <h2 className={`font-display font-bold text-2xl sm:text-4xl ${isDark ? 'text-white' : 'text-[#201d1a]'} tracking-tight`}>
               Engineered for Developers Who Ship
             </h2>
-            <p className="font-sans text-sm text-slate-400 mt-2 max-w-2xl">
+            <p className={`font-sans text-sm ${isDark ? 'text-slate-400' : 'text-[#5e584f]'} mt-2 max-w-2xl`}>
               Everything required to write, test, debug, and deploy software in a single cohesive flow. No context switching, no fragmented tabs, and zero configuration.
             </p>
           </div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#101319] border border-[#232734] font-mono text-xs text-slate-300 shrink-0">
+          <div className={`inline-flex items-center gap-2 px-3 py-1.5 ${isDark ? 'bg-[#101319] border-[#232734] text-slate-300' : 'bg-[#ebe5d8] border-[#d8d0bf] text-[#3d3830]'} border font-mono text-xs shrink-0`}>
             <span className="w-2 h-2 bg-[#00f5c4] anim-pulse-dot"></span>
             <span>4 Pillars • Zero Setup</span>
           </div>
@@ -877,25 +879,25 @@ const Landing = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
           {/* Grid 1: Autonomous AI Pair Programmer */}
-          <div className="p-4 sm:p-6 lg:p-8 bg-[#101319] border border-[#232734] hover:border-[#00f5c4] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tl corner-ch-br">
+          <div className={`p-4 sm:p-6 lg:p-8 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-[#ebe5d8] border-[#d8d0bf] shadow-sm'} border hover:border-[#00f5c4] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tl corner-ch-br`}>
             <div>
               <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-                <div className="w-10 h-10 bg-[#161922] border border-[#00f5c4]/40 text-[#00f5c4] flex items-center justify-center shrink-0">
+                <div className={`w-10 h-10 ${isDark ? 'bg-[#161922]' : 'bg-[#ede7dc]'} border border-[#00f5c4]/40 text-[#00f5c4] flex items-center justify-center shrink-0`}>
                   <SparklesIcon className="w-5 h-5 text-[#00f5c4]" />
                 </div>
-                <span className="font-mono text-[10px] sm:text-xs font-bold text-[#00f5c4] px-2 py-0.5 bg-[#080a0f] border border-[#00f5c4]/30">
+                <span className={`font-mono text-[10px] sm:text-xs font-bold text-[#00f5c4] px-2 py-0.5 ${isDark ? 'bg-[#080a0f]' : 'bg-[#f5f2eb]'} border border-[#00f5c4]/30`}>
                   PILLAR 01 // MULTI-FILE AI
                 </span>
               </div>
-              <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 group-hover:text-[#00f5c4] transition-colors">
+              <h3 className={`font-display font-bold text-lg sm:text-xl ${isDark ? 'text-white' : 'text-[#201d1a]'} mb-2 group-hover:text-[#00f5c4] transition-colors`}>
                 Autonomous Multi-File Code Synthesis
               </h3>
-              <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
+              <p className={`font-sans text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-[#5e584f]'} leading-relaxed mb-6`}>
                 Stop copy-pasting code snippets from a chat sidebar. Bhasha's LangGraph AI understands your entire project context, plans file changes across components, and streams verified AST diffs directly into your editor buffer.
               </p>
             </div>
             
-            <div className="space-y-2 pt-4 border-t border-[#232734] font-mono text-xs text-slate-300">
+            <div className={`space-y-2 pt-4 border-t ${isDark ? 'border-[#232734] text-slate-300' : 'border-[#d8d0bf] text-[#3d3830]'} font-mono text-xs`}>
               <div className="flex items-center gap-2">
                 <span className="text-[#00f5c4] shrink-0">✔</span>
                 <span className="text-[11px] sm:text-xs">Real-time multi-file diffing & dependency updates</span>
@@ -904,7 +906,7 @@ const Landing = () => {
                 <span className="text-[#00f5c4] shrink-0">✔</span>
                 <span className="text-[11px] sm:text-xs">Automated AST syntax and regression checks</span>
               </div>
-              <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
+              <div className={`flex items-center justify-between pt-2 text-[10px] ${isDark ? 'text-slate-500' : 'text-[#8a8174]'}`}>
                 <span>Engine: LangGraph State Machine</span>
                 <span className="text-[#00f5c4]">0 REGRESSIONS</span>
               </div>
@@ -912,25 +914,25 @@ const Landing = () => {
           </div>
 
           {/* Grid 2: Instant Cloud Workspaces */}
-          <div className="p-4 sm:p-6 lg:p-8 bg-[#101319] border border-[#232734] hover:border-[#00d2ff] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tr corner-ch-bl">
+          <div className={`p-4 sm:p-6 lg:p-8 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-[#ebe5d8] border-[#d8d0bf] shadow-sm'} border hover:border-[#00d2ff] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tr corner-ch-bl`}>
             <div>
               <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-                <div className="w-10 h-10 bg-[#161922] border border-[#00d2ff]/40 text-[#00d2ff] flex items-center justify-center shrink-0">
+                <div className={`w-10 h-10 ${isDark ? 'bg-[#161922]' : 'bg-[#ede7dc]'} border border-[#00d2ff]/40 text-[#00d2ff] flex items-center justify-center shrink-0`}>
                   <RocketIcon className="w-5 h-5 text-[#00d2ff]" />
                 </div>
-                <span className="font-mono text-[10px] sm:text-xs font-bold text-[#00d2ff] px-2 py-0.5 bg-[#080a0f] border border-[#00d2ff]/30">
+                <span className={`font-mono text-[10px] sm:text-xs font-bold text-[#00d2ff] px-2 py-0.5 ${isDark ? 'bg-[#080a0f]' : 'bg-[#f5f2eb]'} border border-[#00d2ff]/30`}>
                   PILLAR 02 // ZERO LOCAL SETUP
                 </span>
               </div>
-              <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 group-hover:text-[#00d2ff] transition-colors">
+              <h3 className={`font-display font-bold text-lg sm:text-xl ${isDark ? 'text-white' : 'text-[#201d1a]'} mb-2 group-hover:text-[#00d2ff] transition-colors`}>
                 Zero-Config Full-Stack Environments
               </h3>
-              <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
+              <p className={`font-sans text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-[#5e584f]'} leading-relaxed mb-6`}>
                 Launch full-stack Node.js, React, and Python workspaces in under 2 seconds right in your browser. Powered by Monaco editor with full IntelliSense, smart autocompletion, instant snapshotting, and persistent cloud volumes.
               </p>
             </div>
             
-            <div className="space-y-2 pt-4 border-t border-[#232734] font-mono text-xs text-slate-300">
+            <div className={`space-y-2 pt-4 border-t ${isDark ? 'border-[#232734] text-slate-300' : 'border-[#d8d0bf] text-[#3d3830]'} font-mono text-xs`}>
               <div className="flex items-center gap-2">
                 <span className="text-[#00d2ff] shrink-0">✔</span>
                 <span className="text-[11px] sm:text-xs">Sub-2s workspace cold start via WebAssembly</span>
@@ -939,7 +941,7 @@ const Landing = () => {
                 <span className="text-[#00d2ff] shrink-0">✔</span>
                 <span className="text-[11px] sm:text-xs">Full Monaco IntelliSense & multi-cursor editing</span>
               </div>
-              <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
+              <div className={`flex items-center justify-between pt-2 text-[10px] ${isDark ? 'text-slate-500' : 'text-[#8a8174]'}`}>
                 <span>Persistence: Continuous Snapshotting</span>
                 <span className="text-[#00d2ff]">READY IN &lt;2s</span>
               </div>
@@ -947,25 +949,25 @@ const Landing = () => {
           </div>
 
           {/* Grid 3: Dual-Engine Live App Preview */}
-          <div className="p-4 sm:p-6 lg:p-8 bg-[#101319] border border-[#232734] hover:border-[#a855f7] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tl corner-ch-br">
+          <div className={`p-4 sm:p-6 lg:p-8 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-[#ebe5d8] border-[#d8d0bf] shadow-sm'} border hover:border-[#a855f7] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tl corner-ch-br`}>
             <div>
               <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-                <div className="w-10 h-10 bg-[#161922] border border-[#a855f7]/40 text-[#a855f7] flex items-center justify-center shrink-0">
+                <div className={`w-10 h-10 ${isDark ? 'bg-[#161922]' : 'bg-[#ede7dc]'} border border-[#a855f7]/40 text-[#a855f7] flex items-center justify-center shrink-0`}>
                   <MonitorIcon className="w-5 h-5 text-[#a855f7]" />
                 </div>
-                <span className="font-mono text-[10px] sm:text-xs font-bold text-[#a855f7] px-2 py-0.5 bg-[#080a0f] border border-[#a855f7]/30">
+                <span className={`font-mono text-[10px] sm:text-xs font-bold text-[#a855f7] px-2 py-0.5 ${isDark ? 'bg-[#080a0f]' : 'bg-[#f5f2eb]'} border border-[#a855f7]/30`}>
                   PILLAR 03 // REAL-TIME HMR
                 </span>
               </div>
-              <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 group-hover:text-[#a855f7] transition-colors">
+              <h3 className={`font-display font-bold text-lg sm:text-xl ${isDark ? 'text-white' : 'text-[#201d1a]'} mb-2 group-hover:text-[#a855f7] transition-colors`}>
                 Dual-Engine Live In-Browser Preview
               </h3>
-              <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
+              <p className={`font-sans text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-[#5e584f]'} leading-relaxed mb-6`}>
                 Watch your web application update instantly as you or your AI agent modify code. Dual-engine preview renders client and server runtimes side-by-side with sub-50ms Hot Module Replacement and zero browser reloading.
               </p>
             </div>
             
-            <div className="space-y-2 pt-4 border-t border-[#232734] font-mono text-xs text-slate-300">
+            <div className={`space-y-2 pt-4 border-t ${isDark ? 'border-[#232734] text-slate-300' : 'border-[#d8d0bf] text-[#3d3830]'} font-mono text-xs`}>
               <div className="flex items-center gap-2">
                 <span className="text-[#a855f7] shrink-0">✔</span>
                 <span className="text-[11px] sm:text-xs">Client & server runtimes rendered side-by-side</span>
@@ -974,7 +976,7 @@ const Landing = () => {
                 <span className="text-[#a855f7] shrink-0">✔</span>
                 <span className="text-[11px] sm:text-xs">Sub-50ms React 19 and Vite hot module reload</span>
               </div>
-              <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
+              <div className={`flex items-center justify-between pt-2 text-[10px] ${isDark ? 'text-slate-500' : 'text-[#8a8174]'}`}>
                 <span>Sync Latency: 18ms WebWorker Stream</span>
                 <span className="text-[#a855f7]">LIVE SYNC</span>
               </div>
@@ -982,25 +984,25 @@ const Landing = () => {
           </div>
 
           {/* Grid 4: Integrated Cloud Terminal & Security */}
-          <div className="p-4 sm:p-6 lg:p-8 bg-[#101319] border border-[#232734] hover:border-[#10b981] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tr corner-ch-bl">
+          <div className={`p-4 sm:p-6 lg:p-8 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-[#ebe5d8] border-[#d8d0bf] shadow-sm'} border hover:border-[#10b981] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tr corner-ch-bl`}>
             <div>
               <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-                <div className="w-10 h-10 bg-[#161922] border border-[#10b981]/40 text-[#10b981] flex items-center justify-center shrink-0">
+                <div className={`w-10 h-10 ${isDark ? 'bg-[#161922]' : 'bg-[#ede7dc]'} border border-[#10b981]/40 text-[#10b981] flex items-center justify-center shrink-0`}>
                   <LockShieldIcon className="w-5 h-5 text-[#10b981]" />
                 </div>
-                <span className="font-mono text-[10px] sm:text-xs font-bold text-[#10b981] px-2 py-0.5 bg-[#080a0f] border border-[#10b981]/30">
+                <span className={`font-mono text-[10px] sm:text-xs font-bold text-[#10b981] px-2 py-0.5 ${isDark ? 'bg-[#080a0f]' : 'bg-[#f5f2eb]'} border border-[#10b981]/30`}>
                   PILLAR 04 // CLOUD PTY SHELL
                 </span>
               </div>
-              <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 group-hover:text-[#10b981] transition-colors">
+              <h3 className={`font-display font-bold text-lg sm:text-xl ${isDark ? 'text-white' : 'text-[#201d1a]'} mb-2 group-hover:text-[#10b981] transition-colors`}>
                 Full Interactive Sandboxed Terminal
               </h3>
-              <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
+              <p className={`font-sans text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-[#5e584f]'} leading-relaxed mb-6`}>
                 Run package managers, custom test suites, and backend processes in an isolated cloud container. Automated credential redaction guarantees secret tokens and API keys never leak into model prompts.
               </p>
             </div>
             
-            <div className="space-y-2 pt-4 border-t border-[#232734] font-mono text-xs text-slate-300">
+            <div className={`space-y-2 pt-4 border-t ${isDark ? 'border-[#232734] text-slate-300' : 'border-[#d8d0bf] text-[#3d3830]'} font-mono text-xs`}>
               <div className="flex items-center gap-2">
                 <span className="text-[#10b981] shrink-0">✔</span>
                 <span className="text-[11px] sm:text-xs">Full duplex xterm.js PTY shell with ANSI color</span>
@@ -1009,7 +1011,7 @@ const Landing = () => {
                 <span className="text-[#10b981] shrink-0">✔</span>
                 <span className="text-[11px] sm:text-xs">Isolated container execution & secret redaction</span>
               </div>
-              <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
+              <div className={`flex items-center justify-between pt-2 text-[10px] ${isDark ? 'text-slate-500' : 'text-[#8a8174]'}`}>
                 <span>Security: Enterprise Sandboxed Container</span>
                 <span className="text-[#10b981]">ZERO LEAKS</span>
               </div>
@@ -1028,10 +1030,10 @@ const Landing = () => {
             <div className="text-[#00f5c4] font-mono text-xs font-semibold uppercase tracking-wider mb-2">
               [ LIVE INTERACTIVE DOCK ]
             </div>
-            <h2 className="font-display font-bold text-2xl sm:text-3xl text-white tracking-tight">
+            <h2 className={`font-display font-bold text-2xl sm:text-3xl ${isDark ? 'text-white' : 'text-[#201d1a]'} tracking-tight`}>
               Experience the Autonomous Development Flow
             </h2>
-            <p className="font-sans text-sm text-slate-400 mt-1 max-w-xl">
+            <p className={`font-sans text-sm ${isDark ? 'text-slate-400' : 'text-[#5e584f]'} mt-1 max-w-xl`}>
               Watch the LangGraph state machine orchestrate code modifications, verify syntax, and update the editor in real time.
             </p>
           </div>
@@ -1042,7 +1044,7 @@ const Landing = () => {
                 setTypedChars(0)
                 setActiveDagStep(prev => (prev % 5) + 1)
               }}
-              className="px-3 py-1.5 bg-[#101319] hover:bg-[#161922] border border-[#00f5c4] text-[#00f5c4] text-xs font-mono font-medium flex items-center gap-2 transition-colors"
+              className={`px-3 py-1.5 ${isDark ? 'bg-[#101319] hover:bg-[#161922]' : 'bg-[#ede7dc] hover:bg-[#e2dbce]'} border border-[#00f5c4] text-[#00f5c4] text-xs font-mono font-medium flex items-center gap-2 transition-colors`}
             >
               <RefreshIcon className="w-3.5 h-3.5" />
               <span>Re-Trigger Cycle</span>
@@ -1051,7 +1053,7 @@ const Landing = () => {
         </div>
 
         {/* Mobile View Tabs */}
-        <div className="flex lg:hidden mb-3 border-b border-[#232734] font-mono text-xs">
+        <div className={`flex lg:hidden mb-3 border-b ${isDark ? 'border-[#232734]' : 'border-[#d8d0bf]'} font-mono text-xs`}>
           {[
             { key: 'dag', label: 'DAG Pipeline' },
             { key: 'code', label: 'Code Diff' },
@@ -1072,10 +1074,10 @@ const Landing = () => {
         </div>
 
         {/* Multi-Pane Simulator Window Frame */}
-        <div className="border border-[#232734] bg-[#0c0f16] corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br">
+        <div className={`border ${isDark ? 'border-[#232734] bg-[#0c0f16]' : 'border-[#d8d0bf] bg-[#ebe5d8] shadow-md'} corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br`}>
           
           {/* Top Window Title Bar */}
-          <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-[#101319] border-b border-[#232734] flex flex-wrap items-center justify-between gap-2 sm:gap-3 text-xs font-mono">
+          <div className={`px-3 sm:px-4 py-2.5 sm:py-3 ${isDark ? 'bg-[#101319] border-b border-[#232734]' : 'bg-[#ede7dc] border-b border-[#d8d0bf]'} flex flex-wrap items-center justify-between gap-2 sm:gap-3 text-xs font-mono`}>
             <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
               <div className="flex items-center gap-1.5 shrink-0">
                 <span className="w-2.5 h-2.5 bg-[#ef4444] rounded-full"></span>
@@ -1095,17 +1097,17 @@ const Landing = () => {
 
             <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] text-slate-400 shrink-0">
               <span className="hidden sm:inline">Tokens: {tokenCounter}</span>
-              <span className="px-2 py-0.5 bg-[#161922] border border-[#232734] text-[#00f5c4]">
+              <span className={`px-2 py-0.5 ${isDark ? 'bg-[#161922] border-[#232734]' : 'bg-[#f5f2eb] border-[#d8d0bf]'} border text-[#00f5c4]`}>
                 ENGINE ACTIVE
               </span>
             </div>
           </div>
 
           {/* 3-Column Dock Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-[#232734]">
+          <div className={`grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x ${isDark ? 'divide-[#232734]' : 'divide-[#d8d0bf]'}`}>
             
             {/* Panel 1: LangGraph DAG Pipeline (Left 3 cols) */}
-            <div className={`lg:col-span-3 ${isDark ? 'bg-[#080a0f]' : 'bg-slate-50'} p-3.5 space-y-3 ${activeTabMobile === 'dag' ? 'block' : 'hidden lg:block'}`}>
+            <div className={`lg:col-span-3 ${isDark ? 'bg-[#080a0f]' : 'bg-[#f5f2eb]'} p-3.5 space-y-3 ${activeTabMobile === 'dag' ? 'block' : 'hidden lg:block'}`}>
               <div className="text-[11px] font-mono text-slate-400 uppercase tracking-wider pb-2 border-b border-[#232734]">
                 [ AI Execution Pipeline ]
               </div>
@@ -1204,7 +1206,7 @@ const Landing = () => {
               </div>
 
               {/* Status Bar */}
-              <div className={`px-3 sm:px-4 py-2 ${isDark ? 'bg-[#0d1017] border-[#232734]' : 'bg-slate-100 border-slate-200'} border-t flex items-center justify-between font-mono text-[10px] sm:text-[11px] text-slate-400 gap-2 flex-wrap`}>
+              <div className={`px-3 sm:px-4 py-2 ${isDark ? 'bg-[#0d1017] border-[#232734]' : 'bg-[#ede7dc] border-[#d8d0bf]'} border-t flex items-center justify-between font-mono text-[10px] sm:text-[11px] text-slate-400 gap-2 flex-wrap`}>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-[#00f5c4] anim-pulse-dot"></span>
                   <span>AST State: Clean & Synced</span>
@@ -1214,7 +1216,7 @@ const Landing = () => {
             </div>
 
             {/* Panel 3: System Runtime & Probes (Right 3 cols) */}
-            <div className={`lg:col-span-3 ${isDark ? 'bg-[#080a0f]' : 'bg-slate-50'} p-3.5 flex flex-col justify-between ${activeTabMobile === 'probes' ? 'block' : 'hidden lg:flex'}`}>
+            <div className={`lg:col-span-3 ${isDark ? 'bg-[#080a0f]' : 'bg-[#f5f2eb]'} p-3.5 flex flex-col justify-between ${activeTabMobile === 'probes' ? 'block' : 'hidden lg:flex'}`}>
               <div className="space-y-4">
                 
                 {/* Section Header */}
@@ -1680,7 +1682,7 @@ const Landing = () => {
       {/* =========================================================================
           SECTION 7: PROFESSIONAL FOOTER (Zero Microservice Port Leaks)
           ========================================================================= */}
-      <footer className={`w-full ${isDark ? 'bg-[#050608] border-[#232734]' : 'bg-slate-100 border-slate-300'} border-t`}>
+      <footer className={`w-full ${isDark ? 'bg-[#050608] border-[#232734]' : 'bg-[#ede7dc] border-[#d8d0bf]'} border-t`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 mb-10">
@@ -1697,14 +1699,14 @@ const Landing = () => {
                   AI-IDE
                 </span>
               </div>
-              <p className={`font-sans text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} max-w-sm leading-relaxed`}>
+              <p className={`font-sans text-xs ${isDark ? 'text-slate-400' : 'text-[#5e584f]'} max-w-sm leading-relaxed`}>
                 The AI-first cloud development environment. Engineered for autonomous cognitive flow, multi-file code synthesis, and instant live app previews.
               </p>
               
               <div className="flex items-center gap-3 pt-2">
-                <div className={`flex items-center gap-2 px-2.5 py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-white border-slate-300'}`}>
+                <div className={`flex items-center gap-2 px-2.5 py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-[#ebe5d8] border-[#d8d0bf]'}`}>
                   <span className="w-2 h-2 bg-[#00f5c4] anim-pulse-dot"></span>
-                  <span className={`font-mono text-[10px] ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>All Systems Operational (99.99%)</span>
+                  <span className={`font-mono text-[10px] ${isDark ? 'text-slate-300' : 'text-[#201d1a]'}`}>All Systems Operational (99.99%)</span>
                 </div>
                 <span className="font-mono text-[10px] text-slate-500">v2.0-STABLE</span>
               </div>
@@ -1712,10 +1714,10 @@ const Landing = () => {
 
             {/* Links Column 1: Product */}
             <div>
-              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-[#201d1a]'} uppercase tracking-wider mb-3`}>
                 PRODUCT
               </div>
-              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-[#5e584f]'}`}>
                 <li><a href="#features" className="hover:text-[#00f5c4] transition-colors">AI Pair Programmer</a></li>
                 <li><a href="#simulator" className="hover:text-[#00f5c4] transition-colors">Cloud Workspaces</a></li>
                 <li><a href="#features" className="hover:text-[#00f5c4] transition-colors">Live App Preview</a></li>
@@ -1726,10 +1728,10 @@ const Landing = () => {
 
             {/* Links Column 2: Platform */}
             <div>
-              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-[#201d1a]'} uppercase tracking-wider mb-3`}>
                 PLATFORM
               </div>
-              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-[#5e584f]'}`}>
                 <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">Global Edge Ingress</a></li>
                 <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">Virtual Filesystem</a></li>
                 <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">LangGraph AI Engine</a></li>
@@ -1740,10 +1742,10 @@ const Landing = () => {
 
             {/* Links Column 3: Resources */}
             <div>
-              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-[#201d1a]'} uppercase tracking-wider mb-3`}>
                 RESOURCES
               </div>
-              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-[#5e584f]'}`}>
                 <li><a href="/privacy" className="hover:text-[#00f5c4] transition-colors">Privacy Policy</a></li>
                 <li><a href="https://github.com/KRISHNA-0425/BHASHA" target="_blank" rel="noreferrer" className="hover:text-[#00f5c4] transition-colors">GitHub Repository</a></li>
                 <li><a href="#features" className="hover:text-[#00f5c4] transition-colors">Feature Highlights</a></li>
@@ -1754,7 +1756,7 @@ const Landing = () => {
           </div>
 
           {/* Bottom Copyright & Terms */}
-          <div className="pt-6 border-t border-[#232734] flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[10px] sm:text-[11px] text-slate-500">
+          <div className={`pt-6 border-t ${isDark ? 'border-[#232734]' : 'border-[#d8d0bf]'} flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[10px] sm:text-[11px] text-slate-500`}>
             <div className="flex items-center gap-1.5 flex-wrap justify-center text-center md:text-left">
               <span>© 2026</span>
               <img
