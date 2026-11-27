@@ -1639,12 +1639,12 @@ const Landing = () => {
           SECTION 6: CALL TO ACTION (Instant Browser Launch)
           ========================================================================= */}
       <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="p-6 sm:p-10 bg-[#0c0f16] border border-[#232734] corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br circuit-grid">
+        <div className="p-5 sm:p-10 bg-[#0c0f16] border border-[#232734] corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br circuit-grid">
           <div className="max-w-2xl">
             <div className="text-[#00f5c4] font-mono text-xs font-semibold uppercase tracking-wider mb-2">
               [ INSTANT CLOUD LAUNCH ]
             </div>
-            <h2 className="font-display font-bold text-2xl sm:text-4xl text-white tracking-tight mb-3">
+            <h2 className="font-display font-bold text-xl sm:text-4xl text-white tracking-tight mb-3">
               Start building your next idea in under 2 seconds.
             </h2>
             <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
@@ -1658,11 +1658,11 @@ const Landing = () => {
                 value={ctaEmail}
                 onChange={(e) => setCtaEmail(e.target.value)}
                 placeholder="developer@bhasha.ai"
-                className="flex-1 px-3.5 py-2.5 bg-[#050608] border border-[#232734] text-white placeholder:text-slate-600 font-mono text-xs focus:border-[#00f5c4] outline-none"
+                className="flex-1 min-w-0 px-3.5 py-2.5 bg-[#050608] border border-[#232734] text-white placeholder:text-slate-600 font-mono text-xs focus:border-[#00f5c4] outline-none"
               />
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-[#00f5c4] hover:bg-[#00f5c4]/90 text-[#080a0f] font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
+                className="w-full sm:w-auto px-5 py-2.5 bg-[#00f5c4] hover:bg-[#00f5c4]/90 text-[#080a0f] font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors whitespace-nowrap shrink-0"
               >
                 <span>{userData ? 'GO TO WORKSPACE' : 'LAUNCH WORKSPACE'}</span>
                 <ArrowRightIcon className="w-3.5 h-3.5" />
@@ -1675,8 +1675,8 @@ const Landing = () => {
       {/* =========================================================================
           SECTION 7: PROFESSIONAL FOOTER (Zero Microservice Port Leaks)
           ========================================================================= */}
-      <footer className="w-full bg-[#050608] border-t border-[#232734]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <footer className={`w-full ${isDark ? 'bg-[#050608] border-[#232734]' : 'bg-slate-100 border-slate-300'} border-t`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 mb-10">
             
@@ -1692,14 +1692,14 @@ const Landing = () => {
                   AI-IDE
                 </span>
               </div>
-              <p className="font-sans text-xs text-slate-400 max-w-sm leading-relaxed">
+              <p className={`font-sans text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} max-w-sm leading-relaxed`}>
                 The AI-first cloud development environment. Engineered for autonomous cognitive flow, multi-file code synthesis, and instant live app previews.
               </p>
               
               <div className="flex items-center gap-3 pt-2">
-                <div className="flex items-center gap-2 px-2.5 py-1 bg-[#101319] border border-[#232734]">
+                <div className={`flex items-center gap-2 px-2.5 py-1 ${isDark ? 'bg-[#101319] border-[#232734]' : 'bg-white border-slate-300'}`}>
                   <span className="w-2 h-2 bg-[#00f5c4] anim-pulse-dot"></span>
-                  <span className="font-mono text-[10px] text-slate-300">All Systems Operational (99.99%)</span>
+                  <span className={`font-mono text-[10px] ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>All Systems Operational (99.99%)</span>
                 </div>
                 <span className="font-mono text-[10px] text-slate-500">v2.0-STABLE</span>
               </div>
@@ -1707,50 +1707,50 @@ const Landing = () => {
 
             {/* Links Column 1: Product */}
             <div>
-              <div className="font-mono text-xs font-bold text-white uppercase tracking-wider mb-3">
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
                 PRODUCT
               </div>
-              <ul className="space-y-2 text-xs font-mono text-slate-400">
-                <li><a href="#features" className="hover:text-white transition-colors">AI Pair Programmer</a></li>
-                <li><a href="#simulator" className="hover:text-white transition-colors">Cloud Workspaces</a></li>
-                <li><a href="#features" className="hover:text-white transition-colors">Live App Preview</a></li>
-                <li><a href="#terminal" className="hover:text-white transition-colors">Cloud Terminal</a></li>
-                <li><a href="/payment" className="hover:text-white transition-colors">Pricing & Plans</a></li>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <li><a href="#features" className="hover:text-[#00f5c4] transition-colors">AI Pair Programmer</a></li>
+                <li><a href="#simulator" className="hover:text-[#00f5c4] transition-colors">Cloud Workspaces</a></li>
+                <li><a href="#features" className="hover:text-[#00f5c4] transition-colors">Live App Preview</a></li>
+                <li><a href="#terminal" className="hover:text-[#00f5c4] transition-colors">Cloud Terminal</a></li>
+                <li><a href="/payment" className="hover:text-[#00f5c4] transition-colors">Pricing & Plans</a></li>
               </ul>
             </div>
 
             {/* Links Column 2: Platform */}
             <div>
-              <div className="font-mono text-xs font-bold text-white uppercase tracking-wider mb-3">
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
                 PLATFORM
               </div>
-              <ul className="space-y-2 text-xs font-mono text-slate-400">
-                <li><a href="#platform" className="hover:text-white transition-colors">Global Edge Ingress</a></li>
-                <li><a href="#platform" className="hover:text-white transition-colors">Virtual Filesystem</a></li>
-                <li><a href="#platform" className="hover:text-white transition-colors">LangGraph AI Engine</a></li>
-                <li><a href="#platform" className="hover:text-white transition-colors">Sandboxed Containers</a></li>
-                <li><a href="#platform" className="hover:text-white transition-colors">Security Hardening</a></li>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">Global Edge Ingress</a></li>
+                <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">Virtual Filesystem</a></li>
+                <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">LangGraph AI Engine</a></li>
+                <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">Sandboxed Containers</a></li>
+                <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">Security Hardening</a></li>
               </ul>
             </div>
 
             {/* Links Column 3: Resources */}
             <div>
-              <div className="font-mono text-xs font-bold text-white uppercase tracking-wider mb-3">
+              <div className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'} uppercase tracking-wider mb-3`}>
                 RESOURCES
               </div>
-              <ul className="space-y-2 text-xs font-mono text-slate-400">
-                <li><a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="https://github.com/KRISHNA-0425/BHASHA" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">GitHub Repository</a></li>
-                <li><a href="#features" className="hover:text-white transition-colors">Feature Highlights</a></li>
-                <li><a href="/privacy" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#platform" className="hover:text-white transition-colors">System Status</a></li>
+              <ul className={`space-y-2 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <li><a href="/privacy" className="hover:text-[#00f5c4] transition-colors">Privacy Policy</a></li>
+                <li><a href="https://github.com/KRISHNA-0425/BHASHA" target="_blank" rel="noreferrer" className="hover:text-[#00f5c4] transition-colors">GitHub Repository</a></li>
+                <li><a href="#features" className="hover:text-[#00f5c4] transition-colors">Feature Highlights</a></li>
+                <li><a href="/privacy" className="hover:text-[#00f5c4] transition-colors">Terms of Service</a></li>
+                <li><a href="#platform" className="hover:text-[#00f5c4] transition-colors">System Status</a></li>
               </ul>
             </div>
           </div>
 
           {/* Bottom Copyright & Terms */}
-          <div className="pt-6 border-t border-[#232734] flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[11px] text-slate-500">
-            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+          <div className="pt-6 border-t border-[#232734] flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[10px] sm:text-[11px] text-slate-500">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center text-center md:text-left">
               <span>© 2026</span>
               <img
                 src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
