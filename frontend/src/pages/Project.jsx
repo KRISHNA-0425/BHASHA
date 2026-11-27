@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { toast, ToastContainer } from 'react-toastify'
-import { FiZap } from 'react-icons/fi'
+import { FiZap, FiCheck } from 'react-icons/fi'
+import { getUserSubscription } from '../features/payment'
 import {
   VscFiles,
   VscSearch,
@@ -127,6 +129,25 @@ const Project = () => {
   const [workspaceView, setWorkspaceView] = useState('code') // 'code' | 'split' | 'preview'
   const [previewVersion, setPreviewVersion] = useState(0)
   const [isPricingOpen, setIsPricingOpen] = useState(false)
+  const [subscription, setSubscription] = useState(null)
+
+  // Fetch subscription on mount
+  useEffect(() => {
+    let isMounted = true
+    const fetchSub = async () => {
+      try {
+        const res = await getUserSubscription()
+        if (isMounted && res?.subscription) {
+          setSubscription(res.subscription)
+        }
+      } catch {}
+    }
+    fetchSub()
+    return () => { isMounted = false }
+  }, [])
+
+  const isPro = subscription?.status?.toUpperCase() === 'ACTIVE' &&
+    (subscription?.planId === 'PRO_MONTHLY' || subscription?.planId === 'PRO_YEARLY')
 
   // Editor and File States
   const [openTabs, setOpenTabs] = useState([])
@@ -682,74 +703,74 @@ const Project = () => {
       />
 
       {/* 1. TOP NAVBAR / IDE HEADER */}
-      <header className="h-11 bg-[#090c13] border-b border-white/[0.08] px-3 flex items-center justify-between shrink-0 z-20">
+      <header className="h-11 bg-[#090c13] border-b border-white/[0.08] px-2.5 sm:px-3 flex items-center justify-between shrink-0 z-20">
         {/* Left: Back & Project Title */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
           <Link
             to="/home"
             title="Back to Dashboard"
-            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-2 py-1 rounded hover:bg-white/[0.06] transition-colors"
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-1.5 sm:px-2 py-1 rounded hover:bg-white/[0.06] transition-colors shrink-0"
           >
             <VscArrowLeft className="text-sm" />
-            <span className="hidden sm:inline font-mono">Projects</span>
+            <span className="hidden md:inline font-mono">Projects</span>
           </Link>
 
-          <div className="h-4 w-px bg-white/[0.1] hidden sm:block"></div>
+          <div className="h-4 w-px bg-white/[0.1] hidden sm:block shrink-0"></div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-100 font-mono tracking-wide">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <span className="text-xs font-semibold text-slate-100 font-mono tracking-wide truncate max-w-[90px] xs:max-w-[130px] sm:max-w-[180px] md:max-w-none">
               {project?.name || (projectId ? `Project #${projectId.slice(-6)}` : 'AI Workspace')}
             </span>
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-200 border border-white/[0.1]">
+            <span className="hidden xs:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-200 border border-white/[0.1] shrink-0">
               main
             </span>
             {isLoadingProject && (
-              <VscSync className="text-xs text-slate-500 animate-spin" />
+              <VscSync className="text-xs text-slate-500 animate-spin shrink-0" />
             )}
           </div>
         </div>
 
         {/* Center: View Mode Switcher (Code | Split | Preview) & Run Action */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <div className="flex items-center bg-[#121622] border border-white/[0.08] rounded-md p-0.5 text-[11px] font-mono">
             <button
               type="button"
               onClick={() => setWorkspaceView('code')}
               title="Code Editor Only"
-              className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
+              className={`flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
                 workspaceView === 'code'
                   ? 'bg-white/[0.12] text-white font-medium'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <VscCode className="text-xs" />
-              <span className="hidden sm:inline">Code</span>
+              <span className="hidden xs:inline">Code</span>
             </button>
             <button
               type="button"
               onClick={() => setWorkspaceView('split')}
               title="Split Code + Live Preview"
-              className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
+              className={`hidden md:flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
                 workspaceView === 'split'
                   ? 'bg-white/[0.12] text-white font-medium'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <VscSplitHorizontal className="text-xs" />
-              <span className="hidden sm:inline">Split</span>
+              <span>Split</span>
             </button>
             <button
               type="button"
               onClick={() => setWorkspaceView('preview')}
               title="Full Live Preview"
-              className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
+              className={`flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
                 workspaceView === 'preview'
                   ? 'bg-emerald-500/20 text-emerald-300 font-medium'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <VscGlobe className="text-xs" />
-              <span className="hidden sm:inline">Preview</span>
+              <span className="hidden xs:inline">Preview</span>
             </button>
           </div>
 
@@ -758,10 +779,10 @@ const Project = () => {
               type="button"
               onClick={() => handleRunFile(activeFile)}
               title={`Run ${activeFile.name} in Integrated Terminal`}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-medium transition-all cursor-pointer shadow-xs active:scale-95"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-md bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-medium transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
             >
               <VscPlay className="text-xs text-emerald-400 fill-current" />
-              <span>Run {activeFile.name}</span>
+              <span className="hidden md:inline">Run {activeFile.name}</span>
             </button>
           ) : (
             <button
@@ -770,25 +791,39 @@ const Project = () => {
                 setWorkspaceView((curr) => (curr === 'code' ? 'split' : curr))
                 setPreviewVersion((v) => v + 1)
               }}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/[0.12] text-xs font-mono transition-all cursor-pointer shadow-xs"
+              title="Run Preview"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-md bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/[0.12] text-xs font-mono transition-all cursor-pointer shadow-xs shrink-0"
             >
               <VscPlay className="text-xs text-emerald-400" />
-              <span>Run Preview</span>
+              <span className="hidden md:inline">Run Preview</span>
             </button>
           )}
         </div>
 
         {/* Right: Panel Toggles & Upgrade */}
-        <div className="flex items-center gap-1.5">
-          {/* Upgrade to Pro Button */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          {/* Upgrade to Pro / Pro Badge Button */}
           <button
             type="button"
             onClick={() => navigate('/payment')}
-            title="View Pro Plans & Pricing"
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-xs font-medium transition-all cursor-pointer shadow-xs active:scale-95 mr-1"
+            title={isPro ? "Pro Developer Pass Active" : "View Pro Plans & Pricing"}
+            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer shadow-xs active:scale-95 mr-1 border ${
+              isPro
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700'
+            }`}
           >
-            <FiZap className="text-xs text-amber-400" />
-            <span>Upgrade</span>
+            {isPro ? (
+              <>
+                <FiCheck className="text-xs text-emerald-400 stroke-[3]" />
+                <span>Pro</span>
+              </>
+            ) : (
+              <>
+                <FiZap className="text-xs text-amber-400" />
+                <span>Upgrade</span>
+              </>
+            )}
           </button>
 
           {/* Toggle File Explorer */}
@@ -821,7 +856,7 @@ const Project = () => {
           <button
             onClick={() => setIsAIOpen((prev) => !prev)}
             title="Toggle AI Agent"
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded transition-colors cursor-pointer ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded transition-colors cursor-pointer ${
               isAIOpen
                 ? 'bg-white/[0.1] text-white border border-white/[0.15]'
                 : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
@@ -905,9 +940,9 @@ const Project = () => {
           </button>
         </div>
 
-        {/* Left Sidebar (File Explorer Tree) */}
+        {/* Desktop Left Sidebar (File Explorer Tree) */}
         {isSidebarOpen && (
-          <div className="w-60 md:w-64 shrink-0 h-full overflow-hidden">
+          <div className="hidden md:block w-60 md:w-64 shrink-0 h-full overflow-hidden">
             <FileExplorer
               fileTree={fileTree}
               activeFile={activeFile}
@@ -924,6 +959,38 @@ const Project = () => {
             />
           </div>
         )}
+
+        {/* Mobile File Explorer Drawer Overlay */}
+        <AnimatePresence>
+          {isSidebarOpen && (
+            <div className="md:hidden">
+              <div
+                onClick={() => setIsSidebarOpen(false)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40"
+              />
+              <div className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-[#0b0e14] z-50 shadow-2xl flex flex-col border-r border-white/[0.1]">
+                <FileExplorer
+                  fileTree={fileTree}
+                  activeFile={activeFile}
+                  onSelectFile={(f) => {
+                    selectFileWithContent(f)
+                    setIsSidebarOpen(false)
+                  }}
+                  onCreateFile={handleCreateFile}
+                  onCreateFolder={handleCreateFolder}
+                  onDeleteFile={handleDeleteFile}
+                  onDeleteFolder={handleDeleteFolder}
+                  onClearWorkspace={handleClearWorkspace}
+                  onRefreshTree={handleRefreshTree}
+                  projectName={project?.name || 'workspace'}
+                  rootFolderId={rootFolderId}
+                  isLoading={isLoadingTree}
+                  onCloseMobile={() => setIsSidebarOpen(false)}
+                />
+              </div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* Center Canvas: Monaco Code Editor + Live Preview + Bottom Terminal */}
         <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
@@ -988,6 +1055,8 @@ const Project = () => {
             setWorkspaceView('split')
             setPreviewVersion((v) => v + 1)
           }}
+          isPro={isPro}
+          onOpenPricing={() => setIsPricingOpen(true)}
         />
 
         {/* Pricing & Subscription Modal */}
@@ -995,6 +1064,7 @@ const Project = () => {
           isOpen={isPricingOpen}
           onClose={() => setIsPricingOpen(false)}
           user={userData}
+          onSubscriptionUpdated={(newSub) => setSubscription(newSub)}
         />
       </div>
     </div>

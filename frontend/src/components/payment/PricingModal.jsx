@@ -92,7 +92,7 @@ const PricingModal = ({ isOpen, onClose, user, onSubscriptionUpdated }) => {
             })
 
             if (verifyRes?.success) {
-              toast.success('🎉 Payment verified! Your Pro subscription is now active.')
+              toast.success(plan.tokens ? '🎉 100,000 AI tokens added to your balance!' : '🎉 Payment verified! Your Pro pass is now active.')
               if (onSubscriptionUpdated) {
                 onSubscriptionUpdated(verifyRes.subscription)
               }
@@ -181,56 +181,56 @@ const PricingModal = ({ isOpen, onClose, user, onSubscriptionUpdated }) => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-[#0b0f17] border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 text-slate-100"
+          className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto bg-[#0b0f17] border border-slate-800 rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 text-slate-100"
         >
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800 rounded-lg transition-colors"
+            className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2 text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
           >
             <VscClose className="w-5 h-5" />
           </button>
 
           {/* Modal Header */}
-          <div className="text-center max-w-xl mx-auto mb-8">
+          <div className="text-center max-w-xl mx-auto mb-6 sm:mb-8 pt-2 sm:pt-0">
             <div className="inline-flex items-center gap-2 px-3 py-1 mb-3 text-xs font-medium tracking-wide uppercase rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
               <VscSparkle className="w-4 h-4" />
               <span>Unlock Full Cloud IDE Potential</span>
             </div>
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white">
               Simple, Transparent Pricing
             </h2>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-xs sm:text-sm text-slate-400">
               Supercharge your pair programming workflow with unlimited AI pair programmer iterations, multi-language compiler runtimes, and cloud workspaces.
             </p>
 
             {/* Monthly / Yearly Toggle */}
-            <div className="mt-6 inline-flex items-center p-1 bg-slate-900 border border-slate-800 rounded-xl">
+            <div className="mt-4 sm:mt-6 inline-flex flex-wrap sm:flex-nowrap items-center justify-center p-1 bg-slate-900 border border-slate-800 rounded-xl max-w-full gap-1 sm:gap-0">
               <button
                 onClick={() => setBillingCycle('monthly')}
-                className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                className={`px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                   billingCycle === 'monthly'
-                    ? 'bg-indigo-600 text-white shadow-md'
+                    ? 'bg-slate-800 text-white shadow-xs border border-slate-700'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                Monthly Billing
+                30-Day Pass
               </button>
               <button
                 onClick={() => setBillingCycle('yearly')}
-                className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                   billingCycle === 'yearly'
-                    ? 'bg-indigo-600 text-white shadow-md'
+                    ? 'bg-slate-800 text-white shadow-xs border border-slate-700'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <span>Annual Billing</span>
+                <span>365-Day Pass</span>
                 <span className="px-1.5 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-400 font-bold rounded-full">
                   Save ~17%
                 </span>
@@ -239,9 +239,9 @@ const PricingModal = ({ isOpen, onClose, user, onSubscriptionUpdated }) => {
           </div>
 
           {/* Pricing Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
             {/* Starter Plan */}
-            <div className="relative flex flex-col p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80">
+            <div className="relative flex flex-col p-4 sm:p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="text-lg font-bold text-white">{starterPlan.name}</h3>
@@ -277,10 +277,10 @@ const PricingModal = ({ isOpen, onClose, user, onSubscriptionUpdated }) => {
             </div>
 
             {/* Pro Plan (Highlighted) */}
-            <div className="relative flex flex-col p-6 rounded-2xl bg-gradient-to-b from-indigo-950/40 via-slate-900 to-slate-900 border-2 border-indigo-500/60 shadow-xl shadow-indigo-950/30">
+            <div className="relative flex flex-col p-4 sm:p-6 rounded-2xl bg-[#0f1422] border-2 border-slate-700 shadow-xl shadow-black/40">
               {/* Top Badge */}
-              <div className="absolute -top-3 right-6 px-3 py-1 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[11px] font-bold rounded-full shadow flex items-center gap-1">
-                <VscFlame className="w-3.5 h-3.5" />
+              <div className="absolute -top-3 right-6 px-3 py-0.5 bg-slate-800 text-slate-200 border border-slate-600 text-[10px] font-bold rounded-full shadow flex items-center gap-1 uppercase tracking-wider">
+                <VscFlame className="w-3.5 h-3.5 text-amber-400" />
                 <span>MOST POPULAR</span>
               </div>
 
@@ -292,31 +292,34 @@ const PricingModal = ({ isOpen, onClose, user, onSubscriptionUpdated }) => {
                   </h3>
                   <p className="text-xs text-slate-400 mt-1">For serious developers & high-velocity builders</p>
                 </div>
-                {currentSubscription?.planId === selectedProPlan.id && currentSubscription?.status === 'ACTIVE' && (
+                {currentSubscription?.planId === selectedProPlan.id && currentSubscription?.status?.toUpperCase() === 'ACTIVE' && (
                   <span className="px-2.5 py-1 text-[11px] font-semibold bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
-                    Active Subscription
+                    Active Pass
                   </span>
                 )}
               </div>
 
-              <div className="flex items-baseline gap-1.5 my-4">
-                <span className="text-4xl font-extrabold text-white">
+              <div className="flex items-baseline gap-1.5 my-4 flex-wrap">
+                <span className="text-3xl sm:text-4xl font-extrabold text-white">
                   ₹{selectedProPlan.priceInRupees.toLocaleString('en-IN')}
                 </span>
                 <span className="text-xs text-slate-400">
-                  /{billingCycle === 'monthly' ? 'month' : 'year'}
+                  /{billingCycle === 'monthly' ? '30 days' : '365 days'}
                 </span>
                 {billingCycle === 'yearly' && (
-                  <span className="text-[11px] text-emerald-400 font-medium ml-2">
-                    (₹{Math.round(selectedProPlan.priceInRupees / 12)}/mo)
+                  <span className="text-[11px] text-emerald-400 font-medium ml-1 sm:ml-2">
+                    (₹{Math.round(selectedProPlan.priceInRupees / 12)}/mo · Save 17%)
                   </span>
                 )}
               </div>
+              <p className="text-[11px] text-slate-400 -mt-2 mb-4">
+                One-time upfront payment · No surprise recurring auto-debits
+              </p>
 
               <ul className="space-y-3 my-6 flex-1 text-xs text-slate-200">
                 {selectedProPlan.features.map((feat, i) => (
                   <li key={i} className="flex items-center gap-2.5">
-                    <VscCheck className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                    <VscCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                     <span className="font-medium">{feat}</span>
                   </li>
                 ))}
@@ -325,11 +328,11 @@ const PricingModal = ({ isOpen, onClose, user, onSubscriptionUpdated }) => {
               <button
                 onClick={() => handleSelectPlan(selectedProPlan)}
                 disabled={processingPlanId === selectedProPlan.id}
-                className="w-full py-3 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-lg shadow-indigo-600/30 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer"
+                className="w-full py-3 px-4 rounded-xl text-xs font-bold text-slate-950 bg-white hover:bg-slate-100 shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer"
               >
                 {processingPlanId === selectedProPlan.id ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" />
                     <span>Opening Razorpay Secure Checkout...</span>
                   </>
                 ) : (
@@ -343,7 +346,7 @@ const PricingModal = ({ isOpen, onClose, user, onSubscriptionUpdated }) => {
           </div>
 
           {/* Add-on Token Card */}
-          <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
                 <VscSparkle className="w-5 h-5" />

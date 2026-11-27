@@ -74,7 +74,7 @@ const Payment = () => {
     }
   }, [])
 
-  const isPro = currentSubscription?.status === 'active' &&
+  const isPro = currentSubscription?.status?.toUpperCase() === 'ACTIVE' &&
     (currentSubscription?.planId === 'PRO_MONTHLY' || currentSubscription?.planId === 'PRO_YEARLY')
 
   // Handle Razorpay Checkout for Pro Plan
@@ -111,7 +111,7 @@ const Payment = () => {
         amount: orderRes.amount,
         currency: orderRes.currency || 'INR',
         name: 'BHASHA Cloud IDE',
-        description: `Pro Developer Subscription (${billingCycle === 'yearly' ? 'Yearly' : 'Monthly'})`,
+        description: `Pro Developer Pass (${billingCycle === 'yearly' ? '365 Days' : '30 Days'})`,
         order_id: orderRes.orderId,
         image: 'https://cdn-icons-png.flaticon.com/512/919/919851.png',
         handler: async (response) => {
@@ -161,22 +161,99 @@ const Payment = () => {
     }
   }
 
+  // Handle Razorpay Checkout for AI Token Boost Pack
+  const handleBuyTokens = async () => {
+    try {
+      setIsCheckingOut(true)
+
+      const scriptReady = await loadRazorpayScript()
+      if (!scriptReady) {
+        toast.error('Unable to load Razorpay SDK. Please check your network connection.')
+        return
+      }
+
+      toast.info('Initiating token pack checkout...')
+      const orderRes = await createPaymentOrder('AI_BOOST_100K')
+
+      if (!orderRes?.success || !orderRes?.orderId) {
+        throw new Error(orderRes?.message || 'Failed to initiate order with payment server')
+      }
+
+      const options = {
+        key: orderRes.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: orderRes.amount,
+        currency: orderRes.currency || 'INR',
+        name: 'BHASHA Cloud IDE',
+        description: 'AI Boost 100K Tokens (Never Expires)',
+        order_id: orderRes.orderId,
+        image: 'https://cdn-icons-png.flaticon.com/512/919/919851.png',
+        handler: async (response) => {
+          try {
+            toast.info('Verifying token purchase signature...')
+            const verifyRes = await verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            })
+
+            if (verifyRes?.success) {
+              toast.success('🎉 100,000 AI tokens added to your account!')
+              setCurrentSubscription(verifyRes.subscription)
+            } else {
+              toast.error(verifyRes?.message || 'Payment verification failed.')
+            }
+          } catch (err) {
+            console.error('Payment verification error:', err)
+            toast.error(err.response?.data?.message || 'Payment verification failed')
+          }
+        },
+        prefill: {
+          name: userData?.name || '',
+          email: userData?.email || ''
+        },
+        theme: {
+          color: isDark ? '#18181b' : '#0f172a'
+        },
+        modal: {
+          ondismiss: () => {
+            toast.info('Payment checkout closed')
+          }
+        }
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.on('payment.failed', (err) => {
+        toast.error(`Payment failed: ${err.error?.description || 'Transaction declined'}`)
+      })
+      rzp.open()
+    } catch (err) {
+      console.error('Payment checkout error:', err)
+      toast.error(err.response?.data?.message || err.message || 'Payment initiation failed')
+    } finally {
+      setIsCheckingOut(false)
+    }
+  }
+
   const faqs = [
+    {
+      q: 'Is this an auto-renewing subscription or a fixed pass?',
+      a: 'BHASHA uses upfront fixed-period passes: ₹499 for 30 days of Pro access or ₹4,999 for 365 days. There are NO hidden automatic recurring auto-debits on your card, UPI, or bank account. When your period concludes, you choose if and when to renew manually.'
+    },
     {
       q: 'What payment methods does BHASHA support?',
       a: 'We support all major payment methods via Razorpay: UPI (Google Pay, PhonePe, Paytm, BHIM), Credit and Debit Cards (Visa, MasterCard, RuPay, Maestro), NetBanking from 50+ banks, and leading digital wallets.'
     },
     {
-      q: 'Can I cancel my subscription at any time?',
-      a: 'Yes, you can cancel your subscription at any time with no questions asked. Your Pro privileges will continue until the end of your paid billing period.'
+      q: 'What are AI Tokens and do they expire?',
+      a: 'AI Tokens power the autonomous LangGraph pair programmer during code generation, tool calls, and refactoring. The AI Boost 100K token pack (₹99) carries zero expiration date—tokens remain in your balance until used, even across different billing cycles.'
     },
     {
       q: 'What happens to my code and projects if my plan expires?',
-      a: 'Your code, repositories, and workspace files remain completely safe. You will still have free access to open, edit, and export all your projects on the Starter tier.'
+      a: 'Your code, repositories, and workspace files remain completely safe and untouched. You can still open, edit, run, and export all your projects on the Starter tier.'
     },
     {
       q: 'Is my payment secure?',
-      a: 'Yes. All payments are processed through Razorpay using industry-standard 256-bit SSL encryption and PCI-DSS compliance. We never store or process your credit card or banking credentials on our servers.'
+      a: 'Yes. All payments are processed through Razorpay using industry-standard 256-bit SSL encryption and PCI-DSS Level 1 compliance. We never store or process your card or banking credentials on our servers.'
     }
   ]
 
@@ -189,16 +266,16 @@ const Payment = () => {
       <div>
         {/* Top Back Action & Theme Toggle */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 flex items-center justify-between">
-          <button
+            <button
             onClick={() => navigate('/home')}
-            className={`inline-flex items-center gap-2 text-xs sm:text-sm font-medium px-3.5 py-2 rounded-xl border transition-all cursor-pointer shadow-xs active:scale-95 ${
+            className={`inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium px-3 sm:px-3.5 py-2 rounded-xl border transition-all cursor-pointer shadow-xs active:scale-95 ${
               isDark
                 ? 'text-neutral-400 hover:text-white border-neutral-800 hover:border-neutral-700 bg-neutral-900/80'
                 : 'text-slate-600 hover:text-slate-900 border-slate-200 hover:border-slate-300 bg-white'
             }`}
           >
             <FiArrowLeft className="text-sm" />
-            <span>Go back to the dashboard</span>
+            <span>Back to Dashboard</span>
           </button>
 
           <motion.button
@@ -221,25 +298,39 @@ const Payment = () => {
         <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           {/* Active Subscription Alert */}
           {isPro && (
-            <div className={`mb-8 p-4 rounded-xl border flex items-center justify-between gap-4 transition-colors ${
+            <div className={`mb-8 p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors ${
               isDark ? 'bg-neutral-900 border-neutral-700' : 'bg-white border-slate-200 shadow-xs'
             }`}>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shrink-0">
                   <FiCheck className="text-sm stroke-[3]" />
                 </div>
                 <div>
-                  <p className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                    Pro Plan Active ({currentSubscription?.planId === 'PRO_YEARLY' ? 'Annual' : 'Monthly'})
-                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                      Pro Plan Active ({currentSubscription?.planId === 'PRO_YEARLY' ? 'Annual Pass' : 'Monthly Pass'})
+                    </p>
+                    {currentSubscription?.currentPeriodEnd && (
+                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                        isDark ? 'bg-neutral-800 border-neutral-700 text-neutral-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                      }`}>
+                        Valid until {new Date(currentSubscription.currentPeriodEnd).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                    )}
+                    {currentSubscription?.extraTokens > 0 && (
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded border bg-amber-500/10 border-amber-500/30 text-amber-400">
+                        {currentSubscription.extraTokens.toLocaleString()} Bonus Tokens
+                      </span>
+                    )}
+                  </div>
                   <p className={`text-[11px] mt-0.5 ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
-                    Your subscription is live. All Pro features, unlimited workspaces, and autonomous AI pair programming are unlocked.
+                    Your Pro pass is active. Unlimited workspaces, multi-language compiler runner, and autonomous AI pair programming are unlocked.
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => navigate('/home')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors shrink-0 cursor-pointer ${
                   isDark
                     ? 'bg-neutral-800 hover:bg-neutral-700 text-white border-neutral-700'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
@@ -306,7 +397,7 @@ const Payment = () => {
           </div>
 
           {/* 3 Tier Cards Grid */}
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          <div className="mt-8 sm:mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 items-stretch">
             {/* 1. Starter Tier */}
             <motion.div
               whileHover={{ y: -4 }}
@@ -425,8 +516,8 @@ const Payment = () => {
                   </div>
                   <p className={`text-xs mt-1 ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                     {billingCycle === 'yearly'
-                      ? 'Billed annually (equivalent to ₹416/mo · 2 months free)'
-                      : 'Billed monthly · cancel anytime'}
+                      ? '365-day access pass · One-time payment · Save 17%'
+                      : '30-day access pass · One-time payment · No auto-debit'}
                   </p>
                 </div>
 
@@ -569,6 +660,49 @@ const Payment = () => {
                 Contact Sales
               </motion.a>
             </motion.div>
+          </div>
+
+          {/* AI Token Boost Instant Add-on Section */}
+          <div className={`mt-8 sm:mt-10 p-4 sm:p-6 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-5 sm:gap-6 transition-colors ${
+            isDark
+              ? 'bg-[#10131c] border-indigo-950/60 shadow-lg'
+              : 'bg-indigo-50/50 border-indigo-100 shadow-xs'
+          }`}>
+            <div className="flex items-start sm:items-center gap-4">
+              <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                <FiZap className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h3 className={`text-sm sm:text-base font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    AI Boost: 100,000 High-Speed Tokens
+                  </h3>
+                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25 uppercase tracking-wide">
+                    Zero Expiration
+                  </span>
+                </div>
+                <p className={`text-xs mt-1 max-w-xl leading-relaxed ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>
+                  Need extra fuel for the autonomous LangGraph pair programmer? Top up 100,000 tokens instantly for multi-file scaffolding and complex logic. Tokens stay in your account forever until consumed.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end shrink-0">
+              <div className="text-right">
+                <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>₹99</div>
+                <div className={`text-[11px] ${isDark ? 'text-neutral-500' : 'text-slate-400'}`}>one-time top-up</div>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleBuyTokens}
+                disabled={isCheckingOut}
+                className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              >
+                {isCheckingOut ? 'Connecting...' : 'Buy Token Pack'}
+              </motion.button>
+            </div>
           </div>
 
           {/* Security & Guarantee Strip */}

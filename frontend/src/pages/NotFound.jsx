@@ -27,7 +27,7 @@ const NotFound = () => {
       />
 
       {/* Top Minimal Header */}
-      <header className="relative z-10 w-full border-b border-neutral-800/80 bg-[#090a0f]/80 backdrop-blur-md px-6 sm:px-10 py-4 flex items-center justify-between">
+      <header className="relative z-10 w-full border-b border-neutral-800/80 bg-[#090a0f]/80 backdrop-blur-md px-4 sm:px-6 lg:px-10 py-4 flex items-center justify-between">
         <Link to="/home" className="flex items-center gap-2.5 text-white font-semibold tracking-tight hover:opacity-90 transition-opacity">
           <div className="w-7 h-7 rounded-lg bg-neutral-800 border border-neutral-700 flex items-center justify-center text-xs font-bold font-mono">
             B
