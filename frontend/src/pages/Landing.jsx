@@ -869,20 +869,20 @@ const Landing = () => {
         </div>
 
         {/* 4-Grid Cards Container (2x2 on desktop, 1 col on mobile) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
           {/* Grid 1: Autonomous AI Pair Programmer */}
-          <div className="p-6 sm:p-8 bg-[#101319] border border-[#232734] hover:border-[#00f5c4] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tl corner-ch-br">
+          <div className="p-4 sm:p-6 lg:p-8 bg-[#101319] border border-[#232734] hover:border-[#00f5c4] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tl corner-ch-br">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-[#161922] border border-[#00f5c4]/40 text-[#00f5c4] flex items-center justify-center">
+              <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                <div className="w-10 h-10 bg-[#161922] border border-[#00f5c4]/40 text-[#00f5c4] flex items-center justify-center shrink-0">
                   <SparklesIcon className="w-5 h-5 text-[#00f5c4]" />
                 </div>
-                <span className="font-mono text-xs font-bold text-[#00f5c4] px-2 py-0.5 bg-[#080a0f] border border-[#00f5c4]/30">
+                <span className="font-mono text-[10px] sm:text-xs font-bold text-[#00f5c4] px-2 py-0.5 bg-[#080a0f] border border-[#00f5c4]/30">
                   PILLAR 01 // MULTI-FILE AI
                 </span>
               </div>
-              <h3 className="font-display font-bold text-xl text-white mb-2 group-hover:text-[#00f5c4] transition-colors">
+              <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 group-hover:text-[#00f5c4] transition-colors">
                 Autonomous Multi-File Code Synthesis
               </h3>
               <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
@@ -892,12 +892,12 @@ const Landing = () => {
             
             <div className="space-y-2 pt-4 border-t border-[#232734] font-mono text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <span className="text-[#00f5c4]">✔</span>
-                <span>Real-time multi-file diffing & dependency updates</span>
+                <span className="text-[#00f5c4] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Real-time multi-file diffing & dependency updates</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[#00f5c4]">✔</span>
-                <span>Automated AST syntax and regression checks</span>
+                <span className="text-[#00f5c4] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Automated AST syntax and regression checks</span>
               </div>
               <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
                 <span>Engine: LangGraph State Machine</span>
@@ -907,17 +907,17 @@ const Landing = () => {
           </div>
 
           {/* Grid 2: Instant Cloud Workspaces */}
-          <div className="p-6 sm:p-8 bg-[#101319] border border-[#232734] hover:border-[#00d2ff] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tr corner-ch-bl">
+          <div className="p-4 sm:p-6 lg:p-8 bg-[#101319] border border-[#232734] hover:border-[#00d2ff] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tr corner-ch-bl">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-[#161922] border border-[#00d2ff]/40 text-[#00d2ff] flex items-center justify-center">
+              <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                <div className="w-10 h-10 bg-[#161922] border border-[#00d2ff]/40 text-[#00d2ff] flex items-center justify-center shrink-0">
                   <RocketIcon className="w-5 h-5 text-[#00d2ff]" />
                 </div>
-                <span className="font-mono text-xs font-bold text-[#00d2ff] px-2 py-0.5 bg-[#080a0f] border border-[#00d2ff]/30">
+                <span className="font-mono text-[10px] sm:text-xs font-bold text-[#00d2ff] px-2 py-0.5 bg-[#080a0f] border border-[#00d2ff]/30">
                   PILLAR 02 // ZERO LOCAL SETUP
                 </span>
               </div>
-              <h3 className="font-display font-bold text-xl text-white mb-2 group-hover:text-[#00d2ff] transition-colors">
+              <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 group-hover:text-[#00d2ff] transition-colors">
                 Zero-Config Full-Stack Environments
               </h3>
               <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
@@ -927,12 +927,12 @@ const Landing = () => {
             
             <div className="space-y-2 pt-4 border-t border-[#232734] font-mono text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <span className="text-[#00d2ff]">✔</span>
-                <span>Sub-2s workspace cold start via WebAssembly</span>
+                <span className="text-[#00d2ff] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Sub-2s workspace cold start via WebAssembly</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[#00d2ff]">✔</span>
-                <span>Full Monaco IntelliSense & multi-cursor editing</span>
+                <span className="text-[#00d2ff] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Full Monaco IntelliSense & multi-cursor editing</span>
               </div>
               <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
                 <span>Persistence: Continuous Snapshotting</span>
@@ -942,17 +942,17 @@ const Landing = () => {
           </div>
 
           {/* Grid 3: Dual-Engine Live App Preview */}
-          <div className="p-6 sm:p-8 bg-[#101319] border border-[#232734] hover:border-[#a855f7] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tl corner-ch-br">
+          <div className="p-4 sm:p-6 lg:p-8 bg-[#101319] border border-[#232734] hover:border-[#a855f7] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tl corner-ch-br">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-[#161922] border border-[#a855f7]/40 text-[#a855f7] flex items-center justify-center">
+              <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                <div className="w-10 h-10 bg-[#161922] border border-[#a855f7]/40 text-[#a855f7] flex items-center justify-center shrink-0">
                   <MonitorIcon className="w-5 h-5 text-[#a855f7]" />
                 </div>
-                <span className="font-mono text-xs font-bold text-[#a855f7] px-2 py-0.5 bg-[#080a0f] border border-[#a855f7]/30">
+                <span className="font-mono text-[10px] sm:text-xs font-bold text-[#a855f7] px-2 py-0.5 bg-[#080a0f] border border-[#a855f7]/30">
                   PILLAR 03 // REAL-TIME HMR
                 </span>
               </div>
-              <h3 className="font-display font-bold text-xl text-white mb-2 group-hover:text-[#a855f7] transition-colors">
+              <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 group-hover:text-[#a855f7] transition-colors">
                 Dual-Engine Live In-Browser Preview
               </h3>
               <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
@@ -962,12 +962,12 @@ const Landing = () => {
             
             <div className="space-y-2 pt-4 border-t border-[#232734] font-mono text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <span className="text-[#a855f7]">✔</span>
-                <span>Client & server runtimes rendered side-by-side</span>
+                <span className="text-[#a855f7] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Client & server runtimes rendered side-by-side</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[#a855f7]">✔</span>
-                <span>Sub-50ms React 19 and Vite hot module reload</span>
+                <span className="text-[#a855f7] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Sub-50ms React 19 and Vite hot module reload</span>
               </div>
               <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
                 <span>Sync Latency: 18ms WebWorker Stream</span>
@@ -977,17 +977,17 @@ const Landing = () => {
           </div>
 
           {/* Grid 4: Integrated Cloud Terminal & Security */}
-          <div className="p-6 sm:p-8 bg-[#101319] border border-[#232734] hover:border-[#10b981] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tr corner-ch-bl">
+          <div className="p-4 sm:p-6 lg:p-8 bg-[#101319] border border-[#232734] hover:border-[#10b981] transition-all group flex flex-col justify-between relative corner-ch corner-ch-tr corner-ch-bl">
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 bg-[#161922] border border-[#10b981]/40 text-[#10b981] flex items-center justify-center">
+              <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                <div className="w-10 h-10 bg-[#161922] border border-[#10b981]/40 text-[#10b981] flex items-center justify-center shrink-0">
                   <LockShieldIcon className="w-5 h-5 text-[#10b981]" />
                 </div>
-                <span className="font-mono text-xs font-bold text-[#10b981] px-2 py-0.5 bg-[#080a0f] border border-[#10b981]/30">
+                <span className="font-mono text-[10px] sm:text-xs font-bold text-[#10b981] px-2 py-0.5 bg-[#080a0f] border border-[#10b981]/30">
                   PILLAR 04 // CLOUD PTY SHELL
                 </span>
               </div>
-              <h3 className="font-display font-bold text-xl text-white mb-2 group-hover:text-[#10b981] transition-colors">
+              <h3 className="font-display font-bold text-lg sm:text-xl text-white mb-2 group-hover:text-[#10b981] transition-colors">
                 Full Interactive Sandboxed Terminal
               </h3>
               <p className="font-sans text-xs sm:text-sm text-slate-400 leading-relaxed mb-6">
@@ -997,12 +997,12 @@ const Landing = () => {
             
             <div className="space-y-2 pt-4 border-t border-[#232734] font-mono text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <span className="text-[#10b981]">✔</span>
-                <span>Full duplex xterm.js PTY shell with ANSI color</span>
+                <span className="text-[#10b981] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Full duplex xterm.js PTY shell with ANSI color</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[#10b981]">✔</span>
-                <span>Isolated container execution & secret redaction</span>
+                <span className="text-[#10b981] shrink-0">✔</span>
+                <span className="text-[11px] sm:text-xs">Isolated container execution & secret redaction</span>
               </div>
               <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
                 <span>Security: Enterprise Sandboxed Container</span>
@@ -1070,25 +1070,25 @@ const Landing = () => {
         <div className="border border-[#232734] bg-[#0c0f16] corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br">
           
           {/* Top Window Title Bar */}
-          <div className="px-4 py-3 bg-[#101319] border-b border-[#232734] flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-[#101319] border-b border-[#232734] flex flex-wrap items-center justify-between gap-2 sm:gap-3 text-xs font-mono">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <span className="w-2.5 h-2.5 bg-[#ef4444] rounded-full"></span>
                 <span className="w-2.5 h-2.5 bg-[#eab308] rounded-full"></span>
                 <span className="w-2.5 h-2.5 bg-[#10b981] rounded-full"></span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                 <img
                   src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
                   alt="BHASHA"
-                  className="h-4 w-auto object-contain inline-block align-middle"
+                  className="h-4 w-auto object-contain inline-block align-middle shrink-0"
                 />
-                <span className="text-slate-400 hidden sm:inline">Workspace Dock //</span>
-                <span className="text-[#00f5c4] font-semibold">{scenarios[activeScenario]?.title}</span>
+                <span className="text-slate-400 hidden sm:inline shrink-0">Workspace Dock //</span>
+                <span className="text-[#00f5c4] font-semibold truncate text-[11px] sm:text-xs">{scenarios[activeScenario]?.title}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 text-[11px] text-slate-400">
+            <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] text-slate-400 shrink-0">
               <span className="hidden sm:inline">Tokens: {tokenCounter}</span>
               <span className="px-2 py-0.5 bg-[#161922] border border-[#232734] text-[#00f5c4]">
                 ENGINE ACTIVE
@@ -1151,17 +1151,17 @@ const Landing = () => {
             <div className={`lg:col-span-6 bg-[#050608] flex flex-col justify-between ${activeTabMobile === 'code' ? 'block' : 'hidden lg:flex'}`}>
               <div>
                 {/* Code Editor Header */}
-                <div className="px-4 py-2 bg-[#0c0f16] border-b border-[#232734] flex items-center justify-between font-mono text-xs text-slate-400">
-                  <div className="flex items-center gap-2">
-                    <CodeIcon className="w-3.5 h-3.5 text-[#00f5c4]" />
-                    <span className="text-white">src/components/Dashboard.tsx</span>
-                    <span className="text-[10px] text-[#00f5c4] px-1.5 py-0.2 bg-[#101319] border border-[#00f5c4]/30">LIVE AST DIFF</span>
+                <div className="px-3 sm:px-4 py-2 bg-[#0c0f16] border-b border-[#232734] flex items-center justify-between font-mono text-xs text-slate-400 gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CodeIcon className="w-3.5 h-3.5 text-[#00f5c4] shrink-0" />
+                    <span className="text-white truncate">src/components/Dashboard.tsx</span>
+                    <span className="text-[9px] sm:text-[10px] text-[#00f5c4] px-1.5 py-0.5 bg-[#101319] border border-[#00f5c4]/30 shrink-0">LIVE AST DIFF</span>
                   </div>
-                  <span className="text-[10px] text-slate-500">TypeScript 5.4</span>
+                  <span className="text-[10px] text-slate-500 shrink-0">TypeScript 5.4</span>
                 </div>
 
                 {/* Code Buffer Content */}
-                <div className="p-4 font-mono text-xs leading-relaxed overflow-x-auto text-slate-300 space-y-1">
+                <div className="p-3 sm:p-4 font-mono text-[11px] sm:text-xs leading-relaxed overflow-x-auto text-slate-300 space-y-1">
                   <p className="text-slate-500">// Autonomous LangGraph AST patch orchestration</p>
                   <p>
                     <span className="text-purple-400">import</span> &#123; <span className="text-[#00f5c4]">AgentPipeline</span> &#125; <span className="text-purple-400">from</span> <span className="text-amber-300">'@bhasha/agent-runtime'</span>;
@@ -1199,7 +1199,7 @@ const Landing = () => {
               </div>
 
               {/* Status Bar */}
-              <div className={`px-4 py-2 ${isDark ? 'bg-[#0d1017] border-[#232734]' : 'bg-slate-100 border-slate-200'} border-t flex items-center justify-between font-mono text-[11px] text-slate-400`}>
+              <div className={`px-3 sm:px-4 py-2 ${isDark ? 'bg-[#0d1017] border-[#232734]' : 'bg-slate-100 border-slate-200'} border-t flex items-center justify-between font-mono text-[10px] sm:text-[11px] text-slate-400 gap-2 flex-wrap`}>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-[#00f5c4] anim-pulse-dot"></span>
                   <span>AST State: Clean & Synced</span>
