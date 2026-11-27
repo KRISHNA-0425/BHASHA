@@ -97,7 +97,7 @@ const PrivacyPolicy = () => {
   return (
     <div className="min-h-screen w-full bg-[#090a0f] text-neutral-200 font-sans selection:bg-neutral-800 selection:text-white">
       {/* Top Header */}
-      <header className="w-full border-b border-neutral-800 bg-[#090a0f]/90 backdrop-blur-md sticky top-0 z-20 px-6 sm:px-10 py-3.5 flex items-center justify-between">
+      <header className="w-full border-b border-neutral-800 bg-[#090a0f]/90 backdrop-blur-md sticky top-0 z-20 px-4 sm:px-6 lg:px-10 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link to="/home" className="flex items-center gap-2.5 text-white font-semibold tracking-tight hover:opacity-90 transition-opacity">
             <div className="w-7 h-7 rounded-lg bg-neutral-800 border border-neutral-700 flex items-center justify-center text-xs font-bold font-mono">

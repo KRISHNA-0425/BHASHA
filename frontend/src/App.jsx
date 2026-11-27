@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import Landing from './pages/Landing.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Homepage from './pages/Homepage.jsx'
@@ -37,7 +38,9 @@ const App = () => {
     fetchCurrentUser()
   }, [dispatch])
 
-  if (isCheckingAuth) {
+  const isLandingRoute = window.location.pathname === '/' || window.location.pathname === '/landing'
+
+  if (isCheckingAuth && !isLandingRoute) {
     return (
       <div className="min-h-screen w-full bg-[#07090e] flex items-center justify-center text-slate-400 font-sans">
         <div className="flex flex-col items-center gap-3">
@@ -50,7 +53,8 @@ const App = () => {
 
   return (
     <Routes>
-      <Route path="/" element={userData ? <Navigate to="/home" replace /> : <Navigate to="/login" replace />} />
+      <Route path="/" element={<Landing />} />
+      <Route path="/landing" element={<Landing />} />
       <Route path="/login" element={userData ? <Navigate to="/home" replace /> : <Login />} />
       <Route path="/register" element={userData ? <Navigate to="/home" replace /> : <Register />} />
       <Route path="/home" element={userData ? <Homepage /> : <Navigate to="/login" replace />} />

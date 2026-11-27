@@ -22,9 +22,9 @@ const Footer = ({ theme = 'dark' }) => {
           : 'bg-slate-50 border-slate-200 text-slate-600'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 sm:px-10 py-12 lg:py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-10 lg:py-16">
         {/* Main 4-Column Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-12 pb-12 border-b border-inherit">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 pb-10 sm:pb-12 border-b border-inherit">
           {/* Brand & Mission (Spans 2 columns on lg) */}
           <div className="lg:col-span-2 space-y-4">
             <Link to="/home" className="inline-flex items-center gap-2.5 group">
@@ -217,7 +217,7 @@ const Footer = ({ theme = 'dark' }) => {
             © 2026 BHASHA Cloud IDE. All rights reserved.
           </p>
 
-          <div className="flex items-center gap-6 text-[11px]">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 sm:gap-6 text-[11px]">
             <Link
               to="/home"
               className={`transition-colors ${isDark ? 'text-neutral-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}

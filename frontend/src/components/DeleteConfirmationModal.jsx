@@ -29,7 +29,7 @@ const DeleteConfirmationModal = ({
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-sans">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 font-sans">
                 {/* Backdrop */}
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -45,7 +45,7 @@ const DeleteConfirmationModal = ({
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.94, y: 10 }}
                     transition={{ type: 'spring', duration: 0.25, bounce: 0.1 }}
-                    className={`relative w-full max-w-md rounded-2xl p-6 z-10 border shadow-2xl transition-colors ${
+                    className={`relative w-full max-w-md max-h-[92vh] overflow-y-auto rounded-2xl p-5 sm:p-6 z-10 border shadow-2xl transition-colors ${
                         isDark
                             ? 'bg-[#10131b] border-white/[0.1] text-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)]'
                             : 'bg-white border-slate-200 text-slate-900 shadow-2xl'

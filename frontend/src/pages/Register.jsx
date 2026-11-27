@@ -134,7 +134,7 @@ const Register = () => {
             <main className="relative z-10 w-full flex flex-col items-center justify-center my-auto py-2">
 
                 {/* Central Card */}
-                <div className="w-full max-w-[440px] sm:max-w-[460px] bg-[#10131b]/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl p-6 sm:p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_35px_-8px_rgba(30,64,120,0.22)] transition-all flex flex-col justify-between">
+                <div className="w-full max-w-[440px] sm:max-w-[460px] min-h-[500px] h-auto bg-[#10131b]/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl p-5 sm:p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_35px_-8px_rgba(30,64,120,0.22)] transition-all flex flex-col justify-between">
 
                     <div>
                         {/* Header Title with Logo Badge */}

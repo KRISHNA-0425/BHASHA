@@ -13,6 +13,7 @@ import PricingModal from '../components/payment/PricingModal.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import { getAllProject, toggleLike, deleteProject } from '../features/project.js'
 import { animateHeroReveal } from '../utils/animations.js'
+import { getUserSubscription } from '../features/payment'
 
 const Homepage = () => {
     const navigate = useNavigate()
@@ -23,8 +24,10 @@ const Homepage = () => {
     const [activeTab, setActiveTab] = useState('projects') // 'projects' | 'starred'
     const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false)
     const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
+    const [subscription, setSubscription] = useState(null)
     const [projectToDelete, setProjectToDelete] = useState(null)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
     const heroRef = useRef(null)
 
     // Local theme management: get & set from localStorage
@@ -72,6 +75,19 @@ const Homepage = () => {
             }
         }
         fetchProjects()
+
+        // Fetch user active subscription
+        const fetchSub = async () => {
+            try {
+                const res = await getUserSubscription()
+                if (res?.subscription) {
+                    setSubscription(res.subscription)
+                }
+            } catch (err) {
+                console.error("Failed to fetch subscription:", err)
+            }
+        }
+        fetchSub()
     }, [])
 
     // Animate hero on ready
@@ -97,6 +113,19 @@ const Homepage = () => {
         } catch (err) {
             console.error("Failed to toggle star:", err)
         }
+    }
+
+    const isPro = subscription?.status?.toUpperCase() === 'ACTIVE' &&
+        (subscription?.planId === 'PRO_MONTHLY' || subscription?.planId === 'PRO_YEARLY')
+
+    // Gated project creation check for Starter plan (max 5 projects)
+    const handleOpenNewProject = () => {
+        if (!isPro && totalProjectsCount >= 5) {
+            toast.warn('Starter plan workspace capacity reached (maximum 5 projects). Upgrade to Pro for unlimited cloud workspaces!')
+            setIsPricingModalOpen(true)
+            return
+        }
+        setIsNewProjectModalOpen(true)
     }
 
     // Handle new project creation
@@ -181,11 +210,14 @@ const Homepage = () => {
                 {/* Left Sidebar */}
                 <Sidebar
                     user={userData}
+                    subscription={subscription}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     totalProjectsCount={totalProjectsCount}
                     starredProjectsCount={starredProjectsCount}
                     theme={theme}
+                    isMobileOpen={isMobileSidebarOpen}
+                    onCloseMobile={() => setIsMobileSidebarOpen(false)}
                 />
 
                 {/* Main Content Area */}
@@ -216,14 +248,16 @@ const Homepage = () => {
                     <TopBar
                         searchQuery={searchQuery}
                         setSearchQuery={setSearchQuery}
-                        onOpenNewProject={() => setIsNewProjectModalOpen(true)}
+                        subscription={subscription}
+                        onOpenNewProject={handleOpenNewProject}
                         onOpenPricing={() => navigate('/payment')}
                         theme={theme}
                         toggleTheme={toggleTheme}
+                        onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
                     />
 
                     {/* Dashboard Scrollable Body */}
-                    <main className="relative z-10 flex-1 px-8 sm:px-10 py-8 max-w-7xl w-full mx-auto space-y-10">
+                    <main className="relative z-10 flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl w-full mx-auto space-y-8 sm:space-y-10">
                         {/* Welcome Back Hero */}
                         <div ref={heroRef} className="flex items-center justify-between">
                             <div>
@@ -259,7 +293,7 @@ const Homepage = () => {
                         <EmptyState
                             type={activeTab}
                             searchQuery={searchQuery}
-                            onOpenNewProject={() => setIsNewProjectModalOpen(true)}
+                            onOpenNewProject={handleOpenNewProject}
                             theme={theme}
                         />
                     ) : (
@@ -385,6 +419,10 @@ const Homepage = () => {
                 isOpen={isNewProjectModalOpen}
                 onClose={() => setIsNewProjectModalOpen(false)}
                 onProjectCreated={handleProjectCreated}
+                onOpenPricing={() => {
+                    setIsNewProjectModalOpen(false)
+                    setIsPricingModalOpen(true)
+                }}
                 theme={theme}
             />
 
@@ -403,6 +441,7 @@ const Homepage = () => {
                 isOpen={isPricingModalOpen}
                 onClose={() => setIsPricingModalOpen(false)}
                 user={userData}
+                onSubscriptionUpdated={(newSub) => setSubscription(newSub)}
             />
 
             {/* Bottom-right Toast Notifications */}

@@ -1,5 +1,26 @@
 @import 'tailwindcss';
 
+@theme {
+  --color-obsidian-deepest: #050608;
+  --color-obsidian-base: #080a0f;
+  --color-obsidian-surface: #101319;
+  --color-obsidian-elevated: #161922;
+  --color-obsidian-panel: #1b202c;
+  --color-obsidian-border: #232734;
+  --color-obsidian-borderLight: #2e3446;
+
+  --color-neon-teal: #00f5c4;
+  --color-neon-cyan: #00d2ff;
+  --color-neon-amber: #f59e0b;
+  --color-neon-rose: #f43f5e;
+  --color-neon-emerald: #10b981;
+  --color-neon-blue: #3b82f6;
+
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -15,13 +36,124 @@
   animation: fadeIn 0.25s ease-out forwards;
 }
 
+/* Precision grid lines - crisp developer aesthetic without gradients */
+.circuit-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.circuit-grid-light {
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.ruler-tick-h {
+  background-image: repeating-linear-gradient(to right, #232734 0, #232734 1px, transparent 1px, transparent 8px);
+  height: 6px;
+}
+
+/* Architectural Crosshairs & Corner Anchors */
+.corner-ch { position: relative; }
+.corner-ch::before {
+  content: "+";
+  position: absolute;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1;
+  color: #00f5c4;
+  pointer-events: none;
+}
+.corner-ch-tl::before { top: -6px; left: -6px; }
+.corner-ch-tr::before { top: -6px; right: -6px; }
+.corner-ch-bl::before { bottom: -6px; left: -6px; }
+.corner-ch-br::before { bottom: -6px; right: -6px; }
+
+/* Keyframe Animations */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.85); }
+}
+@keyframes packet-strobe {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+@keyframes scanline-bar {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.7; }
+  100% { top: 100%; opacity: 0; }
+}
+@keyframes terminal-scanline {
+  0% { transform: translateY(-100%); opacity: 0; }
+  15% { opacity: 0.5; }
+  85% { opacity: 0.5; }
+  100% { transform: translateY(600%); opacity: 0; }
+}
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes node-pulse-ring {
+  0% { border-color: #00f5c4; }
+  50% { border-color: #2e3446; }
+  100% { border-color: #00f5c4; }
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+@keyframes wire-flow {
+  0% { stroke-dashoffset: 40; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.anim-pulse-dot { animation: pulse-dot 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.anim-blink { animation: blink-cursor 0.9s step-end infinite; }
+.anim-node-pulse { animation: node-pulse-ring 2.4s ease-in-out infinite; }
+.anim-scanline { animation: scanline-bar 4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.anim-terminal-scan { animation: terminal-scanline 6s linear infinite; }
+
+.logo-dot-anim {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+.packet-rail {
+  position: relative;
+  overflow: hidden;
+}
+.packet-rail::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0; width: 40px;
+  background: #00f5c4;
+  animation: packet-strobe 2.8s linear infinite;
+  opacity: 0.65;
+}
+
+.mesh-wire-path {
+  stroke-dasharray: 6 4;
+  animation: wire-flow 1.5s linear infinite;
+}
+
 /* Ensure browser autofill matches the futuristic dark theme */
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
   -webkit-text-fill-color: #f1f5f9 !important;
-  -webkit-box-shadow: 0 0 0px 1000px #090b10 inset !important;
-  box-shadow: 0 0 0px 1000px #090b10 inset !important;
+  -webkit-box-shadow: 0 0 0px 1000px #080a0f inset !important;
+  box-shadow: 0 0 0px 1000px #080a0f inset !important;
   transition: background-color 5000s ease-in-out 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-pulse-dot, .anim-blink, .anim-node-pulse, .packet-rail::after, .anim-scanline, .logo-dot-anim, .mesh-wire-path, .anim-terminal-scan {
+    animation: none !important;
+  }
 }

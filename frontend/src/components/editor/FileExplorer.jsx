@@ -11,7 +11,8 @@ import {
   VscChevronDown,
   VscSearch,
   VscTrash,
-  VscLoading
+  VscLoading,
+  VscClose
 } from 'react-icons/vsc'
 import { getFileIcon } from '../../utils/fileIcons.jsx'
 export { getFileIcon }
@@ -250,7 +251,8 @@ const FileExplorer = ({
   onRefreshTree,
   projectName = 'workspace',
   rootFolderId = null,
-  isLoading = false
+  isLoading = false,
+  onCloseMobile
 }) => {
   // Set default expanded for root folders
   const [expandedFolders, setExpandedFolders] = useState(() => {
@@ -402,6 +404,15 @@ const FileExplorer = ({
           >
             <VscTrash className="text-xs" />
           </button>
+          {onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              title="Close File Explorer"
+              className="p-1 text-slate-400 hover:text-white rounded transition-colors cursor-pointer md:hidden ml-1"
+            >
+              <VscClose className="text-sm" />
+            </button>
+          )}
         </div>
       </div>
 

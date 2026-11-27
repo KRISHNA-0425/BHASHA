@@ -165,7 +165,7 @@ const CodeEditor = ({
                   e.stopPropagation()
                   onCloseTab(tab)
                 }}
-                className="opacity-0 group-hover:opacity-100 hover:bg-white/[0.1] rounded p-0.5 text-slate-400 hover:text-slate-100 transition-opacity ml-1 cursor-pointer"
+                className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 hover:!opacity-100 hover:bg-white/[0.1] rounded p-0.5 text-slate-400 hover:text-slate-100 transition-opacity ml-1 cursor-pointer"
               >
                 <VscClose className="text-xs" />
               </button>

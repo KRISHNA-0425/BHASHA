@@ -43,7 +43,9 @@ const AIAgentPanel = ({
   activeFile,
   onFileMutated,
   onOpenFile,
-  onOpenPreview
+  onOpenPreview,
+  isPro = false,
+  onOpenPricing
 }) => {
   const [messages, setMessages] = useState([
     {
@@ -103,6 +105,29 @@ const AIAgentPanel = ({
 
     const promptText = rawPrompt.trim()
     const nowLabel = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+    if (!isPro) {
+      if (onOpenPricing) onOpenPricing()
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `u-${Date.now()}`,
+          sender: 'user',
+          text: promptText,
+          time: nowLabel
+        },
+        {
+          id: `a-${Date.now() + 1}`,
+          sender: 'assistant',
+          text: '🔒 **Pro Pass Required:** The Autonomous LangGraph AI Copilot is exclusive to Pro Developer Pass or Token Pack holders. Please upgrade to Pro to unlock real-time code scaffolding and multi-file autonomous edits.',
+          steps: [],
+          isError: true,
+          time: nowLabel
+        }
+      ])
+      setInputText('')
+      return
+    }
 
     // Build history for backend from completed messages before appending new turn
     const historyPayload = messages
@@ -296,7 +321,14 @@ const AIAgentPanel = ({
   if (!isOpen) return null
 
   return (
-    <div className="h-full w-80 sm:w-96 bg-[#0b0e14] border-l border-white/[0.08] flex flex-col font-sans select-none shrink-0 z-10">
+    <>
+      {/* Mobile/Tablet Drawer Backdrop */}
+      <div
+        onClick={onClose}
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden"
+      />
+
+      <div className="fixed inset-y-0 right-0 z-50 lg:static lg:z-10 h-full w-full sm:w-96 lg:w-80 xl:w-96 max-w-[92vw] sm:max-w-none bg-[#0b0e14] border-l border-white/[0.08] flex flex-col font-sans select-none shrink-0 shadow-2xl lg:shadow-none">
       {/* Agent Top Header */}
       <div className="px-3.5 py-3 border-b border-white/[0.06] flex items-center justify-between bg-[#080b11]">
         <div className="flex items-center gap-2">
@@ -513,6 +545,7 @@ const AIAgentPanel = ({
         </form>
       </div>
     </div>
+    </>
   )
 }
 

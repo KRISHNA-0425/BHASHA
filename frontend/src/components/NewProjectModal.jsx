@@ -4,13 +4,14 @@ import { FiX, FiPlus, FiStar } from 'react-icons/fi'
 import { FaStar } from 'react-icons/fa'
 import { createProject } from '../features/project.js'
 
-const NewProjectModal = ({ isOpen, onClose, onProjectCreated, theme = 'dark' }) => {
+const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onOpenPricing, theme = 'dark' }) => {
     const isDark = theme === 'dark'
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
     const [liked, setLiked] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
+    const [isLimitReached, setIsLimitReached] = useState(false)
 
     if (!isOpen) return null
 
@@ -38,6 +39,8 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, theme = 'dark' }) 
             onClose()
         } catch (err) {
             console.error("Failed to create project:", err)
+            const isLimit = err.response?.status === 403 || err.response?.data?.code === 'PROJECT_LIMIT_EXCEEDED'
+            setIsLimitReached(isLimit)
             setError(err.response?.data?.message || err.message || "Failed to create project")
         } finally {
             setIsLoading(false)
@@ -46,7 +49,7 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, theme = 'dark' }) 
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-sans">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 font-sans">
                 {/* Backdrop */}
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -62,7 +65,7 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, theme = 'dark' }) 
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.94, y: 10 }}
                     transition={{ type: "spring", duration: 0.3, bounce: 0.1 }}
-                    className={`relative w-full max-w-lg backdrop-blur-2xl rounded-2xl p-7 z-10 border shadow-2xl transition-colors ${
+                    className={`relative w-full max-w-lg max-h-[92vh] overflow-y-auto backdrop-blur-2xl rounded-2xl p-5 sm:p-7 z-10 border shadow-2xl transition-colors ${
                         isDark
                             ? 'bg-[#10131b]/95 border-white/[0.1] text-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)]'
                             : 'bg-white border-slate-200 text-slate-900 shadow-2xl'
@@ -106,10 +109,26 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, theme = 'dark' }) 
                         </button>
                     </div>
 
-                    {/* Error Banner */}
+                    {/* Error / Capacity Limit Banner */}
                     {error && (
-                        <div className="mt-4 p-3.5 rounded-xl bg-red-950/40 border border-red-500/30 text-red-200 text-sm flex items-start gap-2.5">
-                            <span className="flex-1">{error}</span>
+                        <div className={`mt-4 p-3.5 rounded-xl border text-xs sm:text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                            isLimitReached
+                                ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                                : 'bg-red-950/40 border-red-500/30 text-red-200'
+                        }`}>
+                            <span className="flex-1 leading-relaxed">{error}</span>
+                            {isLimitReached && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onClose()
+                                        if (onOpenPricing) onOpenPricing()
+                                    }}
+                                    className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all shrink-0 cursor-pointer shadow-sm"
+                                >
+                                    Upgrade to Pro
+                                </button>
+                            )}
                         </div>
                     )}
 

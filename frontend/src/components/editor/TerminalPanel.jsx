@@ -349,7 +349,8 @@ const TerminalPanel = forwardRef(({
   return (
     <div
       style={{
-        height: isMaximized ? '75vh' : `${panelHeight}px`
+        height: isMaximized ? '75vh' : `${panelHeight}px`,
+        maxHeight: isMaximized ? '90vh' : '65vh'
       }}
       className={`w-full bg-[#07090e] border-t border-white/[0.08] flex flex-col z-10 font-sans relative ${
         isDragging ? 'select-none transition-none' : 'transition-[height] duration-150'
@@ -368,25 +369,25 @@ const TerminalPanel = forwardRef(({
       {/* Terminal Top Bar */}
       <div className="h-8 bg-[#090c13] border-b border-white/[0.06] flex items-center justify-between px-3 text-xs select-none">
         {/* Left Tabs & Status Indicator */}
-        <div className="flex items-center gap-2 font-mono text-[11px]">
+        <div className="flex items-center gap-1 sm:gap-2 font-mono text-[11px] overflow-x-auto scrollbar-none min-w-0 pr-2">
           {['TERMINAL', 'OUTPUT', 'PROBLEMS (0)', 'DEBUG CONSOLE'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-2.5 py-1 rounded cursor-pointer transition-colors ${
+              className={`px-2 sm:px-2.5 py-1 rounded cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
                 activeTab === tab
                   ? 'text-white font-semibold bg-white/[0.08]'
                   : 'text-slate-400 hover:text-slate-200'
-              }`}
+              } ${tab === 'PROBLEMS (0)' || tab === 'DEBUG CONSOLE' ? 'hidden sm:inline-block' : ''}`}
             >
               {tab}
             </button>
           ))}
 
           {/* Connection status badge */}
-          <div className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded text-[10px] bg-white/[0.04] border border-white/[0.06]">
+          <div className="flex items-center gap-1.5 ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 rounded text-[10px] bg-white/[0.04] border border-white/[0.06] shrink-0">
             <span
-              className={`w-1.5 h-1.5 rounded-full ${
+              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                 connectionStatus === 'connected'
                   ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)] animate-pulse'
                   : connectionStatus === 'connecting'
@@ -394,7 +395,7 @@ const TerminalPanel = forwardRef(({
                   : 'bg-rose-500'
               }`}
             />
-            <span className="text-slate-300 font-sans capitalize">{connectionStatus}</span>
+            <span className="text-slate-300 font-sans capitalize hidden xs:inline">{connectionStatus}</span>
           </div>
         </div>
 
