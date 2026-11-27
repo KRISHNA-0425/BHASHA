@@ -65,7 +65,7 @@ const ProjectCard = ({ project, onToggleLike, onDelete, onClick, theme = 'dark' 
             }}
             transition={{ duration: 0.2 }}
             onClick={() => onClick && onClick(project)}
-            className={`rounded-2xl p-5 flex flex-col justify-between h-48 transition-all cursor-pointer group font-sans border ${
+            className={`rounded-2xl p-4 sm:p-5 flex flex-col justify-between min-h-[175px] sm:h-48 transition-all cursor-pointer group font-sans border ${
                 isDark
                     ? 'bg-[#10131c] border-white/[0.08] hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.8)]'
                     : 'bg-white border-slate-200 shadow-xs hover:shadow-md'

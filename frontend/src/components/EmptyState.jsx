@@ -8,7 +8,7 @@ const EmptyState = ({ type = "all", searchQuery = "", onOpenNewProject, theme = 
     const isStarred = type === "starred"
 
     return (
-        <div className={`w-full border border-dashed rounded-2xl p-14 text-center flex flex-col items-center justify-center my-6 font-sans transition-colors ${
+        <div className={`w-full border border-dashed rounded-2xl p-6 sm:p-12 text-center flex flex-col items-center justify-center my-4 sm:my-6 font-sans transition-colors ${
             isDark
                 ? 'bg-[#10131c]/60 border-white/[0.08]'
                 : 'bg-white/60 border-slate-200 shadow-xs'
