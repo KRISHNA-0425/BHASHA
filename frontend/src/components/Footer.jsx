@@ -19,7 +19,7 @@ const Footer = ({ theme = 'dark' }) => {
       className={`w-full border-t transition-colors duration-200 font-sans ${
         isDark
           ? 'bg-[#090a0f] border-neutral-800/80 text-neutral-400'
-          : 'bg-slate-50 border-slate-200 text-slate-600'
+          : 'bg-[#ede7dc] border-[#d8d0bf] text-[#5e584f]'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-10 lg:py-16">

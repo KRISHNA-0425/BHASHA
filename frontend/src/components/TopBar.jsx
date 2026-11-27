@@ -34,7 +34,7 @@ const TopBar = ({
         <header className={`w-full py-3 sm:py-4 px-3 sm:px-6 lg:px-8 border-b backdrop-blur-xl flex items-center justify-between sticky top-0 z-20 font-sans transition-colors duration-200 ${
             isDark
                 ? 'border-white/[0.06] bg-[#0a0c12]/85'
-                : 'border-slate-200 bg-white/85'
+                : 'border-[#d8d0bf] bg-[#ebe5d8]/85'
         }`}>
             {/* Left: Mobile Sidebar Hamburger + Search Bar */}
             <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-xl min-w-0">
@@ -45,7 +45,7 @@ const TopBar = ({
                     className={`lg:hidden p-2 rounded-xl border transition-colors cursor-pointer shrink-0 flex items-center justify-center ${
                         isDark
                             ? 'bg-[#12151f] border-white/[0.08] text-slate-300 hover:text-white hover:bg-white/[0.06]'
-                            : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100 shadow-xs'
+                            : 'bg-[#ebe5d8] border-[#d8d0bf] text-[#201d1a] hover:text-black hover:bg-[#ede7dc] shadow-xs'
                     }`}
                     aria-label="Open navigation menu"
                     title="Open Menu"
@@ -58,7 +58,7 @@ const TopBar = ({
                     <div className={`flex items-center gap-2 sm:gap-3 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 transition-all border ${
                         isDark
                             ? 'bg-[#12151f] border-white/[0.08] hover:border-white/[0.18] focus-within:border-cyan-500/70 focus-within:ring-1 focus-within:ring-cyan-500/30'
-                            : 'bg-white border-slate-200 hover:border-slate-300 focus-within:border-slate-900 focus-within:ring-1 focus-within:ring-slate-900/10 shadow-xs'
+                            : 'bg-[#fbf9f4] border-[#d8d0bf] hover:border-[#c8bfae] focus-within:border-slate-900 focus-within:ring-1 focus-within:ring-slate-900/10 shadow-xs'
                     }`}>
                         <FiSearch className="text-sm sm:text-base shrink-0 text-slate-400" />
                         <input
@@ -97,7 +97,7 @@ const TopBar = ({
                     className={`p-2 sm:p-2.5 rounded-xl transition-all cursor-pointer border flex items-center justify-center shrink-0 ${
                         isDark
                             ? 'bg-[#12151f] border-white/[0.08] hover:border-white/[0.18] text-slate-300 hover:text-white shadow-xs'
-                            : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 shadow-xs'
+                            : 'bg-[#ebe5d8] border-[#d8d0bf] hover:border-[#c8bfae] text-[#201d1a] hover:text-black shadow-xs'
                     }`}
                 >
                     {isDark ? (
