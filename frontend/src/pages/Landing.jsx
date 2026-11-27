@@ -650,7 +650,7 @@ const Landing = () => {
               <img
                 src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
                 alt="BHASHA"
-                className="h-6 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
+                className="h-6 sm:h-8 w-auto object-contain "
               />
               <span className="font-mono text-[9px] sm:text-[10px] px-1.5 py-0.5 bg-[#101319] border border-[#00f5c4] text-[#00f5c4] hidden sm:inline-block">
                 AI-IDE
@@ -763,6 +763,11 @@ const Landing = () => {
         <div className="relative z-10 w-full max-w-3xl mb-8">
           <div className={`relative p-3.5 sm:p-7 ${isDark ? 'bg-[#080a0f]/90 border-[#232734]' : 'bg-white/90 border-slate-300 shadow-lg'} border corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br backdrop-blur-md`}>
             
+            {/* Animated Scanline Sweep across Datum Frame */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[inherit]">
+              <div className="anim-scanline" />
+            </div>
+
             {/* Datum Header inside Frame */}
             <div className="flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-slate-500 mb-3 sm:mb-4 border-b border-[#232734] pb-2">
               <span className="flex items-center gap-1 sm:gap-1.5 truncate">
