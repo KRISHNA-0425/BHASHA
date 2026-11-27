@@ -261,7 +261,7 @@ const Payment = () => {
     <div className={`min-h-screen w-full font-sans flex flex-col justify-between transition-colors duration-200 ${
       isDark
         ? 'bg-[#090a0f] text-neutral-200 selection:bg-neutral-800 selection:text-white'
-        : 'bg-[#f8fafc] text-slate-800 selection:bg-slate-200 selection:text-slate-900'
+        : 'bg-[#f5f2eb] text-[#201d1a] selection:bg-amber-100 selection:text-amber-900'
     }`}>
       <div>
         {/* Top Back Action & Theme Toggle */}
@@ -271,7 +271,7 @@ const Payment = () => {
             className={`inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium px-3 sm:px-3.5 py-2 rounded-xl border transition-all cursor-pointer shadow-xs active:scale-95 ${
               isDark
                 ? 'text-neutral-400 hover:text-white border-neutral-800 hover:border-neutral-700 bg-neutral-900/80'
-                : 'text-slate-600 hover:text-slate-900 border-slate-200 hover:border-slate-300 bg-white'
+                : 'text-[#201d1a] hover:text-black border-[#d8d0bf] hover:border-[#c8bfae] bg-[#ebe5d8]'
             }`}
           >
             <FiArrowLeft className="text-sm" />
@@ -287,7 +287,7 @@ const Payment = () => {
             className={`p-2.5 rounded-xl border transition-all cursor-pointer shadow-xs ${
               isDark
                 ? 'bg-neutral-900/80 border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700'
-                : 'bg-white border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-300'
+                : 'bg-[#ebe5d8] border-[#d8d0bf] text-[#201d1a] hover:text-black hover:border-[#c8bfae]'
             }`}
           >
             {isDark ? <FiMoon className="text-sm" /> : <FiSun className="text-sm text-amber-500" />}
@@ -299,7 +299,7 @@ const Payment = () => {
           {/* Active Subscription Alert */}
           {isPro && (
             <div className={`mb-8 p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors ${
-              isDark ? 'bg-neutral-900 border-neutral-700' : 'bg-white border-slate-200 shadow-xs'
+              isDark ? 'bg-neutral-900 border-neutral-700' : 'bg-[#ebe5d8] border-[#d8d0bf] shadow-xs'
             }`}>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shrink-0">
@@ -352,7 +352,7 @@ const Payment = () => {
 
             {/* Monthly / Annual Billing Toggle */}
             <div className={`pt-3 inline-flex items-center gap-1 p-1 rounded-xl border transition-colors ${
-              isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-slate-100 border-slate-200'
+              isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-[#ede7dc] border-[#d8d0bf]'
             }`}>
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -362,10 +362,10 @@ const Payment = () => {
                   billingCycle === 'monthly'
                     ? isDark
                       ? 'bg-neutral-800 text-white shadow-xs'
-                      : 'bg-white text-slate-900 shadow-xs'
+                      : 'bg-[#ebe5d8] text-[#201d1a] shadow-xs'
                     : isDark
                       ? 'text-neutral-400 hover:text-neutral-200'
-                      : 'text-slate-500 hover:text-slate-800'
+                      : 'text-[#5e584f] hover:text-[#201d1a]'
                 }`}
               >
                 Monthly
@@ -378,10 +378,10 @@ const Payment = () => {
                   billingCycle === 'yearly'
                     ? isDark
                       ? 'bg-neutral-800 text-white shadow-xs'
-                      : 'bg-white text-slate-900 shadow-xs'
+                      : 'bg-[#ebe5d8] text-[#201d1a] shadow-xs'
                     : isDark
                       ? 'text-neutral-400 hover:text-neutral-200'
-                      : 'text-slate-500 hover:text-slate-800'
+                      : 'text-[#5e584f] hover:text-[#201d1a]'
                 }`}
               >
                 <span>Yearly</span>
@@ -403,14 +403,14 @@ const Payment = () => {
               whileHover={{ y: -4 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className={`rounded-2xl border p-6 flex flex-col justify-between transition-colors ${
-                isDark ? 'bg-[#0e1017] border-neutral-800' : 'bg-white border-slate-200 shadow-xs'
+                isDark ? 'bg-[#0e1017] border-neutral-800' : 'bg-[#ebe5d8] border-[#d8d0bf] shadow-xs'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <h3 className={`text-sm sm:text-[15px] font-semibold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Starter</h3>
+                  <h3 className={`text-sm sm:text-[15px] font-semibold tracking-tight ${isDark ? 'text-white' : 'text-[#201d1a]'}`}>Starter</h3>
                   <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border ${
-                    isDark ? 'bg-neutral-800/80 border-neutral-700/60 text-neutral-400' : 'bg-slate-100 border-slate-200 text-slate-600'
+                    isDark ? 'bg-neutral-800/80 border-neutral-700/60 text-neutral-400' : 'bg-[#fbf9f4] border-[#d8d0bf] text-[#3d3830]'
                   }`}>
                     Free
                   </span>
