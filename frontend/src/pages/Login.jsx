@@ -202,7 +202,10 @@ const Login = () => {
         {/* Central Authentication Card Enclosure */}
         <div className={`w-full max-w-xl ${isDark ? 'bg-[#0a0d14] border-[#232734]' : 'bg-[#ebe5d8] border-[#d8d0bf] shadow-xl'} border p-4 sm:p-8 corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br relative transition-all`}>
           
-          
+          {/* Animated Scanline Sweep across Complete Form */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[inherit] z-20">
+            <div className="anim-scanline-card" />
+          </div>
 
           {/* Center Brand Wordmark */}
           <div className="flex flex-col items-center text-center mb-6">
@@ -214,7 +217,6 @@ const Login = () => {
             <div className="text-[#00f5c4] font-mono text-[10px] sm:text-xs font-semibold uppercase tracking-widest mt-1">
               IDENTITY AUTHENTICATION // SESSION GATEWAY
             </div>
-          
           </div>
 
           {/* Feedback Messages */}

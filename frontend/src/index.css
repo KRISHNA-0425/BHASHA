@@ -144,6 +144,17 @@
   z-index: 20;
   animation: scanline-bar 3.5s ease-in-out infinite alternate;
 }
+.anim-scanline-card {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(0, 245, 196, 0) 0%, rgba(0, 245, 196, 0.85) 15%, #00f5c4 50%, rgba(0, 245, 196, 0.85) 85%, rgba(0, 245, 196, 0) 100%);
+  box-shadow: 0 0 12px #00f5c4, 0 0 24px rgba(0, 245, 196, 0.6);
+  pointer-events: none;
+  z-index: 20;
+  animation: scanline-bar 4.5s ease-in-out infinite alternate;
+}
 .anim-terminal-scan { animation: terminal-scanline 6s linear infinite; }
 
 .logo-dot-anim {
@@ -200,7 +211,7 @@ html:not(.dark) body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .anim-pulse-dot, .anim-blink, .anim-node-pulse, .packet-rail::after, .anim-scanline, .logo-dot-anim, .mesh-wire-path, .anim-terminal-scan {
+  .anim-pulse-dot, .anim-blink, .anim-node-pulse, .packet-rail::after, .anim-scanline, .anim-scanline-card, .logo-dot-anim, .mesh-wire-path, .anim-terminal-scan {
     animation: none !important;
   }
 }
