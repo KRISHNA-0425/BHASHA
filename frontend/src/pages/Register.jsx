@@ -231,46 +231,20 @@ const Register = () => {
         {/* Central Provisioning Card Enclosure */}
         <div className={`w-full max-w-xl ${isDark ? 'bg-[#0a0d14] border-[#232734]' : 'bg-[#ebe5d8] border-[#d8d0bf] shadow-xl'} border p-4 sm:p-8 corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br relative transition-all`}>
           
-          
+          {/* Animated Scanline Sweep across Complete Form */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[inherit] z-20">
+            <div className="anim-scanline-card" />
+          </div>
 
-          {/* Centerpiece: Precision Engineered BHASHA Brand Geometry Frame with Animated Scanline */}
-          <div className="relative w-full max-w-md mx-auto mb-6">
-            <div className={`relative p-3.5 sm:p-5 ${isDark ? 'bg-[#080a0f]/90 border-[#232734]' : 'bg-[#fbf9f4] border-[#d8d0bf] shadow-sm'} border corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br backdrop-blur-md`}>
-              
-              {/* Animated Scanline Sweep across Datum Frame */}
-              <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[inherit]">
-                <div className="anim-scanline" />
-              </div>
-
-              {/* Datum Header inside Frame */}
-              <div className={`flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-slate-500 mb-2.5 border-b ${isDark ? 'border-[#232734]' : 'border-[#d8d0bf]'} pb-1.5`}>
-                <span className="flex items-center gap-1">
-                  <span className="text-[#00f5c4]">⎡</span>
-                  <span className={isDark ? 'text-slate-400' : 'text-[#5e584f]'}>AUTONOMOUS CLOUD IDE</span>
-                </span>
-                <span className="hidden xs:inline text-slate-500">NEXT-GEN DEV RUNTIME</span>
-                <span className="flex items-center gap-1">
-                  <span className={isDark ? 'text-slate-400' : 'text-[#5e584f]'}>PROVISION TENANT</span>
-                  <span className="text-[#00f5c4]">⎤</span>
-                </span>
-              </div>
-
-              {/* Iconic BHASHA Brand Logo */}
-              <div className="flex flex-col items-center justify-center py-2 sm:py-3 px-2 relative">
-                <img
-                  src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
-                  alt="BHASHA"
-                  className="h-8 sm:h-10 w-auto object-contain select-none drop-shadow-[0_0_24px_rgba(0,245,196,0.3)]"
-                />
-              </div>
-
-              {/* Datum Footer inside Frame */}
-              <div className={`flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-slate-500 mt-2.5 border-t ${isDark ? 'border-[#232734]' : 'border-[#d8d0bf]'} pt-1.5`}>
-                <span className="text-[#00f5c4] truncate">⎣ INITIALIZE CLOUD ID</span>
-                <span className={`hidden xs:inline ${isDark ? 'text-slate-400' : 'text-[#5e584f]'}`}>MULTI-TENANT DEV</span>
-                <span className="text-[#00f5c4] truncate">PORT: 3000 ⎦</span>
-              </div>
-
+          {/* Center Brand Wordmark */}
+          <div className="flex flex-col items-center text-center mb-6">
+            <img
+              src={isDark ? "/bhasha-logo-white.png" : "/bhasha-logo-transparent.png"}
+              alt="BHASHA"
+              className="h-8 sm:h-9 w-auto object-contain select-none mb-2 drop-shadow-[0_0_20px_rgba(0,245,196,0.25)]"
+            />
+            <div className="text-[#00f5c4] font-mono text-[10px] sm:text-xs font-semibold uppercase tracking-widest mt-1">
+              INITIALIZE CLOUD IDENTITY // PROVISION TENANT
             </div>
           </div>
 
