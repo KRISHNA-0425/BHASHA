@@ -1293,13 +1293,13 @@ const Landing = () => {
         </div>
 
         {/* Live Event Bus Ribbon */}
-        <div className="mb-6 p-2.5 bg-[#101319] border border-[#232734] font-mono text-xs flex flex-wrap items-center justify-between gap-3 packet-rail">
-          <div className="flex items-center gap-2 relative z-10">
+        <div className="mb-6 p-2.5 bg-[#101319] border border-[#232734] font-mono text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 packet-rail text-center sm:text-left">
+          <div className="flex items-center gap-2 relative z-10 justify-center sm:justify-start">
             <span className="text-[#00f5c4] font-bold">•</span>
             <span className="text-slate-300">REAL-TIME TELEMETRY BUS:</span>
             <span className="text-[#00f5c4]">ZERO-LATENCY EVENT MESH</span>
           </div>
-          <div className="flex items-center gap-4 text-slate-400 relative z-10 text-[11px]">
+          <div className="flex items-center gap-4 text-slate-400 relative z-10 text-[10px] sm:text-[11px] justify-center sm:justify-end">
             <span>LATENCY: &lt;1.2 ms</span>
             <span>THROUGHPUT: 12.4K ops/s</span>
           </div>
@@ -1342,7 +1342,7 @@ const Landing = () => {
         </div>
 
         {/* Active Node Inspector Box */}
-        <div className="p-4 sm:p-5 bg-[#080a0f] border border-[#232734] corner-ch corner-ch-tl corner-ch-br">
+        <div className="p-3.5 sm:p-5 bg-[#080a0f] border border-[#232734] corner-ch corner-ch-tl corner-ch-br">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-4 border-b border-[#232734]">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-[#00f5c4] anim-pulse-dot"></span>
@@ -1360,7 +1360,7 @@ const Landing = () => {
               <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-2">
                 CAPABILITY SPECIFICATION:
               </div>
-              <pre className="p-3.5 bg-[#050608] border border-[#232734] text-[#00f5c4] font-mono text-xs leading-relaxed overflow-x-auto">
+              <pre className="p-3 sm:p-3.5 bg-[#050608] border border-[#232734] text-[#00f5c4] font-mono text-[11px] sm:text-xs leading-relaxed overflow-x-auto max-h-60 sm:max-h-none">
                 <code>{activeMesh.schema}</code>
               </pre>
             </div>
@@ -1428,7 +1428,7 @@ const Landing = () => {
             <button
               key={s.key}
               onClick={() => setMatrixScenario(s.key)}
-              className={`px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider border transition-all ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 font-mono text-[10px] sm:text-xs font-semibold uppercase tracking-wider border transition-all text-center ${
                 matrixScenario === s.key
                   ? 'bg-[#00f5c4] text-[#080a0f] border-[#00f5c4] shadow-[0_0_14px_rgba(0,245,196,0.3)]'
                   : 'bg-[#101319] text-slate-400 border-[#232734] hover:border-slate-500'
@@ -1440,10 +1440,10 @@ const Landing = () => {
         </div>
 
         {/* 2-Column Comparison Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
           
           {/* Card 1: Traditional Cloud IDE */}
-          <div className="p-6 bg-[#0c0f16] border border-[#ef4444]/30 flex flex-col justify-between relative">
+          <div className="p-4 sm:p-6 bg-[#0c0f16] border border-[#ef4444]/30 flex flex-col justify-between relative">
             <div>
               <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#232734]">
                 <div className="flex items-center gap-2">
@@ -1488,7 +1488,7 @@ const Landing = () => {
           </div>
 
           {/* Card 2: BHASHA Autonomous Flow */}
-          <div className="p-6 bg-[#0c1316] border border-[#00f5c4] flex flex-col justify-between relative shadow-[0_0_20px_rgba(0,245,196,0.1)]">
+          <div className="p-4 sm:p-6 bg-[#0c1316] border border-[#00f5c4] flex flex-col justify-between relative shadow-[0_0_20px_rgba(0,245,196,0.1)]">
             <div>
               <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#00f5c4]/30">
                 <div className="flex items-center gap-2">
@@ -1565,7 +1565,7 @@ const Landing = () => {
           </div>
 
           {/* Quick Action Pills */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {[
               'bhasha --status',
               'npm test',
@@ -1575,7 +1575,7 @@ const Landing = () => {
               <button
                 key={cmd}
                 onClick={() => runReplCommand(cmd)}
-                className="px-2.5 py-1 bg-[#101319] hover:bg-[#161922] border border-[#232734] hover:border-[#00f5c4] text-[#00f5c4] font-mono text-xs transition-colors"
+                className="px-2 sm:px-2.5 py-1 bg-[#101319] hover:bg-[#161922] border border-[#232734] hover:border-[#00f5c4] text-[#00f5c4] font-mono text-[11px] sm:text-xs transition-colors"
               >
                 {cmd}
               </button>
@@ -1587,7 +1587,7 @@ const Landing = () => {
         <div className="bg-[#050608] border border-[#232734] corner-ch corner-ch-tl corner-ch-tr corner-ch-bl corner-ch-br">
           
           {/* Terminal Window Title Bar */}
-          <div className="px-4 py-2 bg-[#0c0f16] border-b border-[#232734] flex items-center justify-between font-mono text-xs text-slate-400">
+          <div className="px-3 sm:px-4 py-2 bg-[#0c0f16] border-b border-[#232734] flex items-center justify-between font-mono text-[10px] sm:text-xs text-slate-400 gap-2 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-[#00f5c4] anim-pulse-dot"></span>
               <span>session: cloud-terminal-secure (active)</span>
@@ -1598,7 +1598,7 @@ const Landing = () => {
           {/* Terminal Output Display */}
           <div
             ref={terminalEndRef}
-            className="p-4 sm:p-6 font-mono text-xs leading-relaxed max-h-80 overflow-y-auto space-y-2 text-slate-300"
+            className="p-3 sm:p-6 font-mono text-[11px] sm:text-xs leading-relaxed max-h-80 overflow-y-auto space-y-2 text-slate-300"
           >
             {replHistory.map((item, idx) => (
               <div key={idx}>
@@ -1609,25 +1609,25 @@ const Landing = () => {
                   <p className="text-[#00f5c4] font-bold mt-2">{item.text}</p>
                 )}
                 {item.type === 'out' && (
-                  <pre className="text-slate-300 whitespace-pre-wrap pl-2 font-mono">{item.text}</pre>
+                  <pre className="text-slate-300 whitespace-pre-wrap pl-2 font-mono text-[11px] sm:text-xs">{item.text}</pre>
                 )}
               </div>
             ))}
           </div>
 
           {/* Terminal Command Input Form */}
-          <form onSubmit={handleReplSubmit} className="p-3 bg-[#080a0f] border-t border-[#232734] flex items-center gap-3">
+          <form onSubmit={handleReplSubmit} className="p-2.5 sm:p-3 bg-[#080a0f] border-t border-[#232734] flex items-center gap-2 sm:gap-3">
             <span className="text-[#00f5c4] font-mono font-bold">$</span>
             <input
               type="text"
               value={replInput}
               onChange={(e) => setReplInput(e.target.value)}
-              placeholder="type a command (e.g. 'help', 'bhasha --status', 'npm test', 'git status') and press Enter..."
-              className="flex-1 bg-transparent border-none outline-none font-mono text-xs text-white placeholder:text-slate-600"
+              placeholder="type a command (e.g. 'help', 'bhasha --status', 'npm test')..."
+              className="flex-1 min-w-0 bg-transparent border-none outline-none font-mono text-[11px] sm:text-xs text-white placeholder:text-slate-600"
             />
             <button
               type="submit"
-              className="px-3 py-1 bg-[#161922] hover:bg-[#00f5c4] text-[#00f5c4] hover:text-[#080a0f] border border-[#00f5c4] font-mono text-xs font-bold transition-colors"
+              className="px-2.5 sm:px-3 py-1 bg-[#161922] hover:bg-[#00f5c4] text-[#00f5c4] hover:text-[#080a0f] border border-[#00f5c4] font-mono text-[10px] sm:text-xs font-bold transition-colors shrink-0"
             >
               EXECUTE
             </button>
