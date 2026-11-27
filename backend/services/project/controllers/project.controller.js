@@ -26,6 +26,36 @@ export const createProject = async (req, res) => {
             return res.status(400).json({ message: 'name is required' });
         }
 
+        // Enforce 5-project limit for Starter / Free tier
+        const currentCount = await Project.countDocuments({ owner: userId });
+        if (currentCount >= 5) {
+            let isPro = false;
+            try {
+                const paymentServiceUrl = process.env.PAYMENT_SERVICE_URL || 'http://localhost:8006';
+                const response = await fetch(`${paymentServiceUrl}/api/payment/subscription`, {
+                    headers: { 'x-user-id': userId },
+                    signal: AbortSignal.timeout(3000)
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const sub = data?.subscription;
+                    isPro = sub?.status?.toUpperCase() === 'ACTIVE' &&
+                        (sub?.planId === 'PRO_MONTHLY' || sub?.planId === 'PRO_YEARLY');
+                }
+            } catch (subErr) {
+                console.error("Subscription verification error:", subErr.message);
+            }
+
+            if (!isPro) {
+                return res.status(403).json({
+                    message: 'Starter plan workspace capacity reached (maximum 5 projects). Upgrade to Pro for unlimited cloud workspaces.',
+                    code: 'PROJECT_LIMIT_EXCEEDED',
+                    currentCount,
+                    maxAllowed: 5
+                });
+            }
+        }
+
         const project = await Project.create({
             name: name.trim(),
             description,
